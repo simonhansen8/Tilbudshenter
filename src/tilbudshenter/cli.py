@@ -12,7 +12,7 @@ from pathlib import Path
 
 from . import __version__
 from .categories import Categorizer, merge_categories
-from .config import DEFAULT_CONFIG_NAME, EXAMPLE_CONFIG, Config, load_config
+from .config import DEFAULT_CONFIG_NAME, EXAMPLE_CONFIG, Config, load_config, save_config, upgrade_config
 from .report import render_html, render_json, render_markdown, render_text, write_reports
 from .scanner import scan
 from .selection import catalog_selected, select_offers, store_selected
@@ -32,6 +32,9 @@ def make_source(cfg: Config, demo: bool) -> OfferSource:
 
 def load_app_config(path: Path | None, demo: bool) -> Config:
     cfg = load_config(path)
+    # Ældre indstillingsfiler får nye standardvalg (fx nye butikker) én gang
+    if cfg.source_path is not None and upgrade_config(cfg):
+        save_config(cfg, cfg.source_path)
     if demo:
         # Demodata holdes adskilt fra de rigtige data
         cfg.database = cfg.database.with_suffix(".demo.db")
