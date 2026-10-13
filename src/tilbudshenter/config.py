@@ -219,8 +219,11 @@ def save_config(cfg: Config, path: Path) -> None:
 
 def example_config() -> Config:
     return Config(
-        stores=["Netto", "REMA 1000", "Lidl", "føtex", "Bilka", "365discount"],
-        exclude_catalogs=["legetøj", "nonfood", "prosonic", "halloween", "ud af huset", "julekatalog"],
+        stores=[
+            "Netto", "REMA 1000", "Lidl", "føtex", "Bilka", "365discount",
+            "Kvickly", "SuperBrugsen", "Brugsen", "MENY", "SPAR",
+        ],
+        exclude_catalogs=["legetøj", "nonfood", "prosonic", "halloween", "ud af huset", "julekatalog", "skønhed"],
         categories=["koed", "fisk", "mejeri", "frugt_og_groent", "broed_og_bager", "kolonial", "frost", "kaffe_og_te"],
     )
 
