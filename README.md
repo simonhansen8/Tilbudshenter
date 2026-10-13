@@ -21,9 +21,10 @@ du starter fra genvejen, henter programmet selv den nyeste udgave fra GitHub
 programmappen og bliver aldrig rørt af en opdatering. Har du brugt programmet
 fra den udpakkede mappe før, flyttes indstillinger og data med.
 
-Er repoet privat, beder installationen om en GitHub-nøgle med rettigheden
-*Contents: Read-only* til repoet (lav den på
-<https://github.com/settings/personal-access-tokens/new>). Den gemmes i
+Er repoet privat, beder installationen om en GitHub-nøgle. Lav den på
+<https://github.com/settings/personal-access-tokens/new>, vælg
+*Only select repositories* og Tilbudshenter under *Repository access* (standardvalget
+*Public repositories* virker ikke), og sæt *Contents* til *Read-only*. Den gemmes i
 `%LOCALAPPDATA%\Tilbudshenter\github-noegle.txt`. Uden net starter programmet
 bare den udgave, der allerede er installeret.
 

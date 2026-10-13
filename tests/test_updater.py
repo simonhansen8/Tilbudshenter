@@ -32,8 +32,9 @@ class FakeGitHub:
     def __call__(self, url, headers):
         if self.offline:
             raise updater.UpdateError("Ingen forbindelse")
-        if self.token and headers.get("Authorization") != f"Bearer {self.token}":
-            raise updater.NotFound("404")
+        auth = headers.get("Authorization")
+        if self.token and auth != f"Bearer {self.token}":
+            raise updater.NotFound("401" if auth else "404", 401 if auth else 404)
         if url.endswith("/commits/main"):
             return self.sha.encode()
         sha = url.rsplit("/", 1)[1]
@@ -111,7 +112,7 @@ def test_install_from_unzipped_folder(tmp_path, monkeypatch):
     (source / "rapporter" / "seneste.html").write_text("rapport")
     home = tmp_path / "hjem"
     gh = FakeGitHub(SHA_A, {SHA_A: make_zip("A")}, token="hemmelig")
-    answers = iter(["forkert", "hemmelig"])
+    answers = iter(["forkert", " \ufeff\"hemmelig\" \r"])
     messages = []
 
     assert updater.install(source, home, gh, ask=lambda _: next(answers), log=messages.append) == 0
@@ -121,7 +122,7 @@ def test_install_from_unzipped_folder(tmp_path, monkeypatch):
     assert (home / "rapporter" / "seneste.html").exists()
     launcher = (home / "Tilbudshenter.bat").read_bytes()
     assert b"\r\n" in launcher and b"opdater.py" in launcher and b"program\\src" in launcher
-    assert any("Nøglen virkede ikke" in m for m in messages)
+    assert any("kopieret forkert" in m for m in messages)
 
     # Data i den nye mappe overskrives ikke ved en ny installation.
     (home / "tilbudshenter.toml").write_text("nye indstillinger")
@@ -136,3 +137,15 @@ def test_install_without_network_uses_local_copy(tmp_path, monkeypatch):
     assert updater.installed_version(home) == "lokal"
     assert (home / "program" / "src" / "tilbudshenter" / "cli.py").exists()
     assert not list((home / "program").rglob("__pycache__"))
+
+
+def test_token_without_repo_access_explains_fix(tmp_path):
+    class NoAccess(FakeGitHub):
+        def __call__(self, url, headers):
+            raise updater.NotFound("404", 404)
+
+    answers = iter(["github_pat_uden_adgang", ""])
+    messages = []
+    updater.ask_token(tmp_path, NoAccess(), ask=lambda _: next(answers), log=messages.append)
+    assert any("kan ikke se repoet" in m for m in messages)
+    assert not (tmp_path / "github-noegle.txt").exists()
