@@ -30,13 +30,17 @@ def make_source(cfg: Config, demo: bool) -> OfferSource:
     return TjekSource(api_key=cfg.api_key)
 
 
-def prepare_config(args: argparse.Namespace) -> Config:
-    cfg = load_config(args.config)
-    if args.demo:
+def load_app_config(path: Path | None, demo: bool) -> Config:
+    cfg = load_config(path)
+    if demo:
         # Demodata holdes adskilt fra de rigtige data
         cfg.database = cfg.database.with_suffix(".demo.db")
         cfg.output_dir = cfg.output_dir / "demo"
     return cfg
+
+
+def prepare_config(args: argparse.Namespace) -> Config:
+    return load_app_config(args.config, args.demo)
 
 
 def best_offers(cfg: Config, storage: Storage, categorizer: Categorizer, now: datetime, limit: int | None = None):
@@ -181,6 +185,13 @@ def cmd_categories(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_app(args: argparse.Namespace) -> int:
+    from .webapp import run
+
+    run(args.config or Path(DEFAULT_CONFIG_NAME), demo=args.demo, port=args.port, open_browser=not args.no_browser)
+    return 0
+
+
 # -- Parser -------------------------------------------------------------
 def build_parser() -> argparse.ArgumentParser:
     common = argparse.ArgumentParser(add_help=False)
@@ -194,6 +205,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
+
+    p = sub.add_parser("app", aliases=["ui"], parents=[common], help="åbn appen i browseren")
+    p.add_argument("--port", type=int, default=8765, help="port (standard: 8765)")
+    p.add_argument("--ingen-browser", dest="no_browser", action="store_true", help="åbn ikke browseren automatisk")
+    p.set_defaults(func=cmd_app)
 
     p = sub.add_parser("init", parents=[common], help="opret en konfigurationsfil")
     p.add_argument("--force", action="store_true", help="overskriv eksisterende fil")

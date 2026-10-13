@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from typing import Callable
 
 from .categories import Categorizer
 from .config import Config
@@ -28,6 +29,9 @@ class ScanResult:
         return bool(self.new_catalogs)
 
 
+ProgressCallback = Callable[[int, int, Catalog], None]
+
+
 def scan(
     cfg: Config,
     source: OfferSource,
@@ -35,20 +39,29 @@ def scan(
     categorizer: Categorizer,
     force: bool = False,
     now: datetime | None = None,
+    progress: ProgressCallback | None = None,
 ) -> ScanResult:
     """Henter aviser for de valgte butikker. Aviser der allerede er scannet,
-    springes over (medmindre ``force``)."""
+    springes over (medmindre ``force``).
+
+    ``progress`` kaldes med (nummer, antal, avis) før hver avis hentes.
+    """
     now = now or datetime.now(timezone.utc)
     result = ScanResult()
-    catalogs = source.list_catalogs(cfg.latitude, cfg.longitude, cfg.radius_km)
-    for catalog in catalogs:
+    to_fetch: list[Catalog] = []
+    for catalog in source.list_catalogs(cfg.latitude, cfg.longitude, cfg.radius_km):
         if not store_selected(catalog.dealer, cfg) or not catalog_selected(catalog.label, cfg):
             continue
         if catalog.run_till and catalog.run_till < now:
             continue
         if not force and storage.is_scanned(catalog.id):
             result.known_catalogs.append(catalog)
-            continue
+        else:
+            to_fetch.append(catalog)
+
+    for number, catalog in enumerate(to_fetch, 1):
+        if progress:
+            progress(number, len(to_fetch), catalog)
         log.info("Henter tilbud fra %s - %s", catalog.dealer, catalog.label)
         try:
             offers = source.list_offers(catalog)

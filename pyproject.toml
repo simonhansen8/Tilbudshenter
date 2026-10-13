@@ -20,7 +20,7 @@ tilbudshenter = "tilbudshenter.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-"tilbudshenter.data" = ["*.json"]
+"tilbudshenter.data" = ["*.json", "*.html"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

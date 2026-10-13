@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -117,57 +118,111 @@ def _from_dict(data: dict) -> Config:
     return cfg
 
 
-EXAMPLE_CONFIG = """\
+def _toml(value) -> str:
+    """Formaterer en simpel værdi som TOML (JSON-strenge er gyldige i TOML)."""
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (int, float)):
+        return repr(float(value)) if isinstance(value, float) else str(value)
+    if isinstance(value, (list, tuple)):
+        return "[" + ", ".join(_toml(v) for v in value) + "]"
+    return json.dumps(str(value), ensure_ascii=False)
+
+
+def _relative(path: Path, base: Path | None) -> str:
+    if base is not None:
+        try:
+            return path.resolve().relative_to(base.resolve()).as_posix()
+        except ValueError:
+            pass
+    return str(path)
+
+
+def render_config(cfg: Config, base: Path | None = None) -> str:
+    """Skriver konfigurationen som TOML med forklarende kommentarer."""
+    t = _toml
+    custom = "".join(
+        f"\n[kategorier.egne.{key}]\nnavn = {t(spec.get('navn', key))}\n"
+        f"noegleord = {t(spec.get('noegleord', []))}\n"
+        for key, spec in cfg.custom_categories.items()
+    )
+    if not custom:
+        custom = """
+# Egne kategorier eller ekstra nøgleord til eksisterende kategorier:
+# [kategorier.egne.morgenmad]
+# navn = "Morgenmad"
+# noegleord = ["havregryn", "müsli", "skyr"]
+"""
+    max_price = f"max_pris = {t(cfg.max_price)}" if cfg.max_price is not None else "# max_pris = 100"
+    api_key = f"api_noegle = {t(cfg.api_key)}" if cfg.api_key else '# api_noegle = ""'
+    return f"""\
 # Tilbudshenter - konfiguration
+# Kan også ændres under "Indstillinger" i appen.
 # Alle lister kan være tomme: tom liste betyder "alle".
 
 [placering]
 # Bruges til at finde de aviser, der gælder i dit område.
 # Find koordinater fx ved at højreklikke på et sted i Google Maps.
-breddegrad = 55.6761
-laengdegrad = 12.5683
-radius_km = 15
+breddegrad = {t(cfg.latitude)}
+laengdegrad = {t(cfg.longitude)}
+radius_km = {t(cfg.radius_km)}
 
 [butikker]
 # Hvilke butikker er relevante? Se mulighederne med: tilbudshenter butikker
-vaelg = ["Netto", "REMA 1000", "Lidl", "føtex", "Bilka", "365discount"]
-fravaelg = []
+vaelg = {t(cfg.stores)}
+fravaelg = {t(cfg.exclude_stores)}
 
 [aviser]
 # Hvilke af butikkernes aviser er relevante? Matches på en del af avisens
 # navn (store/små bogstaver er ligegyldige). Se navnene med: tilbudshenter butikker
-vaelg = []                  # fx ["uge"] for kun ugeaviserne. Tom liste = alle.
-fravaelg = ["legetøj", "nonfood", "prosonic", "halloween", "ud af huset", "julekatalog"]
+vaelg = {t(cfg.catalogs)}
+fravaelg = {t(cfg.exclude_catalogs)}
 
 [kategorier]
 # Hvilke typer tilbud er relevante? Se mulighederne med: tilbudshenter kategorier
 # "andet" er tilbud, programmet ikke kunne placere i en kategori.
-vaelg = ["koed", "fisk", "mejeri", "frugt_og_groent", "broed_og_bager", "kolonial", "frost", "kaffe_og_te"]
-fravaelg = []
-
-# Egne kategorier eller ekstra nøgleord til eksisterende kategorier:
-# [kategorier.egne.morgenmad]
-# navn = "Morgenmad"
-# noegleord = ["havregryn", "müsli", "skyr"]
-
+vaelg = {t(cfg.categories)}
+fravaelg = {t(cfg.exclude_categories)}
+{custom}
 [filtre]
 # Mange tilbud har ingen kendt førpris, så rabatten ikke kan beregnes.
 # De vises sidst i listen, medmindre kun_kendt_rabat = true.
-min_rabat_procent = 0       # Skjul tilbud med kendt rabat under denne procent
-kun_kendt_rabat = false     # true = vis kun tilbud, hvor rabatten kendes
-# max_pris = 100            # Skjul tilbud over denne pris
-skal_indeholde = []         # Hvis udfyldt: kun tilbud der nævner et af ordene
-udelad_ord = []             # Skjul tilbud der nævner et af ordene
-favoritter = []             # Rykkes op på listen, fx ["kyllingebryst", "skyr"]
-favorit_bonus = 15
+# min_rabat_procent skjuler tilbud, hvis kendte rabat er lavere.
+min_rabat_procent = {t(cfg.min_discount_pct)}
+kun_kendt_rabat = {t(cfg.only_known_discount)}
+{max_price}
+# skal_indeholde: hvis udfyldt, vises kun tilbud der nævner et af ordene.
+# udelad_ord: tilbud der nævner et af ordene, skjules.
+# favoritter: rykkes op på listen, fx ["kyllingebryst", "skyr"].
+skal_indeholde = {t(cfg.include_keywords)}
+udelad_ord = {t(cfg.exclude_keywords)}
+favoritter = {t(cfg.favorites)}
+favorit_bonus = {t(cfg.favorite_bonus)}
 
 [rapport]
-antal = 0                   # Maks. antal tilbud i rapporterne (0 = alle)
-pr_kategori = 0             # Maks. antal pr. kategori (0 = ingen grænse)
-mappe = "rapporter"
-formater = ["html", "md", "json"]
+# antal: maks. antal tilbud i rapporterne (0 = alle).
+# pr_kategori: maks. antal pr. kategori (0 = ingen grænse).
+antal = {t(cfg.top_n)}
+pr_kategori = {t(cfg.per_category)}
+mappe = {t(_relative(cfg.output_dir, base))}
+formater = {t(cfg.formats)}
 
 [data]
-database = "tilbud.db"
-# api_noegle = ""           # Valgfri nøgle til Tjek/eTilbudsavis API'et
+database = {t(_relative(cfg.database, base))}
+{api_key}
 """
+
+
+def save_config(cfg: Config, path: Path) -> None:
+    path.write_text(render_config(cfg, path.resolve().parent), encoding="utf-8")
+
+
+def example_config() -> Config:
+    return Config(
+        stores=["Netto", "REMA 1000", "Lidl", "føtex", "Bilka", "365discount"],
+        exclude_catalogs=["legetøj", "nonfood", "prosonic", "halloween", "ud af huset", "julekatalog"],
+        categories=["koed", "fisk", "mejeri", "frugt_og_groent", "broed_og_bager", "kolonial", "frost", "kaffe_og_te"],
+    )
+
+
+EXAMPLE_CONFIG = render_config(example_config())
