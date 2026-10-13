@@ -83,7 +83,7 @@ laengdegrad = 12.5683
 radius_km = 15
 
 [butikker]
-vaelg = ["Netto", "REMA 1000", "Lidl", "føtex"]   # tom liste = alle
+vaelg = ["Netto", "REMA 1000", "Lidl", "føtex", "Kvickly", "SuperBrugsen"]   # tom liste = alle
 fravaelg = []
 
 [aviser]
@@ -101,6 +101,8 @@ udelad_ord = ["øko"]
 favoritter = ["kyllingebryst", "skyr"]
 ```
 
+En ny konfiguration vælger Netto, REMA 1000, Lidl, føtex, Bilka,
+365discount og Coops kæder (Kvickly, SuperBrugsen, Brugsen, MENY og SPAR).
 Kør `tilbudshenter butikker` for at se de præcise navne på butikker og
 aviser i dit område. Listen viser også, hvilke der er valgt med de nuværende
 indstillinger. Butiksnavne matches uden hensyn til store/små bogstaver, og et
