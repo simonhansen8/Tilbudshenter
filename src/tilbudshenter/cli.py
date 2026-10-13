@@ -84,7 +84,7 @@ def run_scan(args: argparse.Namespace, cfg: Config) -> int:
         offers = best_offers(cfg, storage, categorizer, now)
     title = "Ugens bedste tilbud" + (" (demo)" if args.demo else "")
     paths = write_reports(offers, categorizer, cfg.output_dir, cfg.formats, now, title=title)
-    known = sum(1 for o in offers if o.discount_pct is not None or any("enhedspris" in r for r in o.reasons))
+    known = sum(1 for o in offers if o.known_discount is not None)
     print(f"\n{len(offers)} tilbud matcher dine valg ({known} med kendt rabat). De bedste:\n")
     print(render_text(offers[: args.show], categorizer))
     if paths:

@@ -128,10 +128,19 @@ noegleord = ["tatar"]          # ekstra nøgleord til en eksisterende kategori
 2. Mangler normalprisen, sammenlignes varens **enhedspris** (kr/kg, kr/l)
    med den typiske pris i tidligere aviser. Historikken opbygges automatisk,
    jo længere programmet har kørt.
-3. **Favoritter** får en bonus (`favorit_bonus`), og store besparelser i kroner
+3. Er der heller ingen historik, sammenlignes prisen pr. kg eller liter med
+   **de andre valgte butikker** i de aktuelle aviser. Koster hakket oksekød
+   75 kr/kg i Netto og typisk 100 kr/kg hos de andre, vises det som
+   "ca. -25%". Det gælder almindelige basisvarer som hakket kød,
+   kyllingebryst, bacon, laks, mælk, æg, kartofler og kaffe (se
+   `comparison.py`). Tilbud på flere forskellige varer ("Hakket okse- eller
+   grisekød"), færdigretter, pålæg og økologiske varer sammenlignes ikke.
+4. **Favoritter** får en bonus (`favorit_bonus`), og store besparelser i kroner
    giver et lille ekstra skub.
 
-Mange kæder (fx Netto og REMA 1000) oplyser sjældent en normalpris. Tilbud,
+Mange kæder (fx Netto og REMA 1000) oplyser sjældent en normalpris, og
+derfor er sammenligningen med andre butikker vigtig for dem. Anslåede
+rabatter vises med "ca." og en ramme i stedet for fyldt mærke. Tilbud,
 hvor rabatten ikke kendes, vises efter dem med kendt rabat, sorteret efter
 kategori og enhedspris. Sæt `kun_kendt_rabat = true` for at skjule dem.
 `min_rabat_procent` skjuler tilbud, hvis kendte rabat er lavere.
@@ -172,6 +181,7 @@ src/tilbudshenter/
   scanner.py      finder nye aviser og henter tilbud
   sources/        datakilder (tjek.py = eTilbudsavis, demo.py = demodata)
   categories.py   kategorisering ud fra nøgleord
+  comparison.py   sammenligning af samme vare på tværs af butikker
   selection.py    filtrering og rangering
   storage.py      SQLite: aviser, tilbud og prishistorik
   report.py       HTML, Markdown, JSON og terminal
