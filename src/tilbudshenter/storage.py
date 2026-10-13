@@ -135,6 +135,10 @@ class Storage:
             for r in rows
         ]
 
+    def last_scan(self) -> datetime | None:
+        row = self.conn.execute("SELECT MAX(scanned_at) AS last FROM catalogs").fetchone()
+        return _dt(row["last"]) if row and row["last"] else None
+
     # -- Tilbud ---------------------------------------------------------
     def save_offers(self, offers: list[Offer]) -> None:
         now = _now()

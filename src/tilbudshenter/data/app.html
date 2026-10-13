@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tilbudshenter</title>
+<style>
+:root {
+  --bg: #f6f5f1; --surface: #ffffff; --surface-2: #efede7; --fg: #1d1d1b; --muted: #6b6a64;
+  --line: #e2e0d8; --accent: #1f6f43; --accent-fg: #ffffff; --accent-soft: #e3f1e8;
+  --badge: #c8102e; --warn: #9a5b00; --warn-soft: #fff3dc; --error: #b42318; --error-soft: #fdecea;
+  --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141412; --surface: #1d1d1a; --surface-2: #272724; --fg: #ecebe6; --muted: #a3a29b;
+    --line: #34332f; --accent: #4cc283; --accent-fg: #0d1f15; --accent-soft: #1b3326;
+    --badge: #ff5a6e; --warn: #f2b45c; --warn-soft: #33270f; --error: #ff8a80; --error-soft: #3a1b18;
+    --shadow: none;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--fg); }
+button, input, select { font: inherit; color: inherit; }
+main { max-width: 1180px; margin: 0 auto; padding: 20px 16px 64px; }
+
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; justify-content: space-between; }
+h1 { margin: 0; font-size: 24px; letter-spacing: -.01em; }
+.status { color: var(--muted); font-size: 14px; margin-top: 2px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 9px 14px; cursor: pointer; font-weight: 600; }
+.btn:hover { background: var(--surface-2); }
+.btn:disabled { opacity: .55; cursor: default; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.btn.primary:hover { filter: brightness(1.07); }
+.btn.small { padding: 5px 10px; font-size: 13px; font-weight: 500; }
+.link { background: none; border: none; color: var(--accent); cursor: pointer; padding: 0; font-size: 13px; text-decoration: underline; }
+
+.notice { margin-top: 16px; padding: 12px 14px; border-radius: 10px; background: var(--accent-soft); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.notice.error { background: var(--error-soft); color: var(--error); }
+.notice.warn { background: var(--warn-soft); color: var(--warn); }
+.notice .grow { flex: 1 1 240px; }
+.progress { height: 6px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin-top: 8px; }
+.progress > div { height: 100%; background: var(--accent); width: 0; transition: width .3s; }
+.progress.indeterminate > div { width: 30%; animation: slide 1.2s infinite ease-in-out; }
+@keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 22px 0 8px; }
+.search { flex: 1 1 260px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+select { padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.check { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+.check input { width: 16px; height: 16px; accent-color: var(--accent); }
+
+.group-label { display: flex; gap: 10px; align-items: baseline; color: var(--muted); font-size: 13px; margin: 12px 0 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 11px; cursor: pointer; font-size: 13px; }
+.chip .n { color: var(--muted); margin-left: 4px; }
+.chip.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.chip.on .n { color: inherit; opacity: .7; }
+
+.count { color: var(--muted); font-size: 14px; margin: 18px 0 10px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 3px; box-shadow: var(--shadow); min-width: 0; }
+.card .img { height: 120px; display: flex; align-items: center; justify-content: center; background: #fff; border-radius: 8px; margin-bottom: 6px; overflow: hidden; }
+.card img { max-width: 100%; max-height: 120px; object-fit: contain; }
+.top { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); }
+.badge { background: var(--badge); color: #fff; border-radius: 6px; padding: 1px 6px; font-weight: 700; font-size: 13px; white-space: nowrap; }
+.name { font-weight: 650; overflow-wrap: anywhere; }
+.desc { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.price { font-size: 20px; font-weight: 750; margin-top: 4px; }
+.pre { color: var(--muted); text-decoration: line-through; font-size: 13px; margin-left: 6px; font-weight: 400; }
+.unit { font-size: 13px; }
+.why { color: var(--accent); font-size: 13px; }
+.meta { color: var(--muted); font-size: 12px; margin-top: auto; padding-top: 6px; }
+.more { display: flex; justify-content: center; margin-top: 18px; }
+.empty { text-align: center; color: var(--muted); padding: 48px 16px; border: 1px dashed var(--line); border-radius: 12px; margin-top: 16px; }
+
+dialog { border: none; border-radius: 14px; padding: 0; width: min(760px, calc(100vw - 32px)); max-height: calc(100vh - 32px); background: var(--surface); color: var(--fg); box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+dialog::backdrop { background: rgba(0,0,0,.45); }
+.dlg { display: flex; flex-direction: column; max-height: calc(100vh - 32px); }
+.dlg-head, .dlg-foot { padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.dlg-head { border-bottom: 1px solid var(--line); }
+.dlg-head h2 { margin: 0; font-size: 18px; }
+.dlg-foot { border-top: 1px solid var(--line); justify-content: flex-end; }
+.dlg-body { overflow: auto; padding: 6px 18px 18px; }
+fieldset { border: none; padding: 0; margin: 16px 0 0; }
+legend { font-weight: 700; margin-bottom: 4px; padding: 0; }
+.hint { color: var(--muted); font-size: 13px; margin: 0 0 8px; }
+.fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+label.field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+label.field input { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
+.wide { grid-column: 1 / -1; }
+.store { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; margin-top: 6px; }
+.store-catalogs { display: flex; flex-direction: column; gap: 3px; margin: 6px 0 2px 24px; font-size: 13px; }
+.store-catalogs .period { color: var(--muted); }
+.cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 6px; }
+.toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 14px; max-width: calc(100vw - 32px); }
+[hidden] { display: none !important; }
+@media (max-width: 520px) {
+  h1 { font-size: 21px; }
+  .actions { width: 100%; }
+  .actions .btn { flex: 1; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+  .card .img { height: 96px; }
+}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Tilbudshenter <span id="demo-tag" class="status" hidden>(demo)</span></h1>
+      <div class="status" id="status">Indlæser…</div>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="btn-scan">Hent nye tilbud</button>
+      <button class="btn" id="btn-settings">Indstillinger</button>
+    </div>
+  </header>
+
+  <div class="notice" id="scan-box" hidden>
+    <div class="grow">
+      <div id="scan-text">Henter…</div>
+      <div class="progress" id="scan-progress"><div></div></div>
+    </div>
+  </div>
+  <div class="notice" id="message" hidden></div>
+
+  <section id="filters" hidden>
+    <div class="toolbar">
+      <input class="search" id="search" type="search" placeholder="Søg efter vare, fx kylling eller kaffe">
+      <select id="sort" aria-label="Sortering">
+        <option value="best">Bedste tilbud først</option>
+        <option value="discount">Største rabat</option>
+        <option value="unit">Laveste pris pr. kg/l</option>
+        <option value="price">Laveste pris</option>
+        <option value="store">Butik</option>
+      </select>
+      <label class="check"><input type="checkbox" id="known-only"> Kun kendt rabat</label>
+    </div>
+    <div class="group-label">Butik <button class="link" data-all="stores">Vis alle</button></div>
+    <div class="chips" id="store-chips"></div>
+    <div class="group-label">Kategori <button class="link" data-all="cats">Vis alle</button> <button class="link" data-reset="cats">Mine kategorier</button></div>
+    <div class="chips" id="cat-chips"></div>
+  </section>
+
+  <div class="count" id="count"></div>
+  <div class="grid" id="grid"></div>
+  <div class="more"><button class="btn" id="btn-more" hidden>Vis flere</button></div>
+  <div class="empty" id="empty" hidden></div>
+</main>
+
+<dialog id="settings">
+  <form class="dlg" method="dialog" id="settings-form">
+    <div class="dlg-head">
+      <h2>Indstillinger</h2>
+      <button class="btn small" value="cancel" formnovalidate>Luk</button>
+    </div>
+    <div class="dlg-body">
+      <fieldset>
+        <legend>Placering</legend>
+        <p class="hint">Bruges til at finde aviserne i dit område. Find koordinater ved at højreklikke på et sted i Google Maps.</p>
+        <div class="fields">
+          <label class="field">Breddegrad <input id="s-lat" type="number" step="any" required></label>
+          <label class="field">Længdegrad <input id="s-lng" type="number" step="any" required></label>
+          <label class="field">Radius (km) <input id="s-radius" type="number" step="any" min="1" required></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Butikker og aviser</legend>
+        <p class="hint">Vælg de butikker og aviser, du vil have tilbud fra. Nye ugeaviser kommer automatisk med.</p>
+        <button type="button" class="btn small" id="btn-load-stores">Vis butikker i mit område</button>
+        <div id="store-list"></div>
+        <div class="fields" style="margin-top:10px">
+          <label class="field wide">Fravælg aviser, hvis navnet indeholder (adskil med komma)
+            <input id="s-excl-catalogs" placeholder="fx legetøj, nonfood, halloween">
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Kategorier</legend>
+        <p class="hint">Vælg de typer tilbud, du som udgangspunkt vil se.</p>
+        <div class="cat-grid" id="s-cats"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Filtre</legend>
+        <div class="fields">
+          <label class="field">Mindste rabat (%) <input id="s-min-discount" type="number" step="1" min="0" max="100"></label>
+          <label class="field">Højeste pris (kr) <input id="s-max-price" type="number" step="any" min="0" placeholder="Ingen grænse"></label>
+          <label class="field wide">Udelad tilbud der nævner (adskil med komma) <input id="s-exclude-words" placeholder="fx øl, energidrik"></label>
+          <label class="field wide">Favoritter, som rykkes op på listen (adskil med komma) <input id="s-favorites" placeholder="fx kyllingebryst, skyr"></label>
+          <label class="check wide"><input type="checkbox" id="s-known-only"> Vis kun tilbud, hvor rabatten kendes</label>
+        </div>
+      </fieldset>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn" value="cancel" formnovalidate>Annuller</button>
+      <button class="btn primary" id="btn-save" value="save">Gem</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const PAGE = 120;
+const state = {
+  offers: [], settings: null, categories: [], stores: new Set(), cats: new Set(),
+  q: "", sort: "best", knownOnly: false, limit: PAGE, catalogList: null, scanning: false,
+};
+
+async function api(path, body) {
+  const opts = body === undefined ? {} : {
+    method: "POST", headers: {"Content-Type": "application/json", "X-Tilbudshenter": "1"}, body: JSON.stringify(body),
+  };
+  const res = await fetch(path, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Fejl ${res.status}`);
+  return data;
+}
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+}
+
+function toast(text) {
+  const t = $("toast"); t.textContent = text; t.hidden = false;
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => t.hidden = true, 3500);
+}
+
+function showMessage(html, kind) {
+  const m = $("message");
+  m.className = "notice" + (kind ? " " + kind : "");
+  m.innerHTML = html; m.hidden = !html;
+}
+
+function splitList(text) { return text.split(",").map(s => s.trim()).filter(Boolean); }
+
+function timeAgo(iso) {
+  if (!iso) return "aldrig";
+  const d = new Date(iso);
+  return d.toLocaleString("da-DK", {weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"});
+}
+
+// -- Status og hentning ----------------------------------------------
+async function refreshState() {
+  const s = await api("/api/state");
+  state.settings = s.settings;
+  state.categories = s.categories;
+  $("demo-tag").hidden = !s.demo;
+  $("status").textContent = `Sidst hentet: ${timeAgo(s.last_scan)} · ${s.catalog_count} aktive aviser`;
+  renderScan(s.scan);
+  return s;
+}
+
+function renderScan(scan) {
+  const wasScanning = state.scanning;
+  state.scanning = scan.running;
+  $("btn-scan").disabled = scan.running;
+  $("btn-scan").textContent = scan.running ? "Henter…" : "Hent nye tilbud";
+  $("scan-box").hidden = !scan.running;
+  if (scan.running) {
+    const bar = $("scan-progress");
+    if (scan.total) {
+      bar.classList.remove("indeterminate");
+      bar.firstElementChild.style.width = `${Math.round(100 * scan.done / scan.total)}%`;
+      $("scan-text").textContent = `Henter avis ${scan.done + 1} af ${scan.total} · ${scan.message}`;
+    } else {
+      bar.classList.add("indeterminate");
+      $("scan-text").textContent = scan.message || "Finder aviser…";
+    }
+    setTimeout(pollScan, 800);
+    if (!wasScanning && !state.offers.length) render();
+  } else if (wasScanning) {
+    if (scan.error) {
+      showMessage(`<div class="grow"><b>Hentningen mislykkedes.</b> ${esc(scan.error)}</div>`, "error");
+    } else if (scan.result) {
+      const r = scan.result;
+      const failed = r.failed.length ? ` ${r.failed.length} aviser kunne ikke hentes.` : "";
+      showMessage(r.new_catalogs
+        ? `<div class="grow">${r.new_catalogs} nye aviser hentet med ${r.offers_fetched} tilbud.${esc(failed)}</div>`
+        : `<div class="grow">Ingen nye aviser siden sidst. Du ser de aktuelle tilbud.${esc(failed)}</div>`,
+        r.failed.length ? "warn" : "");
+    }
+    loadOffers();
+  }
+}
+
+async function pollScan() {
+  try { await refreshState(); } catch (e) { setTimeout(pollScan, 2000); }
+}
+
+async function startScan(force) {
+  showMessage("");
+  try {
+    await api("/api/scan", {force: !!force});
+    renderScan({running: true, done: 0, total: 0, message: "Finder aviser…"});
+  } catch (e) { showMessage(`<div class="grow">${esc(e.message)}</div>`, "error"); }
+}
+
+// -- Tilbud -------------------------------------------------------------
+async function loadOffers() {
+  const data = await api("/api/offers");
+  state.offers = data.offers;
+  const stores = new Set(state.offers.map(o => o.dealer));
+  state.stores = new Set([...stores].filter(s => state.stores.size === 0 || state.stores.has(s)));
+  if (state.stores.size === 0) state.stores = stores;
+  if (!loadOffers.didInitCats) { resetCats(); loadOffers.didInitCats = true; }
+  state.knownOnly = state.settings.only_known_discount;
+  $("known-only").checked = state.knownOnly;
+  state.limit = PAGE;
+  render();
+}
+
+function resetCats() {
+  const chosen = state.settings.categories;
+  state.cats = new Set(chosen.length ? chosen : state.categories.map(c => c.key));
+}
+
+// Pris pr. kg eller liter; stykpriser kan ikke sammenlignes og kommer sidst
+function perKg(o) { return (o.unit === "kg" || o.unit === "l") && o.unit_price ? o.unit_price : Infinity; }
+
+function filtered() {
+  const q = state.q.toLowerCase();
+  const minDiscount = state.settings.min_discount_pct || 0;
+  let list = state.offers.filter(o =>
+    state.stores.has(o.dealer) && state.cats.has(o.category) &&
+    (!state.knownOnly || o.known_discount !== null) &&
+    (o.known_discount === null || o.known_discount >= minDiscount || o.reasons.some(r => r.startsWith("favorit"))) &&
+    (!q || `${o.heading} ${o.description} ${o.dealer}`.toLowerCase().includes(q)));
+  const by = {
+    discount: (a, b) => (b.known_discount ?? -1) - (a.known_discount ?? -1),
+    unit: (a, b) => perKg(a) - perKg(b) || a.price - b.price,
+    price: (a, b) => a.price - b.price,
+    store: (a, b) => a.dealer.localeCompare(b.dealer, "da") || b.score - a.score,
+  }[state.sort];
+  if (by) list = [...list].sort(by);
+  return list;
+}
+
+function chip(kind, value, label, n, on) {
+  return `<button class="chip${on ? " on" : ""}" data-kind="${kind}" data-value="${esc(value)}">${esc(label)}<span class="n">${n}</span></button>`;
+}
+
+function renderChips() {
+  const storeCounts = {}, catCounts = {};
+  for (const o of state.offers) {
+    storeCounts[o.dealer] = (storeCounts[o.dealer] || 0) + 1;
+    catCounts[o.category] = (catCounts[o.category] || 0) + 1;
+  }
+  $("store-chips").innerHTML = Object.keys(storeCounts).sort((a, b) => a.localeCompare(b, "da"))
+    .map(s => chip("stores", s, s, storeCounts[s], state.stores.has(s))).join("");
+  $("cat-chips").innerHTML = state.categories.filter(c => catCounts[c.key])
+    .map(c => chip("cats", c.key, c.name, catCounts[c.key], state.cats.has(c.key))).join("");
+}
+
+function card(o) {
+  const img = o.image_url ? `<div class="img"><img src="${esc(o.image_url)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>` : "";
+  const badge = o.discount_text ? `<span class="badge">${esc(o.discount_text)}</span>`
+    : (o.known_discount ? `<span class="badge">-${Math.round(o.known_discount)}%</span>` : "");
+  return `<article class="card">${img}
+    <div class="top"><span>${esc(o.dealer)}</span>${badge}</div>
+    <div class="name">${esc(o.heading)}</div>
+    ${o.description ? `<div class="desc" title="${esc(o.description)}">${esc(o.description)}</div>` : ""}
+    <div class="price">${esc(o.price_text)}${o.pre_price_text ? `<span class="pre">${esc(o.pre_price_text)}</span>` : ""}</div>
+    ${o.unit_price_text ? `<div class="unit">${esc(o.unit_price_text)}</div>` : ""}
+    ${o.reasons.length ? `<div class="why">${esc(o.reasons.join(", "))}</div>` : ""}
+    <div class="meta">${esc(o.category_name)} · ${esc(o.period_text)}${o.catalog_label ? ` · ${esc(o.catalog_label)}` : ""}</div>
+  </article>`;
+}
+
+function render() {
+  const hasOffers = state.offers.length > 0;
+  $("filters").hidden = !hasOffers;
+  if (!hasOffers) {
+    $("grid").innerHTML = ""; $("count").textContent = ""; $("btn-more").hidden = true;
+    $("empty").hidden = false;
+    $("empty").innerHTML = state.scanning ? "Henter tilbud…"
+      : "Der er ingen tilbud endnu.<br><br><button class='btn primary' onclick='startScan()'>Hent nye tilbud</button>";
+    return;
+  }
+  renderChips();
+  const list = filtered();
+  $("empty").hidden = list.length > 0;
+  $("empty").textContent = "Ingen tilbud matcher dine filtre.";
+  $("count").textContent = `Viser ${Math.min(list.length, state.limit)} af ${list.length} tilbud`
+    + (list.length < state.offers.length ? ` (${state.offers.length} i alt)` : "");
+  $("grid").innerHTML = list.slice(0, state.limit).map(card).join("");
+  $("btn-more").hidden = list.length <= state.limit;
+}
+
+// -- Indstillinger ------------------------------------------------------
+function openSettings() {
+  const s = state.settings;
+  $("s-lat").value = s.latitude; $("s-lng").value = s.longitude; $("s-radius").value = s.radius_km;
+  $("s-excl-catalogs").value = s.exclude_catalogs.join(", ");
+  $("s-min-discount").value = s.min_discount_pct;
+  $("s-max-price").value = s.max_price ?? "";
+  $("s-exclude-words").value = s.exclude_keywords.join(", ");
+  $("s-favorites").value = s.favorites.join(", ");
+  $("s-known-only").checked = s.only_known_discount;
+  const chosen = new Set(s.categories);
+  $("s-cats").innerHTML = state.categories.map(c =>
+    `<label class="check"><input type="checkbox" value="${esc(c.key)}" ${!chosen.size || chosen.has(c.key) ? "checked" : ""}> ${esc(c.name)}</label>`).join("");
+  state.catalogList = null;
+  $("store-list").innerHTML = s.stores.length
+    ? `<p class="hint">Valgte butikker: ${esc(s.stores.join(", "))}</p>` : `<p class="hint">Alle butikker er valgt.</p>`;
+  $("settings").showModal();
+}
+
+async function loadStores() {
+  const btn = $("btn-load-stores");
+  btn.disabled = true; btn.textContent = "Henter butikker…";
+  try {
+    const data = await api("/api/catalogs");
+    state.catalogList = data.stores;
+    renderStores();
+    btn.hidden = true;
+  } catch (e) {
+    $("store-list").innerHTML = `<p class="hint" style="color:var(--error)">Kunne ikke hente butikker: ${esc(e.message)}</p>`;
+  } finally { btn.disabled = false; btn.textContent = "Vis butikker i mit område"; }
+}
+
+function catalogExcluded(label, words) {
+  const l = label.toLowerCase();
+  return words.some(w => w && l.includes(w.toLowerCase()));
+}
+
+function renderStores() {
+  const words = splitList($("s-excl-catalogs").value);
+  $("store-list").innerHTML = state.catalogList.map((s, i) => `
+    <div class="store">
+      <label class="check"><input type="checkbox" data-store="${i}" ${s.selected ? "checked" : ""}> <b>${esc(s.name)}</b></label>
+      <div class="store-catalogs" ${s.selected ? "" : "hidden"}>
+        ${s.catalogs.map(c => `<label class="check"><input type="checkbox" data-catalog="${esc(c.label)}" ${catalogExcluded(c.label, words) ? "" : "checked"}>
+          ${esc(c.label)} <span class="period">${esc(c.period)}</span></label>`).join("")}
+      </div>
+    </div>`).join("");
+}
+
+function toggleCatalog(label, on) {
+  let words = splitList($("s-excl-catalogs").value);
+  if (on) words = words.filter(w => !label.toLowerCase().includes(w.toLowerCase()));
+  else if (!catalogExcluded(label, words)) words.push(label);
+  $("s-excl-catalogs").value = words.join(", ");
+  renderStores();
+}
+
+async function saveSettings() {
+  const s = state.settings;
+  const cats = [...$("s-cats").querySelectorAll("input")];
+  const chosenCats = cats.filter(c => c.checked).map(c => c.value);
+  const body = {
+    latitude: $("s-lat").value, longitude: $("s-lng").value, radius_km: $("s-radius").value,
+    exclude_catalogs: splitList($("s-excl-catalogs").value),
+    categories: chosenCats.length === cats.length ? [] : chosenCats,
+    min_discount_pct: $("s-min-discount").value || 0,
+    max_price: $("s-max-price").value,
+    exclude_keywords: splitList($("s-exclude-words").value),
+    favorites: splitList($("s-favorites").value),
+    only_known_discount: $("s-known-only").checked,
+  };
+  if (state.catalogList) {
+    const chosen = state.catalogList.filter(st => st.selected).map(st => st.name);
+    body.stores = chosen.length === state.catalogList.length ? [] : chosen;
+  }
+  const storesChanged = JSON.stringify(body.stores ?? s.stores) !== JSON.stringify(s.stores)
+    || JSON.stringify(body.exclude_catalogs) !== JSON.stringify(s.exclude_catalogs)
+    || ["latitude", "longitude", "radius_km"].some(k => Number(body[k]) !== s[k]);
+  try {
+    await api("/api/settings", body);
+    await refreshState();
+    resetCats();
+    await loadOffers();
+    if (storesChanged) {
+      showMessage(`<div class="grow">Indstillingerne er gemt. Hent tilbud for at få aviser fra dine nye valg med.</div>
+        <button class="btn primary small" onclick="startScan()">Hent nu</button>`);
+    } else toast("Indstillingerne er gemt");
+  } catch (e) { showMessage(`<div class="grow">Kunne ikke gemme: ${esc(e.message)}</div>`, "error"); }
+}
+
+// -- Hændelser ----------------------------------------------------------
+$("btn-scan").addEventListener("click", () => startScan(false));
+$("btn-settings").addEventListener("click", openSettings);
+$("btn-load-stores").addEventListener("click", loadStores);
+$("btn-more").addEventListener("click", () => { state.limit += PAGE; render(); });
+$("search").addEventListener("input", e => { state.q = e.target.value; state.limit = PAGE; render(); });
+$("sort").addEventListener("change", e => { state.sort = e.target.value; render(); });
+$("known-only").addEventListener("change", e => { state.knownOnly = e.target.checked; render(); });
+$("filters").addEventListener("click", e => {
+  const c = e.target.closest(".chip");
+  if (c) {
+    const set = state[c.dataset.kind];
+    set.has(c.dataset.value) ? set.delete(c.dataset.value) : set.add(c.dataset.value);
+    state.limit = PAGE; render(); return;
+  }
+  if (e.target.dataset.all === "stores") state.stores = new Set(state.offers.map(o => o.dealer));
+  else if (e.target.dataset.all === "cats") state.cats = new Set(state.categories.map(c => c.key));
+  else if (e.target.dataset.reset === "cats") resetCats();
+  else return;
+  render();
+});
+$("store-list").addEventListener("change", e => {
+  const t = e.target;
+  if (t.dataset.store !== undefined) {
+    state.catalogList[Number(t.dataset.store)].selected = t.checked;
+    renderStores();
+  } else if (t.dataset.catalog !== undefined) toggleCatalog(t.dataset.catalog, t.checked);
+});
+$("s-excl-catalogs").addEventListener("change", () => { if (state.catalogList) renderStores(); });
+$("settings-form").addEventListener("submit", e => {
+  if (e.submitter && e.submitter.value === "save") { e.preventDefault(); if ($("settings-form").reportValidity()) { $("settings").close(); saveSettings(); } }
+});
+
+(async function init() {
+  try {
+    const s = await refreshState();
+    await loadOffers();
+    // Første gang: hent tilbud med det samme
+    if (!s.last_scan && !s.scan.running) startScan();
+  } catch (e) {
+    showMessage(`<div class="grow">Kunne ikke starte: ${esc(e.message)}</div>`, "error");
+  }
+})();
+</script>
+</body>
+</html>

@@ -71,6 +71,7 @@ def score_offer(
         reasons.append(f"favorit ({favorite})")
 
     offer.score = score
+    offer.known_discount = discount
     offer.reasons = reasons
     return discount
 

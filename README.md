@@ -11,6 +11,30 @@ kædernes aviser.
 
 Kræver Python 3.11 eller nyere. Der er ingen andre afhængigheder.
 
+### Appen (anbefalet)
+
+**Windows:** dobbeltklik på `Tilbudshenter.bat`. Første gang installeres
+programmet automatisk. Derefter åbner appen i din browser.
+
+**Andre systemer:**
+
+```bash
+pip install -e .
+tilbudshenter app
+```
+
+I appen kan du:
+
+- hente nye tilbud med knappen **Hent nye tilbud** (første gang sker det
+  automatisk),
+- søge og filtrere på butik og kategori, sortere efter rabat eller pris pr. kg,
+- vælge butikker, aviser, kategorier og din placering under **Indstillinger**.
+
+Appen kører kun på din egen computer. Luk konsolvinduet for at stoppe den.
+Vil du prøve med demodata uden internet: `tilbudshenter app --demo`.
+
+### Kommandolinjen
+
 ```bash
 pip install -e .
 tilbudshenter init        # opretter tilbudshenter.toml, som du retter til
@@ -30,6 +54,7 @@ Demodata gemmes adskilt fra dine rigtige data (`tilbud.demo.db` og
 
 | Kommando | Hvad den gør |
 |---|---|
+| `tilbudshenter app` | Åbner appen i browseren. |
 | `tilbudshenter scan` | Finder nye aviser for dine butikker, henter tilbuddene og laver rapport. Aviser der allerede er scannet, springes over. |
 | `tilbudshenter tilbud` | Viser de bedste aktuelle tilbud fra databasen. Kan filtreres ad hoc, se nedenfor. |
 | `tilbudshenter butikker` | Viser hvilke butikker der har aviser i dit område, og hvilke du har valgt. |
@@ -141,6 +166,7 @@ Alternativt kan `tilbudshenter overvaag` køre i baggrunden.
 ```
 src/tilbudshenter/
   cli.py          kommandolinjen
+  webapp.py       appen (lokal webserver); brugerfladen ligger i data/app.html
   config.py       indlæsning af tilbudshenter.toml
   scanner.py      finder nye aviser og henter tilbud
   sources/        datakilder (tjek.py = eTilbudsavis, demo.py = demodata)
