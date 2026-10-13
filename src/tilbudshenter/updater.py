@@ -68,6 +68,10 @@ class UpdateError(Exception):
 class NotFound(UpdateError):
     """Repoet kunne ikke ses, typisk fordi det er privat og nøglen mangler."""
 
+    def __init__(self, message: str, code: int = 404) -> None:
+        super().__init__(message)
+        self.code = code
+
 
 def default_home() -> Path:
     override = os.environ.get("TILBUDSHENTER_HJEM")
@@ -85,7 +89,7 @@ def http_fetch(url: str, headers: dict) -> bytes:
             return resp.read()
     except urllib.error.HTTPError as exc:
         if exc.code in (401, 403, 404):
-            raise NotFound(f"GitHub svarede {exc.code}") from exc
+            raise NotFound(f"GitHub svarede {exc.code}", exc.code) from exc
         raise UpdateError(f"GitHub svarede {exc.code}") from exc
     except (urllib.error.URLError, OSError) as exc:
         raise UpdateError(f"Ingen forbindelse til GitHub ({exc})") from exc
@@ -110,9 +114,14 @@ def download(sha: str, token: str | None, fetch: Fetch = http_fetch) -> bytes:
     return fetch(f"{API}/repos/{REPO}/zipball/{sha}", _headers(token, "application/vnd.github+json"))
 
 
+def clean_token(raw: str) -> str:
+    """Fjerner mellemrum, citationstegn og usynlige tegn, der kan komme med ved kopiering."""
+    return "".join(ch for ch in raw if ch.isascii() and ch.isprintable() and ch not in " \"'")
+
+
 def read_token(home: Path) -> str | None:
     try:
-        return (home / TOKEN_FILE).read_text("utf-8").strip() or None
+        return clean_token((home / TOKEN_FILE).read_text("utf-8-sig")) or None
     except OSError:
         return None
 
@@ -270,17 +279,31 @@ def ask_token(home: Path, fetch: Fetch, ask: Callable[[str], str], log: Callable
         return
     log("")
     log("Repoet på GitHub er privat, så programmet skal have en nøgle for at kunne hente opdateringer.")
-    log("Lav en på https://github.com/settings/personal-access-tokens/new med adgang til")
-    log(f"repoet {REPO} og rettigheden 'Contents: Read-only'. Indsæt den her (højreklik for at indsætte).")
+    log("Sådan laver du den:")
+    log("  1. Gå til https://github.com/settings/personal-access-tokens/new")
+    log("  2. Skriv et navn, fx Tilbudshenter, og vælg en udløbsdato.")
+    log("  3. Under 'Repository access' vælger du 'Only select repositories' og så Tilbudshenter.")
+    log("     (Standardvalget 'Public repositories' virker IKKE, fordi repoet er privat.)")
+    log("  4. Under 'Permissions' finder du 'Contents' og sætter den til 'Read-only'.")
+    log("  5. Tryk 'Generate token' og kopiér nøglen (den starter med github_pat_).")
+    log("Indsæt nøglen her med højreklik eller Ctrl+V og tryk Enter.")
     while True:
-        token = ask("GitHub-nøgle (tryk Enter for at springe over): ").strip()
+        token = clean_token(ask("GitHub-nøgle (tryk Enter for at springe over): "))
         if not token:
             log("Springer over. Programmet virker, men opdaterer sig ikke selv.")
             return
         try:
             latest_sha(token, fetch)
-        except UpdateError:
-            log("Nøglen virkede ikke. Prøv igen.")
+        except NotFound as exc:
+            if exc.code == 401:
+                log("GitHub kender ikke nøglen. Den er nok kopieret forkert eller udløbet. Prøv igen.")
+            else:
+                log(f"Nøglen er gyldig, men kan ikke se repoet {REPO} (GitHub svarede {exc.code}).")
+                log("Ret nøglen på https://github.com/settings/personal-access-tokens så den har")
+                log("'Only select repositories' med Tilbudshenter og 'Contents: Read-only', og prøv igen.")
+            continue
+        except UpdateError as exc:
+            log(f"Kunne ikke afprøve nøglen: {exc}. Prøv igen.")
             continue
         (home / TOKEN_FILE).write_text(token + "\n", "utf-8")
         log("Nøglen virker og er gemt.")
