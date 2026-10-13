@@ -20,6 +20,11 @@ class Config:
     stores: list[str] = field(default_factory=list)
     exclude_stores: list[str] = field(default_factory=list)
 
+    # Hvilke aviser hos de valgte butikker. Matches på dele af avisens navn,
+    # fx "uge" eller "legetøj". Tom liste = alle.
+    catalogs: list[str] = field(default_factory=list)
+    exclude_catalogs: list[str] = field(default_factory=list)
+
     # Hvilke typer tilbud der er relevante. Tom liste = alle.
     categories: list[str] = field(default_factory=list)
     exclude_categories: list[str] = field(default_factory=list)
@@ -27,6 +32,7 @@ class Config:
 
     # Finere filtre
     min_discount_pct: float = 0.0
+    only_known_discount: bool = False
     max_price: float | None = None
     include_keywords: list[str] = field(default_factory=list)
     exclude_keywords: list[str] = field(default_factory=list)
@@ -34,7 +40,7 @@ class Config:
     favorite_bonus: float = 15.0
 
     # Rapport
-    top_n: int = 40
+    top_n: int = 0  # 0 = alle
     per_category: int = 0  # 0 = ingen grænse pr. kategori
     output_dir: Path = Path("rapporter")
     formats: list[str] = field(default_factory=lambda: ["html", "md", "json"])
@@ -80,6 +86,10 @@ def _from_dict(data: dict) -> Config:
     cfg.stores = list(stores.get("vaelg", []))
     cfg.exclude_stores = list(stores.get("fravaelg", []))
 
+    catalogs = data.get("aviser", {})
+    cfg.catalogs = list(catalogs.get("vaelg", []))
+    cfg.exclude_catalogs = list(catalogs.get("fravaelg", []))
+
     cats = data.get("kategorier", {})
     cfg.categories = list(cats.get("vaelg", []))
     cfg.exclude_categories = list(cats.get("fravaelg", []))
@@ -87,6 +97,7 @@ def _from_dict(data: dict) -> Config:
 
     flt = data.get("filtre", {})
     cfg.min_discount_pct = float(flt.get("min_rabat_procent", cfg.min_discount_pct))
+    cfg.only_known_discount = bool(flt.get("kun_kendt_rabat", cfg.only_known_discount))
     if flt.get("max_pris") is not None:
         cfg.max_price = float(flt["max_pris"])
     cfg.include_keywords = list(flt.get("skal_indeholde", []))
@@ -118,12 +129,19 @@ laengdegrad = 12.5683
 radius_km = 15
 
 [butikker]
-# Hvilke tilbudsaviser er relevante? Se mulighederne med: tilbudshenter butikker
-vaelg = ["Netto", "Rema 1000", "Lidl", "Føtex", "Bilka", "Coop 365"]
+# Hvilke butikker er relevante? Se mulighederne med: tilbudshenter butikker
+vaelg = ["Netto", "REMA 1000", "Lidl", "føtex", "Bilka", "365discount"]
 fravaelg = []
+
+[aviser]
+# Hvilke af butikkernes aviser er relevante? Matches på en del af avisens
+# navn (store/små bogstaver er ligegyldige). Se navnene med: tilbudshenter butikker
+vaelg = []                  # fx ["uge"] for kun ugeaviserne. Tom liste = alle.
+fravaelg = ["legetøj", "nonfood", "prosonic", "halloween", "ud af huset", "julekatalog"]
 
 [kategorier]
 # Hvilke typer tilbud er relevante? Se mulighederne med: tilbudshenter kategorier
+# "andet" er tilbud, programmet ikke kunne placere i en kategori.
 vaelg = ["koed", "fisk", "mejeri", "frugt_og_groent", "broed_og_bager", "kolonial", "frost", "kaffe_og_te"]
 fravaelg = []
 
@@ -133,15 +151,18 @@ fravaelg = []
 # noegleord = ["havregryn", "müsli", "skyr"]
 
 [filtre]
-min_rabat_procent = 20      # Vis kun tilbud med mindst så meget rabat (når førpris kendes)
+# Mange tilbud har ingen kendt førpris, så rabatten ikke kan beregnes.
+# De vises sidst i listen, medmindre kun_kendt_rabat = true.
+min_rabat_procent = 0       # Skjul tilbud med kendt rabat under denne procent
+kun_kendt_rabat = false     # true = vis kun tilbud, hvor rabatten kendes
 # max_pris = 100            # Skjul tilbud over denne pris
 skal_indeholde = []         # Hvis udfyldt: kun tilbud der nævner et af ordene
 udelad_ord = []             # Skjul tilbud der nævner et af ordene
-favoritter = ["kaffe", "kyllingebryst"]  # Rykkes op på listen
+favoritter = []             # Rykkes op på listen, fx ["kyllingebryst", "skyr"]
 favorit_bonus = 15
 
 [rapport]
-antal = 40                  # Antal tilbud i oversigten
+antal = 0                   # Maks. antal tilbud i rapporterne (0 = alle)
 pr_kategori = 0             # Maks. antal pr. kategori (0 = ingen grænse)
 mappe = "rapporter"
 formater = ["html", "md", "json"]

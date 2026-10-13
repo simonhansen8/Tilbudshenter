@@ -89,7 +89,7 @@ def offer_from_api(data: dict, catalog: Catalog) -> Offer | None:
     amount, unit = parse_quantity(data.get("quantity"))
     images = data.get("images") or {}
     branding = data.get("branding") or {}
-    return Offer(
+    offer = Offer(
         id=str(data["id"]),
         catalog_id=catalog.id,
         dealer=_first(branding.get("name"), catalog.dealer),
@@ -103,7 +103,10 @@ def offer_from_api(data: dict, catalog: Catalog) -> Offer | None:
         run_from=parse_datetime(data.get("run_from")) or catalog.run_from,
         run_till=parse_datetime(data.get("run_till")) or catalog.run_till,
         image_url=_first(images.get("view"), images.get("zoom"), images.get("thumb")),
+        catalog_label=catalog.label,
     )
+    offer.enrich_from_text()
+    return offer
 
 
 class TjekSource:

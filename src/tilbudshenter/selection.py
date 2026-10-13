@@ -17,7 +17,8 @@ def _norm_store(name: str) -> str:
 
 def store_selected(dealer: str, cfg: Config) -> bool:
     """Er butikken valgt? Navne matches uden hensyn til store/små bogstaver
-    og mellemrum, og "Coop 365" matcher fx også "Coop 365discount"."""
+    og mellemrum, og et navn matcher også længere navne ("365" matcher
+    "365discount")."""
     dealer_n = _norm_store(dealer)
 
     def matches(names: list[str]) -> bool:
@@ -26,6 +27,13 @@ def store_selected(dealer: str, cfg: Config) -> bool:
     if cfg.exclude_stores and matches(cfg.exclude_stores):
         return False
     return not cfg.stores or matches(cfg.stores)
+
+
+def catalog_selected(label: str, cfg: Config) -> bool:
+    """Er avisen valgt? Matches på en del af avisens navn."""
+    if _contains_any(label, cfg.exclude_catalogs):
+        return False
+    return not cfg.catalogs or bool(_contains_any(label, cfg.catalogs))
 
 
 def _contains_any(text: str, words: list[str]) -> str | None:
@@ -78,7 +86,7 @@ def select_offers(
     bedste først."""
     selected: list[Offer] = []
     for offer in offers:
-        if not store_selected(offer.dealer, cfg):
+        if not store_selected(offer.dealer, cfg) or not catalog_selected(offer.catalog_label, cfg):
             continue
         offer.category = categorizer.categorize(offer.heading, offer.description)
         if cfg.categories and offer.category not in cfg.categories:
@@ -93,13 +101,21 @@ def select_offers(
             continue
 
         discount = score_offer(offer, cfg, typical_prices)
-        if cfg.min_discount_pct > 0 and not _contains_any(offer.text, cfg.favorites):
-            # Uden kendt rabat kan vi ikke vurdere tilbuddet - spring over.
-            if discount is None or discount < cfg.min_discount_pct:
+        if not _contains_any(offer.text, cfg.favorites):
+            if discount is None and cfg.only_known_discount:
+                continue
+            if discount is not None and discount < cfg.min_discount_pct:
                 continue
         selected.append(offer)
 
-    selected.sort(key=lambda o: (-o.score, o.unit_price or float("inf"), o.price))
+    # Bedste score først. Tilbud uden kendt rabat (score 0) kommer sidst,
+    # grupperet efter kategori og med laveste enhedspris først.
+    selected.sort(key=lambda o: (
+        -o.score,
+        categorizer.display_name(o.category) if o.score == 0 else "",
+        o.unit_price or float("inf"),
+        o.price,
+    ))
     selected = _dedupe(selected)
 
     if cfg.per_category > 0:

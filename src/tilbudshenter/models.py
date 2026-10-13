@@ -68,6 +68,61 @@ def parse_quantity(text: str) -> tuple[float, str] | None:
     return amount, si_unit
 
 
+# Et beløb som "79,90", "1.999,-", "219,-" eller "25"
+_AMOUNT = r"(\d{1,3}(?:\.\d{3})+|\d+)(?:,(\d{2}|-))?"
+_STATED_UNIT_PRICE_RE = re.compile(
+    rf"\bpr\.?\s*(kg|kilo|liter|ltr|l)\.?\s*(?:maks\.?|max\.?)?\s*(\d{{1,3}}(?:\.\d{{3}})*,\d{{2}})",
+    re.IGNORECASE,
+)
+_NORMAL_PRICE_RE = re.compile(rf"\b(?:normalpris|normal pris|før)\.?\s*(op til\s*)?{_AMOUNT}", re.IGNORECASE)
+# Intervaller som "Spar 13-35 %" springes over
+_SAVE_RE = re.compile(rf"\bspar\s*(op til\s*)?{_AMOUNT}(?![\d.,]|\s*-\s*\d)\s*(%)?", re.IGNORECASE)
+
+
+def _to_float(whole: str, fraction: str | None) -> float:
+    value = float(whole.replace(".", ""))
+    if fraction and fraction != "-":
+        value += int(fraction) / 100
+    return value
+
+
+def parse_stated_unit_price(text: str) -> tuple[float, str] | None:
+    """Finder butikkens egen enhedspris, fx 'Pr. kg 79,90' -> (79.9, 'kg')."""
+    match = _STATED_UNIT_PRICE_RE.search(text or "")
+    if not match:
+        return None
+    unit = normalize_unit(match[1])
+    whole, _, fraction = match[2].partition(",")
+    price = _to_float(whole, fraction)
+    return (price, unit[0]) if unit and price > 0 else None
+
+
+def parse_reference_price(text: str, price: float) -> float | None:
+    """Udleder normalprisen fra tekst som 'Normalpris 219,-', 'Spar 43,80'
+    eller 'Spar 25 %'. Tvetydige angivelser ("op til", flere forskellige
+    normalpriser, intervaller) ignoreres."""
+    text = text or ""
+    candidates = {
+        _to_float(m[2], m[3]) for m in _NORMAL_PRICE_RE.finditer(text) if not m[1]
+    }
+    if len(candidates) == 1:
+        reference = candidates.pop()
+    else:
+        saves = [m for m in _SAVE_RE.finditer(text) if not m[1]]
+        if len(saves) != 1 or len(candidates) > 1:
+            return None
+        save = _to_float(saves[0][2], saves[0][3])
+        if saves[0][4]:  # procent
+            if not 0 < save < 100:
+                return None
+            reference = price / (1 - save / 100)
+        else:
+            reference = price + save
+    if price < reference < price * 10:
+        return round(reference, 2)
+    return None
+
+
 @dataclass
 class Catalog:
     """En tilbudsavis fra en butikskæde."""
@@ -99,6 +154,7 @@ class Offer:
     run_till: datetime | None = None
     image_url: str | None = None
     category: str | None = None
+    catalog_label: str = ""
     # Udfyldes af scoringen
     score: float = 0.0
     reasons: list[str] = field(default_factory=list)
@@ -108,6 +164,20 @@ class Offer:
             parsed = parse_quantity(f"{self.heading} {self.description}")
             if parsed:
                 self.amount, self.unit = parsed
+
+    def enrich_from_text(self) -> None:
+        """Supplerer data ud fra beskrivelsen.
+
+        Mange aviser angiver ikke førpris som et felt, men skriver fx
+        "Normalpris 219,-" eller "Spar 25 %" i teksten. Butikkens egen
+        enhedspris ("Pr. kg 79,90") er mere pålidelig end en udregnet.
+        """
+        if self.pre_price is None:
+            self.pre_price = parse_reference_price(self.description, self.price)
+        stated = parse_stated_unit_price(self.description)
+        if stated:
+            unit_price, unit = stated
+            self.amount, self.unit = self.price / unit_price, unit
 
     @property
     def unit_price(self) -> float | None:
