@@ -13,9 +13,23 @@ Kræver Python 3.11 eller nyere. Der er ingen andre afhængigheder.
 
 ### Appen (anbefalet)
 
-**Windows:** dobbeltklik på `Tilbudshenter.bat`, så åbner appen i din browser.
-Der skal ikke installeres noget ud over Python. Filen kører altid programmet
-fra sin egen mappe, også hvis en ældre udgave er installeret med `pip`.
+**Windows (anbefalet):** hent zip-filen og pak den ud én gang, og dobbeltklik
+på `Installer.bat`. Programmet lægges i `%LOCALAPPDATA%\Tilbudshenter`, og der
+kommer en genvej **Tilbudshenter** på skrivebordet og i Start-menuen. Hver gang
+du starter fra genvejen, henter programmet selv den nyeste udgave fra GitHub
+(uden git). Dine indstillinger, hentede tilbud og rapporter ligger uden for
+programmappen og bliver aldrig rørt af en opdatering. Har du brugt programmet
+fra den udpakkede mappe før, flyttes indstillinger og data med.
+
+Er repoet privat, beder installationen om en GitHub-nøgle med rettigheden
+*Contents: Read-only* til repoet (lav den på
+<https://github.com/settings/personal-access-tokens/new>). Den gemmes i
+`%LOCALAPPDATA%\Tilbudshenter\github-noegle.txt`. Uden net starter programmet
+bare den udgave, der allerede er installeret.
+
+**Windows uden installation:** dobbeltklik på `Tilbudshenter.bat` i den
+udpakkede mappe. Filen kører altid programmet fra sin egen mappe, også hvis en
+ældre udgave er installeret med `pip`.
 
 **Andre systemer:**
 
