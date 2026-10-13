@@ -50,6 +50,9 @@ class Config:
     database: Path = Path("tilbud.db")
     api_key: str | None = None
 
+    # Opgraderinger af indstillingerne, der allerede er udført (se upgrade_config)
+    upgrades: list[str] = field(default_factory=list)
+
     source_path: Path | None = None
 
 
@@ -115,6 +118,7 @@ def _from_dict(data: dict) -> Config:
     store = data.get("data", {})
     cfg.database = Path(store.get("database", cfg.database))
     cfg.api_key = store.get("api_noegle") or None
+    cfg.upgrades = list(data.get("opgraderinger", {}).get("udfoert", []))
     return cfg
 
 
@@ -210,6 +214,10 @@ formater = {t(cfg.formats)}
 [data]
 database = {t(_relative(cfg.database, base))}
 {api_key}
+
+[opgraderinger]
+# Bruges af programmet, så en opgradering af indstillingerne kun sker én gang.
+udfoert = {t(cfg.upgrades)}
 """
 
 
@@ -217,12 +225,42 @@ def save_config(cfg: Config, path: Path) -> None:
     path.write_text(render_config(cfg, path.resolve().parent), encoding="utf-8")
 
 
+# Kæder der kom med i standardvalget efter de første udgaver
+NEW_STORES = ["Kvickly", "SuperBrugsen", "Brugsen", "MENY", "SPAR"]
+
+
+def _add_new_stores(cfg: Config) -> bool:
+    """Tilføjer de nye kæder til et eksisterende butiksvalg. En tom liste
+    betyder allerede alle butikker, og fravalgte butikker tilføjes ikke."""
+    if not cfg.stores:
+        return False
+    chosen = {name.casefold() for name in cfg.stores + cfg.exclude_stores}
+    missing = [name for name in NEW_STORES if name.casefold() not in chosen]
+    cfg.stores = cfg.stores + missing
+    return bool(missing)
+
+
+# Navn -> ændring. Hver opgradering udføres én gang pr. konfiguration, så
+# brugeren kan fravælge fx en butik bagefter, uden at den kommer igen.
+UPGRADES = {"nye-butikker-2026-10": _add_new_stores}
+
+
+def upgrade_config(cfg: Config) -> bool:
+    """Udfører de opgraderinger, konfigurationen ikke har fået endnu.
+
+    Returnerer True, hvis konfigurationen er ændret og bør gemmes.
+    """
+    pending = [name for name in UPGRADES if name not in cfg.upgrades]
+    for name in pending:
+        UPGRADES[name](cfg)
+        cfg.upgrades.append(name)
+    return bool(pending)
+
+
 def example_config() -> Config:
     return Config(
-        stores=[
-            "Netto", "REMA 1000", "Lidl", "føtex", "Bilka", "365discount",
-            "Kvickly", "SuperBrugsen", "Brugsen", "MENY", "SPAR",
-        ],
+        stores=["Netto", "REMA 1000", "Lidl", "føtex", "Bilka", "365discount", *NEW_STORES],
+        upgrades=list(UPGRADES),
         exclude_catalogs=["legetøj", "nonfood", "prosonic", "halloween", "ud af huset", "julekatalog", "skønhed"],
         categories=["koed", "fisk", "mejeri", "frugt_og_groent", "broed_og_bager", "kolonial", "frost", "kaffe_og_te"],
     )

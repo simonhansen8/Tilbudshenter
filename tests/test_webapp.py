@@ -96,3 +96,34 @@ def test_server_scan_and_settings(server, tmp_path):
 def test_server_rejects_foreign_host(server):
     status, body = request(server + "/api/state", headers={"Host": "evil.example"})
     assert status == 403
+
+
+def test_old_config_gets_new_stores_once(tmp_path):
+    from tilbudshenter.cli import load_app_config
+    from tilbudshenter.config import save_config
+
+    path = tmp_path / "tilbudshenter.toml"
+    save_config(Config(stores=["Netto", "kvickly"], exclude_stores=["SPAR"]), path)
+    cfg = load_app_config(path, demo=False)
+    assert cfg.stores == ["Netto", "kvickly", "SuperBrugsen", "Brugsen", "MENY"]
+    assert "SuperBrugsen" in path.read_text(encoding="utf-8")
+
+    # Fravælger brugeren en af dem bagefter, kommer den ikke igen
+    cfg.stores = ["Netto", "kvickly"]
+    save_config(cfg, path)
+    assert load_app_config(path, demo=False).stores == ["Netto", "kvickly"]
+
+
+def test_all_stores_and_new_config_not_changed(tmp_path):
+    from tilbudshenter.cli import load_app_config
+    from tilbudshenter.config import example_config, save_config
+
+    path = tmp_path / "alle.toml"
+    save_config(Config(stores=[]), path)
+    assert load_app_config(path, demo=False).stores == []
+
+    path = tmp_path / "ny.toml"
+    save_config(example_config(), path)
+    before = path.read_text(encoding="utf-8")
+    load_app_config(path, demo=False)
+    assert path.read_text(encoding="utf-8") == before
