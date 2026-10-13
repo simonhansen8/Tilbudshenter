@@ -37,7 +37,13 @@ def period_text(offer: Offer) -> str:
 
 
 def discount_text(offer: Offer) -> str:
-    return f"-{offer.discount_pct:.0f}%" if offer.discount_pct else ""
+    """Rabat ift. normalprisen, eller "ca. -25%" når den er anslået ud fra
+    prishistorik eller andre butikkers priser."""
+    if offer.discount_pct:
+        return f"-{offer.discount_pct:.0f}%"
+    if offer.known_discount:
+        return f"ca. -{offer.known_discount:.0f}%"
+    return ""
 
 
 def _short(text: str, width: int) -> str:
@@ -109,6 +115,7 @@ h1 { margin:0 0 4px; font-size:26px; }
 .price { font-size:20px; font-weight:700; }
 .pre { color:var(--muted); text-decoration:line-through; font-size:13px; margin-left:6px; font-weight:400; }
 .badge { background:var(--accent); color:#fff; border-radius:6px; padding:1px 6px; font-weight:700; font-size:13px; }
+.badge.est { background:transparent; color:var(--accent); box-shadow:inset 0 0 0 1.5px var(--accent); }
 .why { color:var(--good); font-size:13px; }
 .hidden { display:none; }
 """
@@ -141,7 +148,8 @@ def render_html(offers: list[Offer], categorizer: Categorizer, title: str, gener
     for i, o in enumerate(offers, 1):
         img = f'<img src="{e(o.image_url)}" alt="" loading="lazy">' if o.image_url else ""
         pre = f'<span class="pre">{kr(o.pre_price)}</span>' if o.pre_price else ""
-        badge = f'<span class="badge">{discount_text(o)}</span>' if o.discount_pct else ""
+        est = " est" if o.discount_pct is None else ""
+        badge = f'<span class="badge{est}">{discount_text(o)}</span>' if discount_text(o) else ""
         unit = f'<div class="desc">{unit_price_text(o)}</div>' if o.unit_price else ""
         why = f'<div class="why">{e(", ".join(o.reasons))}</div>' if o.reasons else ""
         cards.append(

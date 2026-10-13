@@ -157,7 +157,8 @@ class Offer:
     catalog_label: str = ""
     # Udfyldes af scoringen
     score: float = 0.0
-    known_discount: float | None = None  # Rabat i % fra førpris eller prishistorik
+    known_discount: float | None = None  # Rabat i % fra førpris, prishistorik eller andre butikker
+    discount_basis: str | None = None  # "foerpris", "historik" eller "butikker"
     reasons: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
@@ -225,6 +226,7 @@ class Offer:
             "image_url": self.image_url,
             "score": round(self.score, 1),
             "known_discount": round(self.known_discount, 1) if self.known_discount is not None else None,
+            "discount_basis": self.discount_basis,
             "catalog_label": self.catalog_label,
             "reasons": self.reasons,
         }

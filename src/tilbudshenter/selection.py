@@ -6,6 +6,7 @@ import re
 from collections import Counter
 
 from .categories import Categorizer
+from .comparison import Comparison, compare_across_stores
 from .config import Config
 from .models import Offer
 from .storage import product_key
@@ -45,23 +46,35 @@ def score_offer(
     offer: Offer,
     cfg: Config,
     typical_prices: dict[tuple[str, str], float] | None = None,
+    comparisons: dict[str, Comparison] | None = None,
 ) -> float | None:
     """Beregner en score (højere = bedre) og udfylder ``offer.reasons``.
 
-    Grundscoren er rabatten i procent - fra førprisen, eller hvis den
-    mangler, ift. varens typiske enhedspris i tidligere aviser. Favoritter
-    får en bonus, og store besparelser i kroner giver et lille ekstra skub.
-    Returnerer den kendte rabat i procent (eller None).
+    Grundscoren er rabatten i procent - fra førprisen. Mangler den, bruges
+    varens typiske enhedspris i tidligere aviser, og ellers de andre
+    butikkers pris pr. kg/liter på samme varetype i de aktuelle aviser.
+    Favoritter får en bonus, og store besparelser i kroner giver et lille
+    ekstra skub. Returnerer den kendte rabat i procent (eller None).
     """
     reasons: list[str] = []
     discount = offer.discount_pct
+    basis = "foerpris" if discount is not None else None
     if discount is not None:
         reasons.append(f"-{discount:.0f}% (spar {offer.savings:.2f} kr)".replace(".", ","))
     elif typical_prices and offer.unit_price and offer.unit:
         typical = typical_prices.get((product_key(offer.heading), offer.unit))
         if typical and typical > offer.unit_price:
             discount = (1 - offer.unit_price / typical) * 100
+            basis = "historik"
             reasons.append(f"{discount:.0f}% under normal enhedspris".replace(".", ","))
+    if discount is None and comparisons and (comparison := comparisons.get(offer.id)):
+        discount = (1 - offer.unit_price / comparison.reference) * 100
+        basis = "butikker"
+        others = "1 anden butik" if comparison.other_stores == 1 else f"{comparison.other_stores} andre butikker"
+        reasons.append(
+            f"{discount:.0f}% billigere end {comparison.group} i {others} "
+            f"(typisk {comparison.reference:.2f} kr/{offer.unit})".replace(".", ",")
+        )
 
     score = discount or 0.0
     if offer.savings:
@@ -72,6 +85,7 @@ def score_offer(
 
     offer.score = score
     offer.known_discount = discount
+    offer.discount_basis = basis
     offer.reasons = reasons
     return discount
 
@@ -85,10 +99,14 @@ def select_offers(
 ) -> list[Offer]:
     """Filtrerer tilbud efter butik, kategori og filtre og sorterer de
     bedste først."""
+    candidates = [
+        o for o in offers
+        if store_selected(o.dealer, cfg) and catalog_selected(o.catalog_label, cfg)
+    ]
+    # Sammenlign med de valgte butikker, uanset kategori- og prisfiltre
+    comparisons = compare_across_stores(candidates)
     selected: list[Offer] = []
-    for offer in offers:
-        if not store_selected(offer.dealer, cfg) or not catalog_selected(offer.catalog_label, cfg):
-            continue
+    for offer in candidates:
         offer.category = categorizer.categorize(offer.heading, offer.description)
         if cfg.categories and offer.category not in cfg.categories:
             continue
@@ -101,7 +119,7 @@ def select_offers(
         if _contains_any(offer.text, cfg.exclude_keywords):
             continue
 
-        discount = score_offer(offer, cfg, typical_prices)
+        discount = score_offer(offer, cfg, typical_prices, comparisons)
         if not _contains_any(offer.text, cfg.favorites):
             if discount is None and cfg.only_known_discount:
                 continue
