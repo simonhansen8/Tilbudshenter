@@ -162,10 +162,14 @@ class Storage:
         """Tilbud der gælder nu eller senere (ikke udløbne)."""
         at = at or datetime.now(timezone.utc)
         rows = self.conn.execute(
-            "SELECT * FROM offers WHERE run_till IS NULL OR run_till >= ?",
+            """
+            SELECT o.*, c.label AS catalog_label
+            FROM offers o LEFT JOIN catalogs c ON c.id = o.catalog_id
+            WHERE o.run_till IS NULL OR o.run_till >= ?
+            """,
             (_iso(at),),
         ).fetchall()
-        return [
+        offers = [
             Offer(
                 id=r["id"], catalog_id=r["catalog_id"], dealer=r["dealer"],
                 heading=r["heading"], description=r["description"] or "",
@@ -173,9 +177,14 @@ class Storage:
                 currency=r["currency"] or "DKK", amount=r["amount"], unit=r["unit"],
                 run_from=_dt(r["run_from"]), run_till=_dt(r["run_till"]),
                 image_url=r["image_url"], category=r["category"],
+                catalog_label=r["catalog_label"] or "",
             )
             for r in rows
         ]
+        # Fortolkningen af beskrivelser kan være forbedret, siden tilbuddet blev hentet
+        for offer in offers:
+            offer.enrich_from_text()
+        return offers
 
     def typical_unit_prices(self, exclude_catalogs: set[str] | None = None) -> dict[tuple[str, str], float]:
         """Median-enhedspris pr. vare fra tidligere aviser.

@@ -33,7 +33,31 @@ def test_filters(cfg, categorizer):
         offer("Hakket oksekød", 30, 32),
     ]
     cfg = replace(cfg, categories=["koed", "fisk", "broed_og_bager"], max_price=150, min_discount_pct=20)
+    # Tilbud uden kendt rabat vises sidst
+    assert [o.heading for o in select_offers(offers, cfg, categorizer)] == ["Kyllingebryst", "Franskbrød"]
+    cfg = replace(cfg, only_known_discount=True)
     assert [o.heading for o in select_offers(offers, cfg, categorizer)] == ["Kyllingebryst"]
+
+
+def test_unknown_discount_sorted_by_category_and_unit_price(cfg, categorizer):
+    offers = [
+        offer("Rugbrød", 20, description="1 kg"),
+        offer("Kaffe", 40, description="500 g"),
+        offer("Kaffe Gold", 30, description="500 g"),
+        offer("Smør", 10, 20),
+    ]
+    result = select_offers(offers, cfg, categorizer)
+    assert [o.heading for o in result] == ["Smør", "Rugbrød", "Kaffe Gold", "Kaffe"]
+
+
+def test_catalog_selection(cfg, categorizer):
+    offers = [offer("Kaffe", 30, 60), offer("LEGO", 300, 500)]
+    offers[0].catalog_label = "Netto uge 42"
+    offers[1].catalog_label = "Legetøjskatalog 2026"
+    cfg = replace(cfg, exclude_catalogs=["legetøj"])
+    assert [o.heading for o in select_offers(offers, cfg, categorizer)] == ["Kaffe"]
+    cfg = replace(cfg, exclude_catalogs=[], catalogs=["legetøj"])
+    assert [o.heading for o in select_offers(offers, cfg, categorizer)] == ["LEGO"]
 
 
 def test_keywords_and_favorites(cfg, categorizer):

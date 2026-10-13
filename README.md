@@ -46,7 +46,7 @@ tilbudshenter tilbud -s kaffe --alle             # alle kaffetilbud, uanset dine
 tilbudshenter tilbud --min-rabat 40 -f html -o tilbud.html
 ```
 
-## Vælg aviser og typer af tilbud
+## Vælg butikker, aviser og typer af tilbud
 
 Alt styres i `tilbudshenter.toml` (oprettes med `tilbudshenter init`):
 
@@ -57,22 +57,30 @@ laengdegrad = 12.5683
 radius_km = 15
 
 [butikker]
-vaelg = ["Netto", "Rema 1000", "Lidl", "Føtex"]   # tom liste = alle
+vaelg = ["Netto", "REMA 1000", "Lidl", "føtex"]   # tom liste = alle
 fravaelg = []
+
+[aviser]
+vaelg = []                                        # fx ["uge"]; tom liste = alle
+fravaelg = ["legetøj", "nonfood", "halloween"]
 
 [kategorier]
 vaelg = ["koed", "fisk", "mejeri", "frugt_og_groent"]  # tom liste = alle
 fravaelg = []
 
 [filtre]
-min_rabat_procent = 20
+min_rabat_procent = 0
+kun_kendt_rabat = false
 udelad_ord = ["øko"]
-favoritter = ["kaffe", "kyllingebryst"]
+favoritter = ["kyllingebryst", "skyr"]
 ```
 
-Butiksnavne matches uden hensyn til store/små bogstaver, og et navn matcher
-også længere navne (`"Coop 365"` matcher `"Coop 365discount"`). Kør
-`tilbudshenter butikker` for at se de præcise navne i dit område.
+Kør `tilbudshenter butikker` for at se de præcise navne på butikker og
+aviser i dit område. Listen viser også, hvilke der er valgt med de nuværende
+indstillinger. Butiksnavne matches uden hensyn til store/små bogstaver, og et
+navn matcher også længere navne (`"365"` matcher `"365discount"`). Aviser
+matches på en del af navnet, så `"legetøj"` fravælger både
+"Legetøjskatalog" og "Billies Bedste Legetøjskatalog 2026".
 
 Kategorier tildeles ud fra nøgleord i varens navn. Du kan lave dine egne
 kategorier eller tilføje nøgleord til de eksisterende:
@@ -88,15 +96,19 @@ noegleord = ["tatar"]          # ekstra nøgleord til en eksisterende kategori
 
 ## Sådan vurderes "bedste tilbud"
 
-1. **Rabat ift. førpris**: `(førpris - pris) / førpris`.
-2. Mangler førprisen, sammenlignes varens **enhedspris** (kr/kg, kr/l, kr/stk)
+1. **Rabat ift. normalpris**: `(normalpris - pris) / normalpris`. Normalprisen
+   tages fra avisens førpris-felt eller fra teksten, fx "Normalpris 219,-",
+   "Spar 43,80" eller "Spar 25 %".
+2. Mangler normalprisen, sammenlignes varens **enhedspris** (kr/kg, kr/l)
    med den typiske pris i tidligere aviser. Historikken opbygges automatisk,
    jo længere programmet har kørt.
 3. **Favoritter** får en bonus (`favorit_bonus`), og store besparelser i kroner
    giver et lille ekstra skub.
 
-Tilbud hvor rabatten ikke kan vurderes, vises kun når `min_rabat_procent` er 0,
-eller når de matcher en favorit.
+Mange kæder (fx Netto og REMA 1000) oplyser sjældent en normalpris. Tilbud,
+hvor rabatten ikke kendes, vises efter dem med kendt rabat, sorteret efter
+kategori og enhedspris. Sæt `kun_kendt_rabat = true` for at skjule dem.
+`min_rabat_procent` skjuler tilbud, hvis kendte rabat er lavere.
 
 ## Rapporter
 

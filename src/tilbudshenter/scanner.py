@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from .categories import Categorizer
 from .config import Config
 from .models import Catalog
-from .selection import store_selected
+from .selection import catalog_selected, store_selected
 from .sources.base import OfferSource, SourceError
 from .storage import Storage
 
@@ -42,7 +42,7 @@ def scan(
     result = ScanResult()
     catalogs = source.list_catalogs(cfg.latitude, cfg.longitude, cfg.radius_km)
     for catalog in catalogs:
-        if not store_selected(catalog.dealer, cfg):
+        if not store_selected(catalog.dealer, cfg) or not catalog_selected(catalog.label, cfg):
             continue
         if catalog.run_till and catalog.run_till < now:
             continue

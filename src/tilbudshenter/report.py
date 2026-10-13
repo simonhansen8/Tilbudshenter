@@ -22,6 +22,8 @@ def kr(value: float | None) -> str:
 def unit_price_text(offer: Offer) -> str:
     if offer.unit_price is None or offer.unit is None:
         return ""
+    if offer.unit == "stk" and offer.amount == 1:
+        return ""  # "pr. stk" for én vare siger intet nyt
     return f"{kr(offer.unit_price)}/{UNIT_LABEL.get(offer.unit, offer.unit)}"
 
 

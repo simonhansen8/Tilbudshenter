@@ -15,7 +15,7 @@ from .categories import Categorizer, merge_categories
 from .config import DEFAULT_CONFIG_NAME, EXAMPLE_CONFIG, Config, load_config
 from .report import render_html, render_json, render_markdown, render_text, write_reports
 from .scanner import scan
-from .selection import select_offers, store_selected
+from .selection import catalog_selected, select_offers, store_selected
 from .sources.base import OfferSource, SourceError
 from .storage import Storage
 
@@ -80,7 +80,8 @@ def run_scan(args: argparse.Namespace, cfg: Config) -> int:
         offers = best_offers(cfg, storage, categorizer, now)
     title = "Ugens bedste tilbud" + (" (demo)" if args.demo else "")
     paths = write_reports(offers, categorizer, cfg.output_dir, cfg.formats, now, title=title)
-    print()
+    known = sum(1 for o in offers if o.discount_pct is not None or any("enhedspris" in r for r in o.reasons))
+    print(f"\n{len(offers)} tilbud matcher dine valg ({known} med kendt rabat). De bedste:\n")
     print(render_text(offers[: args.show], categorizer))
     if paths:
         print(f"\nRapporter gemt i {cfg.output_dir} (fx {paths[0].name})")
@@ -152,17 +153,19 @@ def cmd_stores(args: argparse.Namespace) -> int:
     except SourceError as exc:
         print(f"Fejl: {exc}", file=sys.stderr)
         return 2
+    now = datetime.now(timezone.utc)
     by_store: dict[str, list] = {}
     for c in catalogs:
-        by_store.setdefault(c.dealer, []).append(c)
-    print(f"Butikker med aviser inden for {cfg.radius_km:g} km ([x] = valgt i din konfiguration):\n")
+        if c.run_till is None or c.run_till >= now:
+            by_store.setdefault(c.dealer, []).append(c)
+    print(f"Butikker og aviser inden for {cfg.radius_km:g} km ([x] = valgt i din konfiguration):")
     for name in sorted(by_store, key=str.casefold):
-        mark = "x" if store_selected(name, cfg) else " "
-        labels = "; ".join(
-            f"{c.label} ({c.run_from:%d/%m}-{c.run_till:%d/%m})" if c.run_from and c.run_till else c.label
-            for c in by_store[name]
-        )
-        print(f"  [{mark}] {name}: {labels}")
+        store_on = store_selected(name, cfg)
+        print(f"\n  [{'x' if store_on else ' '}] {name}")
+        for c in sorted(by_store[name], key=lambda c: c.label.casefold()):
+            mark = "x" if store_on and catalog_selected(c.label, cfg) else " "
+            period = f" ({c.run_from:%d/%m}-{c.run_till:%d/%m})" if c.run_from and c.run_till else ""
+            print(f"        [{mark}] {c.label.strip() or '(uden navn)'}{period}")
     return 0
 
 
