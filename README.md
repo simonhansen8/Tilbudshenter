@@ -13,8 +13,9 @@ Kræver Python 3.11 eller nyere. Der er ingen andre afhængigheder.
 
 ### Appen (anbefalet)
 
-**Windows:** dobbeltklik på `Tilbudshenter.bat`. Første gang installeres
-programmet automatisk. Derefter åbner appen i din browser.
+**Windows:** dobbeltklik på `Tilbudshenter.bat`, så åbner appen i din browser.
+Der skal ikke installeres noget ud over Python. Filen kører altid programmet
+fra sin egen mappe, også hvis en ældre udgave er installeret med `pip`.
 
 **Andre systemer:**
 
