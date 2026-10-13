@@ -1,0 +1,162 @@
+# Tilbudshenter
+
+Tilbudshenter scanner de danske tilbudsaviser (Netto, Rema 1000, Lidl, Føtex,
+Bilka, Coop m.fl.), opdager når der udkommer nye, og laver en liste over de
+bedste tilbud ud fra **dine** valg af butikker og typer af varer.
+
+Data hentes fra [Tjek/eTilbudsavis](https://etilbudsavis.dk), der samler
+kædernes aviser.
+
+## Kom i gang
+
+Kræver Python 3.11 eller nyere. Der er ingen andre afhængigheder.
+
+```bash
+pip install -e .
+tilbudshenter init        # opretter tilbudshenter.toml, som du retter til
+tilbudshenter scan        # henter nye aviser og laver rapport
+```
+
+Vil du prøve programmet uden internet, kan du bruge de indbyggede demodata:
+
+```bash
+tilbudshenter scan --demo
+```
+
+Demodata gemmes adskilt fra dine rigtige data (`tilbud.demo.db` og
+`rapporter/demo/`).
+
+## Kommandoer
+
+| Kommando | Hvad den gør |
+|---|---|
+| `tilbudshenter scan` | Finder nye aviser for dine butikker, henter tilbuddene og laver rapport. Aviser der allerede er scannet, springes over. |
+| `tilbudshenter tilbud` | Viser de bedste aktuelle tilbud fra databasen. Kan filtreres ad hoc, se nedenfor. |
+| `tilbudshenter butikker` | Viser hvilke butikker der har aviser i dit område, og hvilke du har valgt. |
+| `tilbudshenter kategorier` | Viser de typer tilbud du kan vælge mellem. |
+| `tilbudshenter overvaag` | Scanner automatisk hver 6. time (`--interval` ændrer det). |
+| `tilbudshenter init` | Opretter en konfigurationsfil med forklaringer. |
+
+Eksempler på `tilbud`:
+
+```bash
+tilbudshenter tilbud -b Netto -b Lidl            # kun Netto og Lidl
+tilbudshenter tilbud -k koed -k fisk -n 10       # top 10 inden for kød og fisk
+tilbudshenter tilbud -s kaffe --alle             # alle kaffetilbud, uanset dine valg
+tilbudshenter tilbud --min-rabat 40 -f html -o tilbud.html
+```
+
+## Vælg aviser og typer af tilbud
+
+Alt styres i `tilbudshenter.toml` (oprettes med `tilbudshenter init`):
+
+```toml
+[placering]
+breddegrad = 55.6761
+laengdegrad = 12.5683
+radius_km = 15
+
+[butikker]
+vaelg = ["Netto", "Rema 1000", "Lidl", "Føtex"]   # tom liste = alle
+fravaelg = []
+
+[kategorier]
+vaelg = ["koed", "fisk", "mejeri", "frugt_og_groent"]  # tom liste = alle
+fravaelg = []
+
+[filtre]
+min_rabat_procent = 20
+udelad_ord = ["øko"]
+favoritter = ["kaffe", "kyllingebryst"]
+```
+
+Butiksnavne matches uden hensyn til store/små bogstaver, og et navn matcher
+også længere navne (`"Coop 365"` matcher `"Coop 365discount"`). Kør
+`tilbudshenter butikker` for at se de præcise navne i dit område.
+
+Kategorier tildeles ud fra nøgleord i varens navn. Du kan lave dine egne
+kategorier eller tilføje nøgleord til de eksisterende:
+
+```toml
+[kategorier.egne.morgenmad]
+navn = "Morgenmad"
+noegleord = ["havregryn", "müsli", "skyr"]
+
+[kategorier.egne.koed]
+noegleord = ["tatar"]          # ekstra nøgleord til en eksisterende kategori
+```
+
+## Sådan vurderes "bedste tilbud"
+
+1. **Rabat ift. førpris**: `(førpris - pris) / førpris`.
+2. Mangler førprisen, sammenlignes varens **enhedspris** (kr/kg, kr/l, kr/stk)
+   med den typiske pris i tidligere aviser. Historikken opbygges automatisk,
+   jo længere programmet har kørt.
+3. **Favoritter** får en bonus (`favorit_bonus`), og store besparelser i kroner
+   giver et lille ekstra skub.
+
+Tilbud hvor rabatten ikke kan vurderes, vises kun når `min_rabat_procent` er 0,
+eller når de matcher en favorit.
+
+## Rapporter
+
+Hver scanning med nye aviser skriver rapporter i `rapporter/`:
+
+- `seneste.html`: oversigt med billeder og filterknapper for butik og kategori
+- `seneste.md`: tabel, der kan læses overalt
+- `seneste.json`: maskinlæsbar liste, tænkt som input til fx en madplan
+- samt dateret kopi, fx `tilbud-2026-10-13.html`
+
+## Kør automatisk
+
+Aviserne udkommer typisk én gang om ugen (oftest fredag-søndag). Det er nok
+at køre `scan` et par gange om dagen; der hentes kun noget, når der er nye
+aviser.
+
+**Linux/macOS (cron)**: `crontab -e` og tilføj fx
+
+```
+0 7,19 * * * cd /sti/til/mappen && /sti/til/tilbudshenter scan >> scan.log 2>&1
+```
+
+**Windows**: Opret en opgave i *Opgavestyring* (Task Scheduler), der kører
+`tilbudshenter scan` i mappen med `tilbudshenter.toml`.
+
+Alternativt kan `tilbudshenter overvaag` køre i baggrunden.
+
+## Opbygning
+
+```
+src/tilbudshenter/
+  cli.py          kommandolinjen
+  config.py       indlæsning af tilbudshenter.toml
+  scanner.py      finder nye aviser og henter tilbud
+  sources/        datakilder (tjek.py = eTilbudsavis, demo.py = demodata)
+  categories.py   kategorisering ud fra nøgleord
+  selection.py    filtrering og rangering
+  storage.py      SQLite: aviser, tilbud og prishistorik
+  report.py       HTML, Markdown, JSON og terminal
+```
+
+En ny datakilde skal blot implementere `list_catalogs()` og `list_offers()`
+(se `sources/base.py`).
+
+## Madplan (planlagt)
+
+Programmet er bygget, så en madplan kan lægges ovenpå:
+
+- `Storage.current_offers()` giver alle aktuelle tilbud med kategori,
+  enhedspris og gyldighedsperiode.
+- `select_offers()` giver de bedste af dem ud fra brugerens valg.
+- `rapporter/seneste.json` indeholder det samme for programmer, der ikke er
+  skrevet i Python.
+
+En madplan kan fx vælge opskrifter, hvis hovedingredienser (kød, fisk,
+grønt) er på tilbud i de valgte butikker i den pågældende uge.
+
+## Udvikling
+
+```bash
+pip install -e ".[dev]"
+pytest
+```

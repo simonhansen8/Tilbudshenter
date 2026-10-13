@@ -1,0 +1,202 @@
+"""SQLite-lager for aviser, tilbud og prishistorik.
+
+Databasen husker hvilke aviser der allerede er scannet (så kun nye aviser
+hentes), og gemmer alle tilbud. Det giver en prishistorik, som bruges til
+at vurdere tilbud uden førpris - og som en kommende madplan kan bygge på.
+"""
+
+from __future__ import annotations
+
+import re
+import sqlite3
+import statistics
+from datetime import datetime, timezone
+from pathlib import Path
+
+from .models import Catalog, Offer
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS catalogs (
+    id          TEXT PRIMARY KEY,
+    source      TEXT NOT NULL,
+    dealer      TEXT NOT NULL,
+    label       TEXT,
+    run_from    TEXT,
+    run_till    TEXT,
+    offer_count INTEGER,
+    first_seen  TEXT NOT NULL,
+    scanned_at  TEXT
+);
+
+CREATE TABLE IF NOT EXISTS offers (
+    id          TEXT PRIMARY KEY,
+    catalog_id  TEXT NOT NULL REFERENCES catalogs(id),
+    dealer      TEXT NOT NULL,
+    heading     TEXT NOT NULL,
+    description TEXT,
+    product_key TEXT NOT NULL,
+    price       REAL NOT NULL,
+    pre_price   REAL,
+    currency    TEXT,
+    amount      REAL,
+    unit        TEXT,
+    unit_price  REAL,
+    category    TEXT,
+    run_from    TEXT,
+    run_till    TEXT,
+    image_url   TEXT,
+    fetched_at  TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS offers_run_till ON offers(run_till);
+CREATE INDEX IF NOT EXISTS offers_product ON offers(product_key, unit);
+"""
+
+
+def product_key(heading: str) -> str:
+    """Normaliseret varenavn til sammenligning over tid."""
+    return re.sub(r"[^\w]+", " ", heading.casefold()).strip()
+
+
+def _iso(value: datetime | None) -> str | None:
+    """Gemmes altid i UTC, så datoer kan sammenlignes som tekst i SQL."""
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc).isoformat()
+
+
+def _dt(value: str | None) -> datetime | None:
+    return datetime.fromisoformat(value) if value else None
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+class Storage:
+    def __init__(self, path: Path | str) -> None:
+        if str(path) != ":memory:":
+            Path(path).parent.mkdir(parents=True, exist_ok=True)
+        self.conn = sqlite3.connect(str(path))
+        self.conn.row_factory = sqlite3.Row
+        self.conn.executescript(SCHEMA)
+
+    def close(self) -> None:
+        self.conn.close()
+
+    def __enter__(self) -> "Storage":
+        return self
+
+    def __exit__(self, *exc) -> None:
+        self.close()
+
+    # -- Aviser ---------------------------------------------------------
+    def is_scanned(self, catalog_id: str) -> bool:
+        row = self.conn.execute(
+            "SELECT scanned_at FROM catalogs WHERE id = ?", (catalog_id,)
+        ).fetchone()
+        return bool(row and row["scanned_at"])
+
+    def save_catalog(self, catalog: Catalog, source: str, scanned: bool) -> None:
+        self.conn.execute(
+            """
+            INSERT INTO catalogs (id, source, dealer, label, run_from, run_till,
+                                  offer_count, first_seen, scanned_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                dealer = excluded.dealer, label = excluded.label,
+                run_from = excluded.run_from, run_till = excluded.run_till,
+                offer_count = excluded.offer_count,
+                scanned_at = COALESCE(excluded.scanned_at, catalogs.scanned_at)
+            """,
+            (
+                catalog.id, source, catalog.dealer, catalog.label,
+                _iso(catalog.run_from), _iso(catalog.run_till), catalog.offer_count,
+                _now(), _now() if scanned else None,
+            ),
+        )
+        self.conn.commit()
+
+    def catalogs(self, active_at: datetime | None = None) -> list[Catalog]:
+        sql = "SELECT * FROM catalogs WHERE scanned_at IS NOT NULL"
+        params: tuple = ()
+        if active_at is not None:
+            sql += " AND (run_till IS NULL OR run_till >= ?)"
+            params = (_iso(active_at),)
+        rows = self.conn.execute(sql + " ORDER BY dealer, run_from", params).fetchall()
+        return [
+            Catalog(
+                id=r["id"], dealer=r["dealer"], label=r["label"],
+                run_from=_dt(r["run_from"]), run_till=_dt(r["run_till"]),
+                offer_count=r["offer_count"],
+            )
+            for r in rows
+        ]
+
+    # -- Tilbud ---------------------------------------------------------
+    def save_offers(self, offers: list[Offer]) -> None:
+        now = _now()
+        self.conn.executemany(
+            """
+            INSERT OR REPLACE INTO offers (
+                id, catalog_id, dealer, heading, description, product_key, price,
+                pre_price, currency, amount, unit, unit_price, category,
+                run_from, run_till, image_url, fetched_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    o.id, o.catalog_id, o.dealer, o.heading, o.description,
+                    product_key(o.heading), o.price, o.pre_price, o.currency,
+                    o.amount, o.unit, o.unit_price, o.category,
+                    _iso(o.run_from), _iso(o.run_till), o.image_url, now,
+                )
+                for o in offers
+            ],
+        )
+        self.conn.commit()
+
+    def current_offers(self, at: datetime | None = None) -> list[Offer]:
+        """Tilbud der gælder nu eller senere (ikke udløbne)."""
+        at = at or datetime.now(timezone.utc)
+        rows = self.conn.execute(
+            "SELECT * FROM offers WHERE run_till IS NULL OR run_till >= ?",
+            (_iso(at),),
+        ).fetchall()
+        return [
+            Offer(
+                id=r["id"], catalog_id=r["catalog_id"], dealer=r["dealer"],
+                heading=r["heading"], description=r["description"] or "",
+                price=r["price"], pre_price=r["pre_price"],
+                currency=r["currency"] or "DKK", amount=r["amount"], unit=r["unit"],
+                run_from=_dt(r["run_from"]), run_till=_dt(r["run_till"]),
+                image_url=r["image_url"], category=r["category"],
+            )
+            for r in rows
+        ]
+
+    def typical_unit_prices(self, exclude_catalogs: set[str] | None = None) -> dict[tuple[str, str], float]:
+        """Median-enhedspris pr. vare fra tidligere aviser.
+
+        Bruges som "normalpris" for tilbud uden førpris. Kun varer set i
+        mindst to tidligere aviser medtages.
+        """
+        exclude_catalogs = exclude_catalogs or set()
+        rows = self.conn.execute(
+            "SELECT product_key, unit, unit_price, catalog_id FROM offers WHERE unit_price IS NOT NULL"
+        ).fetchall()
+        prices: dict[tuple[str, str], list[float]] = {}
+        catalogs_seen: dict[tuple[str, str], set[str]] = {}
+        for r in rows:
+            if r["catalog_id"] in exclude_catalogs:
+                continue
+            key = (r["product_key"], r["unit"])
+            prices.setdefault(key, []).append(r["unit_price"])
+            catalogs_seen.setdefault(key, set()).add(r["catalog_id"])
+        return {
+            key: statistics.median(values)
+            for key, values in prices.items()
+            if len(catalogs_seen[key]) >= 2
+        }
