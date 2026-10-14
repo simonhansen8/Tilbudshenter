@@ -842,11 +842,12 @@ function paperCompare(a, b) {
     || b.score - a.score;
 }
 
-// Link til avisen på eTilbudsavis, helst på tilbuddets side
-function paperUrl(catalogId, page) {
+// Link til avisen på eTilbudsavis; med et tilbud åbnes avisen ved tilbuddet
+// (https://etilbudsavis.dk/Netto?publication=<avis>&offer=<tilbud>)
+function paperUrl(catalogId, offerId) {
   const url = (state.papers[catalogId] || {}).url;
   if (!url) return "";
-  return page ? `${url}&page=${encodeURIComponent(page)}` : url;
+  return offerId ? `${url}&offer=${encodeURIComponent(offerId)}` : url;
 }
 
 function paperHead(o, n) {
@@ -988,7 +989,7 @@ function renderOffer() {
   $("od-pos").textContent = list.length > 1 ? `${i + 1} af ${list.length}` : "";
   $("btn-offer-prev").disabled = i <= 0;
   $("btn-offer-next").disabled = i >= list.length - 1;
-  const url = paperUrl(o.catalog_id, o.catalog_page);
+  const url = paperUrl(o.catalog_id, o.id);
   $("od-paper").hidden = !url;
   if (url) $("od-paper").href = url;
 
