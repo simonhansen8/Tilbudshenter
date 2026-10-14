@@ -70,12 +70,12 @@ def parse_quantity(quantity: dict | None) -> tuple[float | None, str | None]:
 
 
 def catalog_url(data: dict) -> str | None:
-    """Avisen på etilbudsavis.dk, fx https://etilbudsavis.dk/Netto/tilbudsaviser/4_qLrKZB."""
+    """Avisen på etilbudsavis.dk, fx https://etilbudsavis.dk/Netto?publication=4_qLrKZB."""
     markets = (data.get("dealer") or {}).get("markets") or []
     slug = next((m.get("slug") for m in markets if m.get("country_code") == "DK" and m.get("slug")), None)
     if not slug or not data.get("id"):
         return None
-    return f"{WEB_BASE}/{urllib.parse.quote(slug)}/tilbudsaviser/{urllib.parse.quote(str(data['id']))}"
+    return f"{WEB_BASE}/{urllib.parse.quote(slug)}?{urllib.parse.urlencode({'publication': data['id']})}"
 
 
 def catalog_from_api(data: dict) -> Catalog:

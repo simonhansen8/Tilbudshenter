@@ -846,7 +846,7 @@ function paperCompare(a, b) {
 function paperUrl(catalogId, page) {
   const url = (state.papers[catalogId] || {}).url;
   if (!url) return "";
-  return page ? `${url}?publication_page=${encodeURIComponent(page)}` : url;
+  return page ? `${url}&page=${encodeURIComponent(page)}` : url;
 }
 
 function paperHead(o, n) {

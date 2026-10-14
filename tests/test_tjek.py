@@ -103,7 +103,7 @@ def test_image_box():
 
 def test_catalog_url_and_pages(monkeypatch):
     data = {**CATALOG, "dealer": {"markets": [{"slug": "Netto", "country_code": "DK"}]}}
-    assert catalog_from_api(data).url == "https://etilbudsavis.dk/Netto/tilbudsaviser/abc123"
+    assert catalog_from_api(data).url == "https://etilbudsavis.dk/Netto?publication=abc123"
     assert catalog_from_api(CATALOG).url is None
 
     monkeypatch.setattr(TjekSource, "_get", lambda self, path, params: [{"view": "p1.webp"}, {"zoom": "p2.webp"}])

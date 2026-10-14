@@ -18,7 +18,8 @@ from .models import Catalog, Offer
 
 # Hæves, når der hentes mere om hver avis end før, så allerede scannede
 # aviser hentes igen én gang. 2: sidetal, rækkefølge og sidebilleder.
-SCAN_VERSION = 2
+# 3: rettet link til avisen på eTilbudsavis.
+SCAN_VERSION = 3
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS catalogs (
