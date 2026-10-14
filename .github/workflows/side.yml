@@ -33,6 +33,18 @@ jobs:
           pip install -e ".[dev]"
           pytest -q
 
+      # Nye opskrifter fra opskrifter.txt gemmes i main, så hver madside
+      # kun hentes én gang
+      - name: Hent nye opskrifter
+        run: |
+          tilbudshenter opskrifter --liste opskrifter.txt
+          if ! git diff --quiet -- src/tilbudshenter/data/opskrifter.json; then
+            git -c user.name="github-actions[bot]" \
+                -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+                commit -q -m "Opskrifter hentet fra madsiderne" -- src/tilbudshenter/data/opskrifter.json
+            git pull -q --rebase origin main && git push -q origin HEAD:main || echo "Kunne ikke gemme opskrifterne i main"
+          fi
+
       - name: Hent prishistorikken fra sidste kørsel
         run: |
           mkdir -p side

@@ -1,0 +1,13 @@
+# Opskrifter til madplanen
+#
+# Én adresse pr. linje: en opskrift på en madside, eller et sitemap, hvorfra
+# de første 100 opskrifter hentes. Efter "sitemap:" og adressen kan der stå
+# et ord, som adresserne skal indeholde, fx /opskrift/.
+#
+#   https://www.eksempel.dk/opskrift/lasagne
+#   sitemap: https://www.eksempel.dk/sitemap.xml /opskrift/
+#
+# Siden henter nye opskrifter, næste gang den bygges. Kun navn, antal
+# personer, tid og ingredienser gemmes; madplanen linker til madsiden for
+# fremgangsmåden. Opskrifter med kød eller fisk, som ikke kan genkendes i
+# tilbudsaviserne, springes over.

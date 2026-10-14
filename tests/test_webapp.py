@@ -161,3 +161,51 @@ def test_shopping_list(server):
 def test_recipes(server):
     status, data = request(server + "/api/recipes")
     assert status == 200 and data["recipes"] and data["recipes"][0]["items"]
+    assert data["ingredients"] and data["side"]
+
+
+def test_list_notes_and_departments(server):
+    h = {"X-Tilbudshenter": "1"}
+    request(server + "/api/scan", {}, h)
+    for _ in range(100):
+        if not request(server + "/api/state")[1]["scan"]["running"]:
+            break
+        time.sleep(0.05)
+    offer = request(server + "/api/offers")[1]["offers"][0]
+    request(server + "/api/list", {"action": "add", "id": offer["id"], "note": "til Lasagne"}, h)
+    items = request(server + "/api/list", {"action": "add_text", "text": "Løg (3)", "category": "frugt_og_groent",
+                                           "note": "til Chili"}, h)[1]["items"]
+    by_id = {i["id"]: i for i in items}
+    assert by_id[offer["id"]]["note"] == "til Lasagne" and by_id[offer["id"]]["category"] == offer["category"]
+    own = next(i for i in items if i["heading"] == "Løg (3)")
+    assert own["note"] == "til Chili" and own["category"] == "frugt_og_groent"
+
+
+def test_old_shopping_list_gets_new_columns(tmp_path):
+    import sqlite3
+
+    from tilbudshenter.storage import Storage
+
+    db = tmp_path / "gammel.db"
+    conn = sqlite3.connect(db)
+    conn.execute("CREATE TABLE shopping_list (id TEXT PRIMARY KEY, dealer TEXT, heading TEXT NOT NULL, "
+                 "description TEXT, price REAL, unit TEXT, amount REAL, run_from TEXT, run_till TEXT, "
+                 "added_at TEXT NOT NULL, checked INTEGER NOT NULL DEFAULT 0)")
+    conn.commit()
+    conn.close()
+    with Storage(db) as storage:
+        storage.add_text_to_list("Mælk", note="til grød")
+        assert storage.shopping_list()[0]["note"] == "til grød"
+
+
+def test_import_recipe(server, monkeypatch):
+    from tests.test_opskrifter import PAGE
+
+    monkeypatch.setattr("tilbudshenter.webapp.fetch", lambda url: PAGE)
+    h = {"X-Tilbudshenter": "1"}
+    status, data = request(server + "/api/import_recipe", {"url": "https://mad.dk/chili"}, h)
+    assert status == 200 and data["recipe"]["name"] == "Chili con carne & ris"
+    assert data["recipe"]["method"].startswith("Brun kødet")
+    assert request(server + "/api/import_recipe", {"url": "file:///etc/passwd"}, h)[0] == 400
+    monkeypatch.setattr("tilbudshenter.webapp.fetch", lambda url: "<html></html>")
+    assert request(server + "/api/import_recipe", {"url": "https://mad.dk/"}, h)[0] == 400

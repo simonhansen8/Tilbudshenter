@@ -19,7 +19,7 @@ from pathlib import Path
 from .categories import UNCATEGORIZED, Categorizer, merge_categories
 from .cli import best_offers
 from .config import NEW_STORES, Config, example_config
-from .mealplan import recipes_payload
+from .mealplan import plan_payload
 from .models import Catalog, Offer
 from .selection import store_selected
 from .sources.base import SourceError
@@ -166,7 +166,7 @@ def site_data(cfg: Config, now: datetime | None = None, stores: dict[str, list[d
         ],
         "places": places_from_stores(stores),
         "offers": [offer_payload(o, categorizer) for o in offers],
-        "recipes": recipes_payload(),
+        "plan": plan_payload(),
     }
 
 

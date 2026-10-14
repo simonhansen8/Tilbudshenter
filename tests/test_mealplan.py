@@ -2,8 +2,8 @@ import json
 
 from tilbudshenter.cli import main
 from tilbudshenter.mealplan import (
-    INGREDIENTS, MIN_VEG_PER_PERSON, NORMAL_PRICES, RECIPES, VEGETABLES, ingredient_keys, recipe_items,
-    recipes_payload, vegetables_per_person,
+    DEPARTMENTS, INGREDIENTS, MIN_VEG_PER_PERSON, NORMAL_PRICES, RECIPES, VEGETABLES, imported_recipes,
+    ingredient_keys, load_imported, recipe_items, recipes_payload, vegetables_per_person,
 )
 
 
@@ -31,6 +31,7 @@ def test_ingredient_keys_skip_non_raw_goods():
         "Butternut squash",
         "FRESHONA Broccoli- eller blomkålsris",
         "GRILLMESTER Kalkunhakkebøffer",
+        "San Marco Pizza med hvidløg & ost",
     ]:
         assert "blomkaal" not in ingredient_keys(heading)
         assert set(ingredient_keys(heading)) <= {"broccoli"}, heading
@@ -60,7 +61,7 @@ def test_recipes_payload_is_json():
     bolognese = next(r for r in data if r["id"] == "bolognese")
     assert bolognese["items"][0] == {
         "amount": 500, "unit": "g", "name": "hakket kød (okse eller grise- og kalv)", "keys": ["hakket_okse", "hakket_gris_kalv"],
-        "main": True, "side": False, "prices": {"hakket_okse": [100, 0], "hakket_gris_kalv": [75, 0]},
+        "main": True, "side": False, "prices": {"hakket_okse": [100, 500], "hakket_gris_kalv": [75, 500]},
     }
     assert bolognese["veg_g"] == 278
 
@@ -81,7 +82,24 @@ def test_site_has_recipes_and_ingredients(tmp_path):
     out = tmp_path / "side"
     assert main(["side", "--demo", "--ud", str(out)]) == 0
     data = json.loads((out / "data.json").read_text("utf-8"))
-    assert len(data["recipes"]) == len(RECIPES)
+    plan = data["plan"]
+    assert len(plan["recipes"]) >= len(RECIPES)
+    assert {i["key"] for i in plan["ingredients"]} == set(INGREDIENTS)
+    assert plan["side"]["side"] and plan["words"]["pantry"]
     tagged = {o["heading"]: o["ingredients"] for o in data["offers"] if "ingredients" in o}
     assert tagged["Hakket oksekød 8-12%"] == ["hakket_okse"]
     assert "ingredients" not in next(o for o in data["offers"] if o["heading"] == "Toiletpapir")
+
+
+def test_departments_are_categories():
+    from tilbudshenter.categories import DEFAULT_CATEGORIES
+
+    assert set(DEPARTMENTS) <= set(INGREDIENTS)
+    assert set(DEPARTMENTS.values()) <= set(DEFAULT_CATEGORIES)
+
+
+def test_imported_recipes_build():
+    # Samlingen fra madsiderne skrives af GitHub; alle opskrifter i den skal kunne bruges
+    assert len(imported_recipes()) == len(load_imported())
+    for r in imported_recipes():
+        assert r.source.startswith("http") and any(i.main for i in r.items)

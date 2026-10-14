@@ -232,6 +232,15 @@ def cmd_site(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_recipes(args: argparse.Namespace) -> int:
+    from .opskrifter import DEFAULT_JSON, update
+
+    result = update(args.list, args.out or DEFAULT_JSON, delay=args.delay)
+    print(f"{result['recipes']} opskrifter i samlingen, {result['added']} nye. "
+          f"{result['skipped']} sider kunne ikke bruges, {result['failed']} kunne ikke hentes.")
+    return 0
+
+
 # -- Parser -------------------------------------------------------------
 def build_parser() -> argparse.ArgumentParser:
     common = argparse.ArgumentParser(add_help=False)
@@ -289,6 +298,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--ud", dest="out", type=Path, default=Path("side"), help="mappe til siden (standard: side)")
     p.add_argument("--database", type=Path, help="database med tilbud og prishistorik (standard: <mappe>/tilbud.db)")
     p.set_defaults(func=cmd_site)
+
+    p = sub.add_parser("opskrifter", parents=[common], help="hent opskrifterne i opskrifter.txt fra madsiderne")
+    p.add_argument("--liste", dest="list", type=Path, default=Path("opskrifter.txt"),
+                   help="liste over opskrifter og sitemaps (standard: opskrifter.txt)")
+    p.add_argument("--ud", dest="out", type=Path, help="hvor samlingen gemmes (standard: pakkens data/opskrifter.json)")
+    p.add_argument("--pause", dest="delay", type=float, default=1.0, help="sekunder mellem hver side (standard: 1)")
+    p.set_defaults(func=cmd_recipes)
 
     p = sub.add_parser("kategorier", parents=[common], help="vis tilgængelige kategorier")
     p.set_defaults(func=cmd_categories)

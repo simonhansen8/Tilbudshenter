@@ -61,7 +61,9 @@ CREATE TABLE IF NOT EXISTS shopping_list (
     run_from    TEXT,
     run_till    TEXT,
     added_at    TEXT NOT NULL,
-    checked     INTEGER NOT NULL DEFAULT 0
+    checked     INTEGER NOT NULL DEFAULT 0,
+    note        TEXT,  -- fx hvilke retter i madplanen varen skal bruges til
+    category    TEXT   -- afdelingen i butikken
 );
 
 CREATE INDEX IF NOT EXISTS offers_run_till ON offers(run_till);
@@ -98,6 +100,11 @@ class Storage:
         self.conn = sqlite3.connect(str(path))
         self.conn.row_factory = sqlite3.Row
         self.conn.executescript(SCHEMA)
+        # Kolonner der er kommet til siden databasen blev oprettet
+        columns = {r["name"] for r in self.conn.execute("PRAGMA table_info(shopping_list)")}
+        for column in ("note", "category"):
+            if column not in columns:
+                self.conn.execute(f"ALTER TABLE shopping_list ADD COLUMN {column} TEXT")
 
     def close(self) -> None:
         self.conn.close()
@@ -284,28 +291,30 @@ class Storage:
         ).fetchall()
         return [{**dict(r), "checked": bool(r["checked"])} for r in rows]
 
-    def add_to_list(self, offer_id: str) -> bool:
+    def add_to_list(self, offer_id: str, note: str | None = None) -> bool:
         """Lægger et tilbud på listen. Returnerer False, hvis tilbuddet ikke findes."""
         cur = self.conn.execute(
             """
             INSERT OR IGNORE INTO shopping_list
-                (id, dealer, heading, description, price, unit, amount, run_from, run_till, added_at)
-            SELECT id, dealer, heading, description, price, unit, amount, run_from, run_till, ?
+                (id, dealer, heading, description, price, unit, amount, run_from, run_till, added_at, category)
+            SELECT id, dealer, heading, description, price, unit, amount, run_from, run_till, ?, category
             FROM offers WHERE id = ?
             """,
             (_now(), offer_id),
         )
+        if note:
+            self.conn.execute("UPDATE shopping_list SET note = ? WHERE id = ?", (note, offer_id))
         self.conn.commit()
         return cur.rowcount > 0 or self.conn.execute(
             "SELECT 1 FROM shopping_list WHERE id = ?", (offer_id,)
         ).fetchone() is not None
 
-    def add_text_to_list(self, text: str) -> str:
+    def add_text_to_list(self, text: str, note: str | None = None, category: str | None = None) -> str:
         """Lægger en egen vare (fx "mælk") på listen."""
         item_id = f"egen-{datetime.now(timezone.utc).timestamp():.6f}"
         self.conn.execute(
-            "INSERT INTO shopping_list (id, heading, added_at) VALUES (?, ?, ?)",
-            (item_id, text.strip(), _now()),
+            "INSERT INTO shopping_list (id, heading, added_at, note, category) VALUES (?, ?, ?, ?, ?)",
+            (item_id, text.strip(), _now(), note, category),
         )
         self.conn.commit()
         return item_id
