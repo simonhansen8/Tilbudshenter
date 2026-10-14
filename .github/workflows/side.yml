@@ -1,0 +1,57 @@
+# Henter tilbudsaviserne og udgiver siden på GitHub Pages (grenen gh-pages).
+# Kører to gange om dagen, når main ændres, og når man trykker "Run workflow".
+name: Opdater siden
+
+on:
+  schedule:
+    - cron: "17 4,15 * * *"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: side
+  cancel-in-progress: false
+
+jobs:
+  side:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Europe/Copenhagen
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installer og test
+        run: |
+          pip install -e ".[dev]"
+          pytest -q
+
+      - name: Hent prishistorikken fra sidste kørsel
+        run: |
+          mkdir -p side
+          if git fetch --depth 1 origin gh-pages; then
+            git show origin/gh-pages:tilbud.db > side/tilbud.db || rm -f side/tilbud.db
+          fi
+
+      - name: Hent tilbud og byg siden
+        run: tilbudshenter side --ud side
+
+      - name: Udgiv på gh-pages
+        run: |
+          cd side
+          git init -q -b gh-pages
+          git add -A
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -q -m "Tilbud $(date '+%Y-%m-%d %H:%M')"
+          # Én commit ad gangen, så grenen ikke vokser med hver kørsel
+          git push -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

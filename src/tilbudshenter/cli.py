@@ -7,7 +7,7 @@ import logging
 import sys
 import time
 from dataclasses import replace
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from . import __version__
@@ -196,6 +196,38 @@ def cmd_app(args: argparse.Namespace) -> int:
     return 0
 
 
+SITE_HISTORY_DAYS = 183
+
+
+def cmd_site(args: argparse.Namespace) -> int:
+    from .pages import build_site, site_config
+
+    cfg = site_config()
+    cfg.database = args.database or args.out / "tilbud.db"
+    if args.demo:
+        cfg.database = cfg.database.with_suffix(".demo.db")
+    categorizer = Categorizer(merge_categories(cfg.custom_categories))
+    now = datetime.now(timezone.utc)
+    with Storage(cfg.database) as storage:
+        try:
+            result = scan(cfg, make_source(cfg, args.demo), storage, categorizer, now=now)
+        except SourceError as exc:
+            print(f"Fejl: {exc}", file=sys.stderr)
+            return 2
+        # Siden gemmer databasen i git, så den holdes på et halvt års historik
+        storage.prune(now - timedelta(days=SITE_HISTORY_DAYS))
+    for catalog, error in result.failed:
+        print(f"Advarsel: kunne ikke hente {catalog.dealer} ({catalog.label}): {error}", file=sys.stderr)
+    print(f"{len(result.new_catalogs)} nye aviser ({result.offers_fetched} tilbud), "
+          f"{len(result.known_catalogs)} kendte.")
+    data = build_site(cfg, args.out, now)
+    print(f"Siden er bygget i {args.out}: {len(data['offers'])} tilbud fra {len(data['stores'])} butikker.")
+    if not data["offers"]:
+        print("Fejl: ingen tilbud at vise.", file=sys.stderr)
+        return 3
+    return 0
+
+
 # -- Parser -------------------------------------------------------------
 def build_parser() -> argparse.ArgumentParser:
     common = argparse.ArgumentParser(add_help=False)
@@ -248,6 +280,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("butikker", parents=[common], help="vis butikker med aviser i dit område")
     p.set_defaults(func=cmd_stores)
+
+    p = sub.add_parser("side", parents=[common], help="hent tilbud og byg den statiske side til GitHub Pages")
+    p.add_argument("--ud", dest="out", type=Path, default=Path("side"), help="mappe til siden (standard: side)")
+    p.add_argument("--database", type=Path, help="database med tilbud og prishistorik (standard: <mappe>/tilbud.db)")
+    p.set_defaults(func=cmd_site)
 
     p = sub.add_parser("kategorier", parents=[common], help="vis tilgængelige kategorier")
     p.set_defaults(func=cmd_categories)

@@ -264,6 +264,19 @@ class Storage:
             if len(catalogs_seen[key]) >= 2
         }
 
+    def prune(self, before: datetime) -> int:
+        """Sletter aviser og tilbud, der udløb før ``before``, så databasen
+        ikke vokser uden grænse. Returnerer antallet af slettede tilbud."""
+        cutoff = _iso(before)
+        deleted = self.conn.execute("DELETE FROM offers WHERE run_till < ?", (cutoff,)).rowcount
+        self.conn.execute(
+            "DELETE FROM catalogs WHERE run_till < ? AND id NOT IN (SELECT catalog_id FROM offers)", (cutoff,)
+        )
+        self.conn.commit()
+        if deleted:
+            self.conn.execute("VACUUM")
+        return deleted
+
     # -- Indkøbsliste ---------------------------------------------------
     def shopping_list(self) -> list[dict]:
         rows = self.conn.execute(

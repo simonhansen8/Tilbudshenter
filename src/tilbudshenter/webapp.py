@@ -93,20 +93,7 @@ class App:
         )
         with Storage(cfg.database) as storage:
             offers = best_offers(wide, storage, categorizer, datetime.now(timezone.utc), limit=0)
-        return {
-            "offers": [
-                {
-                    **o.to_dict(),
-                    "category_name": categorizer.display_name(o.category),
-                    "price_text": kr(o.price),
-                    "pre_price_text": kr(o.pre_price) if o.pre_price else "",
-                    "unit_price_text": unit_price_text(o),
-                    "discount_text": discount_text(o),
-                    "period_text": period_text(o),
-                }
-                for o in offers
-            ]
-        }
+        return {"offers": [offer_payload(o, categorizer) for o in offers]}
 
     def catalogs(self) -> dict:
         """Butikker og aviser i området (kræver netværk)."""
@@ -221,6 +208,19 @@ class App:
         except Exception as exc:  # Vis uventede fejl i appen i stedet for at gå i stå
             with self._lock:
                 self._scan.update(running=False, message="", error=f"Uventet fejl: {exc!r}")
+
+
+def offer_payload(o: Offer, categorizer: Categorizer) -> dict:
+    """Et tilbud som appen viser det, med færdigformaterede tekster."""
+    return {
+        **o.to_dict(),
+        "category_name": categorizer.display_name(o.category),
+        "price_text": kr(o.price),
+        "pre_price_text": kr(o.pre_price) if o.pre_price else "",
+        "unit_price_text": unit_price_text(o),
+        "discount_text": discount_text(o),
+        "period_text": period_text(o),
+    }
 
 
 def settings_from_config(cfg: Config) -> dict:
