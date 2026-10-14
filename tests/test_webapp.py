@@ -199,12 +199,12 @@ def test_old_shopping_list_gets_new_columns(tmp_path):
 
 
 def test_import_recipe(server, monkeypatch):
-    from tests.test_opskrifter import PAGE
-
-    monkeypatch.setattr("tilbudshenter.webapp.fetch", lambda url: PAGE)
+    page = """<script type="application/ld+json">{"@type": "Recipe", "name": "Chili con carne",
+        "recipeIngredient": ["500 g hakket oksekød", "1 løg"], "recipeInstructions": "Brun kødet."}</script>"""
+    monkeypatch.setattr("tilbudshenter.webapp.fetch", lambda url: page)
     h = {"X-Tilbudshenter": "1"}
     status, data = request(server + "/api/import_recipe", {"url": "https://mad.dk/chili"}, h)
-    assert status == 200 and data["recipe"]["name"] == "Chili con carne & ris"
+    assert status == 200 and data["recipe"]["name"] == "Chili con carne"
     assert data["recipe"]["method"].startswith("Brun kødet")
     assert request(server + "/api/import_recipe", {"url": "file:///etc/passwd"}, h)[0] == 400
     monkeypatch.setattr("tilbudshenter.webapp.fetch", lambda url: "<html></html>")
