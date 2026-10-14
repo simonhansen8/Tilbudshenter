@@ -293,9 +293,11 @@ plan giver nye retter.
   hovedingrediensen købes, så en ret kan købes ind ét sted. Du kan også
   vælge én bestemt butik.
 - Et tilbud bruges kun, når det er billigere end **basisvaren**: den
-  almindelige pris uden tilbud på den billigste udgave, fx kædens eget mærke
-  (`NORMAL_PRICES` i `mealplan.py`, anslået ud fra discountbutikkernes
-  hyldepriser). En stor rabat på et dyrt mærke er altså ikke nok. Under
+  almindelige hyldepris uden tilbud på en almindelig udgave af varen
+  (`NORMAL_PRICES` i `mealplan.py`, anslået ud fra hyldepriserne i 2026).
+  Koster varen typisk mere på tilbud i aviserne (medianen af mindst 6 tilbud
+  i prishistorikken), bruges det i stedet, dog højst halvanden gang den
+  anslåede pris. En stor rabat på et dyrt mærke er altså ikke nok. Under
   **Basispriser** kan du rette priserne til det, du selv giver; dine priser
   gemmes i browseren.
 - Hver ret har en samlet pris og en pris pr. person. Den regnes for de
@@ -351,9 +353,10 @@ bruger Tilbudshenter til at hente opskrifter automatisk:
 1. Skriv adressen på en opskrift, et sitemap eller bare en madside (fx
    `sitemap: https://www.valdemarsro.dk/`) i `opskrifter.txt` (én pr. linje;
    se eksemplerne i filen). For en madside findes sitemappet i dens
-   robots.txt, og op til 300 opskrifter hentes.
-2. Hver gang siden bygges, henter GitHub op til 300 nye opskrifter,
-   skiftevis fra madsiderne, gemmer dem i
+   robots.txt, og op til 1000 opskrifter hentes.
+2. Hver gang siden bygges, henter GitHub op til 1500 nye sider, højst 150
+   fra hver madside. Madsiderne hentes samtidig, men hver madside kun én
+   side ad gangen med et sekunds pause. Opskrifterne gemmes i
    `src/tilbudshenter/data/opskrifter.json` og lægger dem ind i madplanen.
    Hver side hentes kun én gang.
 

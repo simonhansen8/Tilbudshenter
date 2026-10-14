@@ -20,7 +20,7 @@ from urllib.parse import urlparse
 from .categories import UNCATEGORIZED, Categorizer, merge_categories
 from .cli import best_offers, load_app_config, make_source
 from .config import Config, example_config, save_config
-from .mealplan import ingredient_keys, ingredient_names, plan_payload
+from .mealplan import ingredient_keys, ingredient_names, market_prices, plan_payload
 from .opskrifter import extract_recipe, fetch
 from .models import Catalog, Offer
 from .report import discount_text, kr, period_text, unit_price_text, write_reports
@@ -59,6 +59,11 @@ class App:
 
     def categorizer(self, cfg: Config) -> Categorizer:
         return Categorizer(merge_categories(cfg.custom_categories))
+
+    def plan(self) -> dict:
+        """Madplanens data med basispriser, der følger prishistorikken."""
+        with Storage(self.config().database) as storage:
+            return plan_payload(market_prices(storage.unit_prices()))
 
     # -- Status ---------------------------------------------------------
     def state(self) -> dict:
@@ -337,7 +342,7 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/list":
                 return self._json(self.app.shopping_list())
             if path == "/api/recipes":
-                return self._json(plan_payload())
+                return self._json(self.app.plan())
         except SourceError as exc:
             return self._error(HTTPStatus.BAD_GATEWAY, str(exc))
         except Exception as exc:

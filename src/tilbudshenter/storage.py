@@ -295,6 +295,11 @@ class Storage:
             if len(catalogs_seen[key]) >= 2
         }
 
+    def unit_prices(self) -> list[tuple[str, str | None, float]]:
+        """(overskrift, enhed, enhedspris) for alle tilbud i prishistorikken."""
+        return [tuple(r) for r in self.conn.execute(
+            "SELECT heading, unit, unit_price FROM offers WHERE unit_price IS NOT NULL")]
+
     def prune(self, before: datetime, slim_before: datetime | None = None) -> int:
         """Sletter aviser og tilbud, der udløb før ``before``, så databasen
         ikke vokser uden grænse. Tilbud og aviser, der udløb før

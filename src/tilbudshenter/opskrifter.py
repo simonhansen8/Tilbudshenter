@@ -20,11 +20,12 @@ import json
 import logging
 import re
 import time
-from itertools import zip_longest
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
+from itertools import zip_longest
 from datetime import datetime, timezone
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse, urlsplit, urlunsplit
 
 from .comparison import _has_word, _tokens
 from .mealplan import recipe_from_lines
@@ -34,10 +35,12 @@ log = logging.getLogger(__name__)
 USER_AGENT = "Tilbudshenter/0.1 (madplan; https://github.com/simonhansen8/Tilbudshenter)"
 MAX_BYTES = 3_000_000
 DEFAULT_JSON = Path(__file__).parent / "data" / "opskrifter.json"
-SITEMAP_LIMIT = 300
+SITEMAP_LIMIT = 1000
 # Højst så mange nye sider pr. kørsel, så siden stadig bygges hurtigt;
-# resten hentes de næste gange
-NEW_PER_RUN = 300
+# resten hentes de næste gange. Madsiderne hentes samtidig, men hver
+# madside kun én side ad gangen.
+NEW_PER_RUN = 1500
+PER_SITE_PER_RUN = 150
 # Sitemaps og sider, der ikke er opskrifter
 SKIP_SITEMAPS = ("category", "categories", "kategori", "tag", "author", "forfatter", "page-sitemap", "attachment",
                  "product", "produkt", "video", "image", "news", "nyhed")
@@ -45,11 +48,18 @@ GOOD_SITEMAPS = ("opskrift", "recipe", "post")
 NOT_RECIPES = ("/kategori/", "/category/", "/tag/", "/author/", "/forfatter/", "/page/", "/side/", "/soeg", "/search")
 # Hæves, når opskrifter kan læses fra flere slags sider, så de sider, der
 # blev sprunget over før, prøves igen
-VERSION = 3
+VERSION = 4
+
+
+def _ascii_url(url: str) -> str:
+    """Adressen med æ, ø og å kodet som %C3%A6 osv., som urllib kræver."""
+    s = urlsplit(url)
+    return urlunsplit((s.scheme, s.netloc.encode("idna").decode(), quote(s.path, safe="/%:@!$&'()*+,;=-._~"),
+                       quote(s.query, safe="=&%+:/?,;"), ""))
 
 
 def fetch(url: str, timeout: float = 20) -> str:
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "text/html,application/xml"})
+    req = urllib.request.Request(_ascii_url(url), headers={"User-Agent": USER_AGENT, "Accept": "text/html,application/xml"})
     with urllib.request.urlopen(req, timeout=timeout) as res:
         data = res.read(MAX_BYTES)
         if data[:2] == b"\x1f\x8b":
@@ -249,6 +259,22 @@ def sitemap_urls(xml: str) -> list[str]:
     return [htmllib.unescape(u.strip()) for u in re.findall(r"<loc>\s*(.*?)\s*</loc>", xml, re.DOTALL)]
 
 
+def _looks_like_recipe(url: str) -> bool:
+    """Opskrifter har lange navne ("kylling-i-fad-med-groent"), oversigter
+    korte ("fisk-opskrifter/laks")."""
+    return urlparse(url).path.rstrip("/").rsplit("/", 1)[-1].count("-") >= 2
+
+
+def _newest_first(xml: str, urls: list[str]) -> list[str]:
+    """Siderne med den nyeste <lastmod> først. Mange sitemaps står ældst
+    først, og de ældste sider er ofte blogindlæg."""
+    lastmod = {
+        htmllib.unescape(loc.strip()): mod.strip()
+        for loc, mod in re.findall(r"<loc>\s*(.*?)\s*</loc>\s*<lastmod>\s*(.*?)\s*</lastmod>", xml, re.DOTALL)
+    }
+    return sorted(urls, key=lambda u: lastmod.get(u, ""), reverse=True)
+
+
 # -- Samlingen ---------------------------------------------------------
 def read_list(path: Path) -> list[str]:
     """Linjerne i opskrifter.txt uden kommentarer."""
@@ -260,6 +286,11 @@ def read_list(path: Path) -> list[str]:
         if line:
             lines.append(line)
     return lines
+
+
+def _site(url: str) -> str:
+    """Madsiden bag en adresse; www.mummum.dk og mummum.dk er den samme."""
+    return urlparse(url).netloc.lower().removeprefix("www.")
 
 
 def _sitemaps(url: str, fetcher) -> list[str]:
@@ -278,9 +309,10 @@ def _sitemaps(url: str, fetcher) -> list[str]:
 def _sitemap_pages(url: str, fetcher, ok, enough: int, depth: int = 0) -> list[str]:
     """Siderne i et sitemap, der består ``ok``. Et sitemap-indeks peger på flere
     sitemaps; dem med opskrifter læses først, og kategorier o.l. springes over."""
-    urls = sitemap_urls(fetcher(url))
+    xml = fetcher(url)
+    urls = sitemap_urls(xml)
     subs = [u for u in urls if u.split("?")[0].endswith((".xml", ".xml.gz"))]
-    pages = [u for u in urls if u not in subs and ok(u)]
+    pages = _newest_first(xml, [u for u in urls if u not in subs and ok(u)])
     if depth < 2:
         subs = [u for u in subs if not any(w in u.lower() for w in SKIP_SITEMAPS)]
         subs.sort(key=lambda u: not any(w in u.lower() for w in GOOD_SITEMAPS))
@@ -305,14 +337,14 @@ def _expand(line: str, fetcher, limit: int, known: set[str], skipped: set[str]) 
     if not m:
         return [line]
     url, must = m.group(1), m.group(2) or ""
-    host = urlparse(url).netloc
-    have = [u for u in known if urlparse(u).netloc == host and must in u]
+    site = _site(url)
+    have = [u for u in known if _site(u) == site and must in u]
     if len(have) >= limit:
         return have[:limit]
 
     def ok(u: str) -> bool:
         p = urlparse(u)
-        return must in u and p.netloc == host and p.path.strip("/") != "" and not any(w in p.path for w in NOT_RECIPES)
+        return must in u and _site(u) == site and p.path.strip("/") != "" and not any(w in p.path for w in NOT_RECIPES)
 
     urls: list[str] = []
     errors = []
@@ -325,14 +357,41 @@ def _expand(line: str, fetcher, limit: int, known: set[str], skipped: set[str]) 
             break
     if not urls and errors:
         raise errors[0]
-    new = [u for u in dict.fromkeys(urls) if u not in known]
+    # Sider, der ligner opskrifter, først; oversigter og artikler til sidst
+    new = sorted((u for u in dict.fromkeys(urls) if u not in known), key=lambda u: not _looks_like_recipe(u))
     tried = [u for u in new if u in skipped]
     fresh = [u for u in new if u not in skipped][: limit - len(have)]
     return have + fresh + tried
 
 
+def _fetch_all(urls: list[str], fetcher, delay: float) -> dict[str, str | Exception]:
+    """Henter siderne: madsiderne samtidig, men hver madside én side ad gangen
+    med ``delay`` sekunders pause, så ingen madside belastes."""
+    by_site: dict[str, list[str]] = {}
+    for u in urls:
+        by_site.setdefault(_site(u), []).append(u)
+
+    def one_site(site_urls: list[str]) -> dict[str, str | Exception]:
+        out: dict[str, str | Exception] = {}
+        for i, u in enumerate(site_urls):
+            if i and delay:
+                time.sleep(delay)
+            try:
+                out[u] = fetcher(u)
+            except Exception as exc:  # noqa: BLE001
+                out[u] = exc
+        return out
+
+    pages: dict[str, str | Exception] = {}
+    if by_site:
+        with ThreadPoolExecutor(min(16, len(by_site))) as pool:
+            for part in pool.map(one_site, by_site.values()):
+                pages.update(part)
+    return pages
+
+
 def update(list_path: Path, json_path: Path = DEFAULT_JSON, fetcher=None, delay: float = 1.0,
-           limit: int = SITEMAP_LIMIT, max_new: int = NEW_PER_RUN) -> dict:
+           limit: int = SITEMAP_LIMIT, max_new: int = NEW_PER_RUN, per_site: int = PER_SITE_PER_RUN) -> dict:
     """Henter de opskrifter i listen, der ikke er hentet før.
 
     Opskrifter, der er fjernet fra listen, fjernes også fra samlingen.
@@ -342,21 +401,36 @@ def update(list_path: Path, json_path: Path = DEFAULT_JSON, fetcher=None, delay:
     old = json.loads(json_path.read_text(encoding="utf-8")) if json_path.exists() else {}
     known = {r["url"]: r for r in old.get("recipes", [])}
     skipped: dict[str, str] = dict(old.get("skipped", {})) if old.get("version", 1) >= VERSION else {}
-    per_line: list[list[str]] = []
-    for line in read_list(list_path):
+    known_urls, skipped_urls = set(known), set(skipped)
+
+    def expand(line: str) -> list[str]:
         try:
-            per_line.append(_expand(line, fetcher, limit, set(known), set(skipped)))
+            return _expand(line, fetcher, limit, known_urls, skipped_urls)
         except Exception as exc:  # noqa: BLE001 - et dårligt sitemap må ikke stoppe resten
             # Behold det, der allerede er hentet, til sitemappet virker igen
             log.warning("Kunne ikke læse %s: %s", line, exc)
             parts = line.split()
-            host = urlparse(parts[1] if parts[0].lower() == "sitemap:" and len(parts) > 1 else parts[0]).netloc
-            per_line.append([u for u in known if urlparse(u).netloc == host])
+            site = _site(parts[1] if parts[0].lower() == "sitemap:" and len(parts) > 1 else parts[0])
+            return [u for u in known if _site(u) == site]
+
+    # Sitemaps fra alle madsider læses samtidig
+    with ThreadPoolExecutor(16) as pool:
+        per_line = list(pool.map(expand, read_list(list_path)))
     # Skiftevis fra hver linje, så alle madsider får nye opskrifter, også når
     # der hentes højst NEW_PER_RUN sider
     wanted = [u for group in zip_longest(*per_line) for u in group if u]
-    recipes, added, failed, tried, pending = [], 0, 0, 0, 0
-    for url in dict.fromkeys(wanted):
+    wanted = list(dict.fromkeys(wanted))
+    new = [u for u in wanted if u not in known and u not in skipped and urlparse(u).scheme in ("http", "https")]
+    fetch_now: list[str] = []
+    count: dict[str, int] = {}
+    for u in new:
+        if len(fetch_now) < max_new and count.get(_site(u), 0) < per_site:
+            fetch_now.append(u)
+            count[_site(u)] = count.get(_site(u), 0) + 1
+    pending = len(new) - len(fetch_now)
+    pages = _fetch_all(fetch_now, fetcher, delay)
+    recipes, added, failed = [], 0, 0
+    for url in wanted:
         if url in known:
             # Reglerne for aftensmad kan være blevet skærpet siden
             if is_dinner(known[url]):
@@ -364,21 +438,14 @@ def update(list_path: Path, json_path: Path = DEFAULT_JSON, fetcher=None, delay:
             else:
                 skipped[url] = "ikke aftensmad"
             continue
-        if url in skipped or urlparse(url).scheme not in ("http", "https"):
+        if url not in pages:
             continue
-        if tried >= max_new:
-            pending += 1
-            continue
-        tried += 1
-        try:
-            found = extract_recipe(fetcher(url), url)
-        except Exception as exc:  # noqa: BLE001
-            log.warning("Kunne ikke hente %s: %s", url, exc)
+        page = pages[url]
+        if isinstance(page, Exception):
+            log.warning("Kunne ikke hente %s: %s", url, page)
             failed += 1
             continue
-        finally:
-            if delay:
-                time.sleep(delay)
+        found = extract_recipe(page, url)
         why = "ingen opskrift på siden"
         if found and not is_dinner(found):
             why = "ikke aftensmad"
@@ -400,4 +467,8 @@ def update(list_path: Path, json_path: Path = DEFAULT_JSON, fetcher=None, delay:
     if data != old:
         json_path.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     result = {"recipes": len(recipes), "added": added, "failed": failed, "skipped": len(data["skipped"])}
+    sites: dict[str, int] = {}
+    for r in recipes:
+        sites[_site(r["url"])] = sites.get(_site(r["url"]), 0) + 1
+    result["sites"] = sites
     return {**result, "pending": pending} if pending else result

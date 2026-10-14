@@ -1,7 +1,7 @@
 # Opskrifter til madplanen
 #
 # Én adresse pr. linje: en opskrift på en madside, eller et sitemap, hvorfra
-# op til 300 opskrifter hentes. Står der kun madsidens adresse efter
+# op til 1000 opskrifter hentes. Står der kun madsidens adresse efter
 # "sitemap:", findes sitemappet i madsidens robots.txt. Efter adressen kan der
 # stå et ord, som adresserne skal indeholde, fx /opskrifter/.
 #
@@ -9,8 +9,8 @@
 #   sitemap: https://www.eksempel.dk/sitemap.xml /opskrift/
 #   sitemap: https://www.eksempel.dk/
 #
-# Siden henter op til 300 nye opskrifter, hver gang den bygges, skiftevis fra
-# madsiderne. Kun navn, antal personer, tid og ingredienser gemmes; madplanen
+# Siden henter op til 1500 nye sider, hver gang den bygges, højst 150 fra hver
+# madside. Kun navn, antal personer, tid og ingredienser gemmes; madplanen
 # linker til madsiden for fremgangsmåden. Kager, desserter og opskrifter med
 # kød eller fisk, som ikke kan genkendes i tilbudsaviserne, springes over.
 
@@ -19,7 +19,14 @@ sitemap: https://www.valdemarsro.dk/
 sitemap: https://madensverden.dk/
 sitemap: https://www.arla.dk/ /opskrifter/
 sitemap: https://www.mummum.dk/
-sitemap: https://www.spisbedre.dk/ /opskrifter/
+sitemap: https://opskrifter.coop.dk/ /opskrifter/
+sitemap: https://www.hellofresh.dk/ /recipes/
+sitemap: https://www.louisesmadblog.dk/
+sitemap: https://www.danishcrown.com/ /opskrifter/
+sitemap: https://www.opskrifter.dk/ /opskrift/
+# Afprøvet, men giver ingen brugbare opskrifter: Spis Bedre, Isabellas og
+# Femina (opskriften står ikke som schema.org/Recipe), nemlig.com (ingen mængder),
+# Vores Mad, Retnemt og Madklubben
 
 # Valdemarsro
 https://www.valdemarsro.dk/kaalfad-med-hakket-oksekoed/

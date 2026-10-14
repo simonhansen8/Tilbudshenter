@@ -19,7 +19,7 @@ from pathlib import Path
 from .categories import UNCATEGORIZED, Categorizer, merge_categories
 from .cli import best_offers
 from .config import NEW_STORES, Config, example_config
-from .mealplan import plan_payload
+from .mealplan import market_prices, plan_payload
 from .models import Catalog, Offer
 from .selection import store_selected
 from .sources.base import SourceError
@@ -134,6 +134,7 @@ def site_data(cfg: Config, now: datetime | None = None, stores: dict[str, list[d
         offers = best_offers(wide, storage, categorizer, now, limit=0)
         catalogs = storage.catalogs(active_at=now)
         last = storage.last_scan()
+        market = market_prices(storage.unit_prices())
 
     by_store: dict[str, list] = {}
     for c in catalogs:
@@ -171,7 +172,7 @@ def site_data(cfg: Config, now: datetime | None = None, stores: dict[str, list[d
         "offers": [offer_payload(o, categorizer) for o in offers],
         # Sidebillederne ligger i aviser.json, som først hentes, når de skal vises
         "papers": papers_payload(catalogs, pages=False),
-        "plan": plan_payload(),
+        "plan": plan_payload(market),
     }
 
 
