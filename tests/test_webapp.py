@@ -174,11 +174,12 @@ def test_list_notes_and_departments(server):
     data = request(server + "/api/offers")[1]
     offer = data["offers"][0]
     assert data["papers"][offer["catalog_id"]]["dealer"] == offer["dealer"] and offer["catalog_order"]
-    request(server + "/api/list", {"action": "add", "id": offer["id"], "note": "til Lasagne"}, h)
+    request(server + "/api/list", {"action": "add", "id": offer["id"], "note": "til Lasagne", "count": 3}, h)
     items = request(server + "/api/list", {"action": "add_text", "text": "Løg (3)", "category": "frugt_og_groent",
                                            "note": "til Chili"}, h)[1]["items"]
     by_id = {i["id"]: i for i in items}
     assert by_id[offer["id"]]["note"] == "til Lasagne" and by_id[offer["id"]]["category"] == offer["category"]
+    assert by_id[offer["id"]]["count"] == 3
     own = next(i for i in items if i["heading"] == "Løg (3)")
     assert own["note"] == "til Chili" and own["category"] == "frugt_og_groent"
 

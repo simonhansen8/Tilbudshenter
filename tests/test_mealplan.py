@@ -3,7 +3,7 @@ import json
 from tilbudshenter.cli import main
 from tilbudshenter.mealplan import (
     DEPARTMENTS, INGREDIENTS, MIN_VEG_PER_PERSON, NORMAL_PRICES, RECIPES, VEGETABLES, imported_recipes,
-    ingredient_keys, load_imported, recipe_items, recipes_payload, vegetables_per_person,
+    ingredient_keys, ingredient_names, load_imported, recipe_items, recipes_payload, vegetables_per_person,
 )
 
 
@@ -16,6 +16,21 @@ def test_ingredient_keys():
     assert ingredient_keys("Coop creme fraiche eller fraiche") == ["creme_fraiche"]
     assert ingredient_keys("MILBONA Revet mozzarella") == ["revet_ost"]
     assert ingredient_keys("Danske porrer") == ["porrer"]
+
+
+def test_specific_goods_replace_general_ones():
+    assert ingredient_keys("Zanetti Grana Padano") == ["parmesan"]
+    assert ingredient_keys("Revet parmesan eller mozzarella") == ["parmesan", "revet_ost"]
+    assert ingredient_keys("Rucola") == ["rucola"]
+    assert ingredient_keys("Romainesalat eller icebergsalat") == ["romaine", "salat"]
+    assert ingredient_keys("Chorizo i skiver") == []
+    assert {"chorizo", "avocado", "linser", "lime", "mango"} <= set(INGREDIENTS)
+
+
+def test_ingredient_names_for_two_goods():
+    assert ingredient_names("Xtra! pasta eller Coop hakkede tomater") == {
+        "pasta": "Xtra! pasta", "hakkede_tomater": "Coop hakkede tomater"}
+    assert ingredient_names("Coop hakket oksekød 14-18%") == {}
 
 
 def test_ingredient_keys_skip_non_raw_goods():

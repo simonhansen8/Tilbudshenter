@@ -33,7 +33,7 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
                          PRODUCT_GROUPS["hakket_gris_kalv"][2]),
     "hakket_kylling": PRODUCT_GROUPS["hakket_kylling"],
     "kyllingebryst": ("kyllingebryst", [["kyllingebryst"], ["kyllingefilet"], ["kylling", "inderfilet"],
-                                        ["kyllingestrimler"]], ["lage", "kalkun"]),
+                                        ["kyllingeinderfilet"], ["kyllingestrimler"]], ["lage", "kalkun"]),
     "kyllingelaar": ("kyllingelår", [["kylling", "lår"], ["overlår"], ["underlår"]], ["and", "kalkun"]),
     "hel_kylling": ("hel kylling", [["hel", "kylling"], ["helkylling"], ["kylling", "hel "], ["kylling "]],
                     ["grill", "stegt", "lår", "bryst", "filet", "hakket", "pålæg", "kogt", "wings", "tern", "pose", "posen"]),
@@ -41,9 +41,11 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "stegeflaesk": ("stegeflæsk", [["stegeflæsk"], ["brystflæsk"], ["flæsk", "skiver"]], ["svær", "steg"]),
     "medister": PRODUCT_GROUPS["medister"],
     "flaeskesteg": PRODUCT_GROUPS["flaeskesteg"],
-    "moerbrad": PRODUCT_GROUPS["moerbrad"],
+    "moerbrad": ("mørbrad af gris", [*PRODUCT_GROUPS["moerbrad"][1], ["svinemørbrad"], ["mørbrader"]],
+                 PRODUCT_GROUPS["moerbrad"][2]),
     "koteletter": ("koteletter", [["kotelet"]], ["lam", "kalv", "okse"]),
     "poelser": ("pølser", [["pølser"]], ["cocktail", "salami", "spege", "rulle", "leverpostej", "vegansk"]),
+    "chorizo": ("chorizo", [["chorizo"]], ["chips", "snack", "pizza", "skiver"]),
     "boef": ("bøf", [["bøf "], ["bøffer"], ["oksebøf"], ["entrecote"], ["ribeye"], ["culotte"], ["flanksteak"],
                      ["oksefilet"]], ["hakke", "burger", "kylling", "kalkun", "lam", "lammekød", "gris", "vegansk", "plantebaseret"]),
     "okse_tern": ("oksekød i tern", [["okse", "tern"], ["gullasch"], ["oksegryde"]], ["kylling", "gris"]),
@@ -57,13 +59,19 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "rejer": ("rejer", [["rejer"]], ["salat", "cocktail", "chips"]),
     # Mejeri og æg
     "aeg": PRODUCT_GROUPS["aeg"],
-    "maelk": ("mælk", [["letmælk"], ["minimælk"], ["sødmælk"], ["skummetmælk"], ["mælk "]], ["kakao", "chokolade", "is "]),
+    "maelk": ("mælk", [["letmælk"], ["minimælk"], ["sødmælk"], ["skummetmælk"], ["kærnemælk"], ["mælk "]],
+              ["kakao", "chokolade", "is "]),
     "floede": ("fløde", [["fløde "], ["piskefløde"], ["madlavningsfløde"], ["kogefløde"], ["cremefine"]],
                ["is ", "kaffe", "skum", "chokolade", "buko", "ost", "kartofler"]),
     "creme_fraiche": ("creme fraiche", [["creme", "fraiche"], ["cremefraiche"], ["fraiche"]], ["dressing"]),
-    "revet_ost": ("revet ost", [["revet "], ["pizzaost"], ["mozzarella"], ["parmesan"], ["parmigiano"]],
-                  ["kokos", "rødbede", "citron", "gulerod", "chokolade", "snack", "sticks", "nuggets"]),
-    "feta": ("feta", [["feta"]], ["salat", "oliven"]),
+    "revet_ost": ("revet ost", [["revet "], ["pizzaost"], ["mozzarella"], ["cheddar"]],
+                  ["kokos", "rødbede", "citron", "gulerod", "chokolade", "snack", "sticks", "nuggets", "skiver"]),
+    # Parmesan er dyrere end revet ost og kan ikke erstattes af pizzatopping
+    "parmesan": ("parmesan", [["parmesan"], ["parmigiano"], ["grana", "padano"], ["pecorino"]],
+                 ["chips", "snack", "kiks", "chili"]),
+    "feta": ("feta", [["feta"], ["salatost"]], ["salat ", "oliven"]),
+    "yoghurt": ("yoghurt eller skyr", [["yoghurt"], ["skyr"]],
+                ["drik", "drikke", "is ", "müsli", "musli", "bar", "smoothie", "dressing", "frugt", "vanilje"]),
     "smoer": PRODUCT_GROUPS["smoer"],
     # Kolonial og brød
     "pasta": ("pasta", [["pasta "], ["spaghetti"], ["penne"], ["fusilli"], ["makaroni"], ["tagliatelle"],
@@ -80,14 +88,17 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "hakkede_tomater": ("hakkede tomater", [["hakkede", "tomater"], ["flåede", "tomater"], ["passata"]], []),
     "kidneyboenner": ("kidneybønner", [["kidney"], ["chilibønner"], ["sorte", "bønner"]], []),
     "kokosmaelk": ("kokosmælk", [["kokosmælk"]], ["drik"]),
+    "linser": ("linser", [["linser"]], ["chips", "snack", "suppe", "pasta"]),
     "majs": ("majs", [["majs "], ["majskerner"]], ["popcorn", "chips", "snack", "kolbe"]),
     # Frugt og grønt
     "kartofler": PRODUCT_GROUPS["kartofler"],
     "guleroedder": PRODUCT_GROUPS["guleroedder"],
     "loeg": ("løg", [["løg "], ["rødløg"], ["gule", "løg"]], ["ristede", "forårs", "purløg"]),
+    "foraarsloeg": ("forårsløg", [["forårsløg"]], []),
     "hvidloeg": ("hvidløg", [["hvidløg "]], ["dressing", "brød", "smør", "pølse", "gyros"]),
     "porrer": ("porrer", [["porre"]], []),
     "tomater": PRODUCT_GROUPS["tomater"],
+    "cherrytomater": ("cherrytomater", [["cherrytomat"], ["snacktomat"], ["cherry", "tomater"]], ["soltørrede", "dåse"]),
     "agurk": PRODUCT_GROUPS["agurk"],
     "peberfrugt": PRODUCT_GROUPS["peberfrugt"],
     "broccoli": PRODUCT_GROUPS["broccoli"],
@@ -96,12 +107,18 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "roedkaal": ("rødkål", [["rødkål"]], []),
     "champignon": ("champignon", [["champignon"]], []),
     "spinat": ("spinat", [["spinat"]], ["tærte", "pandekage", "ravioli"]),
-    "salat": ("salat", [["iceberg"], ["hjertesalat"], ["romaine"], ["salathoved"], ["rucola"]], ["dressing"]),
+    "salat": ("salat", [["iceberg"], ["hjertesalat"], ["salathoved"]], ["dressing"]),
+    "romaine": ("romainesalat", [["romaine"]], ["dressing"]),
+    "rucola": ("rucola", [["rucola"], ["ruccola"]], ["pesto", "dressing"]),
+    "bladselleri": ("bladselleri", [["bladselleri"], ["stangselleri"], ["selleri"]], ["salt", "juice", "rod", "knold"]),
+    "avocado": ("avocado", [["avocado"]], ["olie", "dip", "creme", "guacamole"]),
     "groenne_boenner": ("grønne bønner", [["grønne", "bønner"], ["haricots"], ["bønner", "haricot"]], []),
     "aerter": ("ærter", [["ærter "]], ["snack", "wasabi"]),
     "squash": ("squash", [["squash"]], ["saft", "sodavand", "drik", "læske", "cl ", "tuborg", "faxe", "butternut", "spaghetti", "hokkaido", "græskar"]),
     "wokgroent": ("wokgrøntsager", [["wokgrønt"], ["wokblanding"]], []),
     "citron": ("citron", [["citroner"], ["citron "]], ["saft", "juice", "te ", "vand", "kage", "is "]),
+    "lime": ("lime", [["lime "], ["limefrugt"], ["limer "]], ["saft", "juice", "sodavand", "drik", "cider", "blade", "kaffir"]),
+    "mango": ("mango", [["mango"]], ["juice", "chutney", "is ", "smoothie", "drik", "tørret", "lassi", "saft", "sorbet"]),
     "persille": ("persille", [["persille"]], ["pesto", "smør"]),
     "aebler": PRODUCT_GROUPS["aebler"],
 }
@@ -114,21 +131,22 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
 # pr. stk, dåse, fed eller bundt i gram, til at omregne mellem stk og kg.
 NORMAL_PRICES: dict[str, tuple[float, float]] = {
     "hakket_okse": (80, 500), "hakket_gris": (55, 500), "hakket_gris_kalv": (60, 500), "hakket_kylling": (70, 500),
-    "kyllingebryst": (85, 150), "kyllingelaar": (35, 200), "hel_kylling": (40, 1400), "bacon": (60, 150),
+    "kyllingebryst": (85, 150), "kyllingelaar": (35, 200), "hel_kylling": (40, 1400), "bacon": (60, 150), "chorizo": (150, 200),
     "stegeflaesk": (70, 400), "medister": (50, 500), "flaeskesteg": (50, 1500), "moerbrad": (85, 500),
     "koteletter": (60, 200), "poelser": (60, 60), "boef": (200, 150), "okse_tern": (140, 500),
     "laksefilet": (170, 125), "hvid_fisk": (120, 125), "fiskefrikadeller": (80, 60), "tun": (90, 185),
     "rejer": (120, 400),
     "aeg": (45, 60), "maelk": (11, 1000), "floede": (35, 250), "creme_fraiche": (30, 200), "revet_ost": (70, 175),
-    "feta": (60, 200), "smoer": (80, 250),
+    "parmesan": (180, 150), "feta": (60, 200), "yoghurt": (20, 1000), "smoer": (80, 250),
     "pasta": (14, 500), "lasagneplader": (30, 250), "ris": (18, 1000), "nudler": (30, 250), "tortilla": (35, 40),
     "burgerboller": (40, 70), "poelsebroed": (30, 40), "pizzadej": (25, 400), "hakkede_tomater": (12, 400),
-    "kidneyboenner": (15, 400), "kokosmaelk": (30, 400), "majs": (25, 300),
-    "kartofler": (8, 100), "guleroedder": (8, 80), "loeg": (8, 150), "hvidloeg": (60, 5), "porrer": (20, 250),
-    "tomater": (25, 100), "agurk": (20, 400), "peberfrugt": (35, 200), "broccoli": (30, 400),
+    "kidneyboenner": (15, 400), "kokosmaelk": (30, 400), "majs": (25, 300), "linser": (25, 500),
+    "kartofler": (8, 100), "guleroedder": (8, 80), "loeg": (8, 150), "foraarsloeg": (60, 100), "hvidloeg": (60, 5), "porrer": (20, 250),
+    "tomater": (25, 100), "cherrytomater": (40, 250), "agurk": (20, 400), "peberfrugt": (35, 200), "broccoli": (30, 400),
     "blomkaal": (20, 800), "spidskaal": (15, 1000), "roedkaal": (15, 500), "champignon": (45, 250),
-    "spinat": (40, 250), "salat": (30, 400), "groenne_boenner": (25, 400), "aerter": (20, 450), "squash": (20, 300),
-    "wokgroent": (25, 600), "citron": (25, 100), "persille": (100, 30), "aebler": (15, 150),
+    "spinat": (40, 250), "salat": (30, 400), "romaine": (35, 300), "rucola": (150, 65), "bladselleri": (25, 400),
+    "avocado": (50, 200), "groenne_boenner": (25, 400), "aerter": (20, 450), "squash": (20, 300),
+    "wokgroent": (25, 600), "citron": (25, 100), "lime": (40, 70), "mango": (30, 400), "persille": (100, 30), "aebler": (15, 150),
 }
 
 # Ord der betyder, at tilbuddet ikke er en råvare
@@ -409,7 +427,7 @@ RECIPES: list[Recipe] = [
         "Server med kartofler og revne gulerødder."),
     Recipe("caesar", "Cæsarsalat med kylling", "kylling", 25, [
         I(500, "g", "kyllingebryst", "kyllingebryst", True),
-        I(2, "stk", "romainesalat", "salat"),
+        I(2, "stk", "romainesalat", "romaine"),
         I(100, "g", "bacon", "bacon"),
         I(50, "g", "revet ost", "revet_ost"),
     ], ["brød til croutoner", "mayonnaise", "citron", "salt og peber"],
@@ -546,6 +564,12 @@ def _matches(tokens: list[str], spec: tuple[str, list[list[str]], list[str]]) ->
     return any(all(_has_word(tokens, w) for w in pattern) for pattern in patterns)
 
 
+# Mere præcise ingredienser, der vinder over en bredere: står der
+# "revet parmesan", er det parmesan og ikke en hvilken som helst revet ost
+REPLACES = {"parmesan": ["revet_ost"], "romaine": ["salat"], "rucola": ["salat"], "cherrytomater": ["tomater"],
+            "foraarsloeg": ["loeg"]}
+
+
 # Første ord i hvert mønster. Står ingen af dem i varenavnet, kan
 # ingrediensen ikke matche, og den dyrere kontrol springes over.
 _TRIGGERS = {
@@ -562,6 +586,20 @@ def ingredient_keys(heading: str) -> list[str]:
     return list(_ingredient_keys(heading))
 
 
+def ingredient_names(heading: str) -> dict[str, str]:
+    """Den del af varenavnet, hver ingrediens står i, når tilbuddet nævner
+    flere varer: "Xtra! pasta eller Coop hakkede tomater" giver
+    {"pasta": "Xtra! pasta", "hakkede_tomater": "Coop hakkede tomater"}.
+    Tom, når alle ingredienser står i samme del."""
+    keys = ingredient_keys(heading)
+    names = {}
+    for part in _parts(heading):
+        for key in _ingredient_keys(part):
+            if key in keys and key not in names:
+                names[key] = part
+    return names if len(set(names.values())) > 1 else {}
+
+
 @lru_cache(maxsize=8192)
 def _ingredient_keys(heading: str) -> tuple[str, ...]:
     found: list[str] = []
@@ -575,9 +613,9 @@ def _ingredient_keys(heading: str) -> tuple[str, ...]:
         tokens = _tokens(part)
         if any(_has_word(tokens, w) for w in _NOT_RAW):
             continue
-        for key in candidates:
-            if key not in found and _matches(tokens, INGREDIENTS[key]):
-                found.append(key)
+        here = [key for key in candidates if _matches(tokens, INGREDIENTS[key])]
+        replaced = {r for k in here for r in REPLACES.get(k, [])}
+        found += [k for k in here if k not in replaced and k not in found]
     return tuple(found)
 
 
@@ -590,7 +628,8 @@ def _amount(value: float) -> float | int:
 VEGETABLES = {
     "guleroedder", "loeg", "porrer", "tomater", "hakkede_tomater", "agurk", "peberfrugt", "broccoli",
     "blomkaal", "spidskaal", "roedkaal", "champignon", "spinat", "salat", "groenne_boenner", "aerter",
-    "squash", "wokgroent", "majs", "kidneyboenner",
+    "squash", "wokgroent", "majs", "kidneyboenner", "cherrytomater", "romaine", "rucola", "bladselleri", "avocado",
+    "foraarsloeg", "linser",
 }
 
 # Kostrådene anbefaler omkring 600 g frugt og grønt om dagen. En ret med
@@ -658,13 +697,14 @@ def recipes_payload() -> list[dict]:
 _DEPARTMENT_KEYS = {
     "koed": ["hakket_okse", "hakket_gris", "hakket_gris_kalv", "hakket_kylling", "kyllingebryst", "kyllingelaar",
              "hel_kylling", "bacon", "stegeflaesk", "medister", "flaeskesteg", "moerbrad", "koteletter", "poelser",
-             "boef", "okse_tern"],
+             "boef", "okse_tern", "chorizo"],
     "fisk": ["laksefilet", "hvid_fisk", "fiskefrikadeller", "rejer"],
-    "mejeri": ["aeg", "maelk", "floede", "creme_fraiche", "revet_ost", "feta", "smoer", "pizzadej"],
+    "mejeri": ["aeg", "maelk", "floede", "creme_fraiche", "revet_ost", "parmesan", "feta", "yoghurt", "smoer",
+               "pizzadej"],
     "broed_og_bager": ["tortilla", "burgerboller", "poelsebroed"],
     "frost": ["aerter", "wokgroent"],
     "kolonial": ["pasta", "lasagneplader", "ris", "nudler", "hakkede_tomater", "kidneyboenner", "kokosmaelk",
-                 "majs", "tun"],
+                 "majs", "tun", "linser"],
 }
 DEPARTMENTS = {k: dept for dept, keys in _DEPARTMENT_KEYS.items() for k in keys}
 
@@ -743,7 +783,10 @@ PANTRY_WORDS = [
     "garam", "tomatpuré", "tomatpure", "bagepulver", "gær ", "maizena", "majsstivelse", "vanilje", "sesam",
     "rasp", "tabasco", "worcester", "sriracha", "basilikum", "koriander", "dild", "purløg", "mynte", "estragon",
     "kardemomme", "nellike", "allehånde", "fennikelfrø", "sambal", "harissa", "pesto", "kapers", "oliven",
-    "hvidvin", "rødvin", "smørelse", "fedtstof", "neutral",
+    "hvidvin", "rødvin", "smørelse", "fedtstof", "neutral", "fiskesauce", "fishsauce", "fiskesovs",
+    "østerssauce", "hoisin", "citrongræs", "citronsaft", "limesaft", "gastrik", "stegesky", "soltørrede",
+    "jalapeño", "jalapeños", "jalapenos", "nødder", "mandler", "pinjekerner", "rosiner", "tranebær", "dadler",
+    "abrikoser", "kokosmel", "appelsin", "frø ", "kerner",
 ]
 PORK_WORDS = ["skinke", "bacon", "pancetta", "chorizo", "salami", "svin", "gris", "flæsk", "pølse", "prosciutto",
               "serrano", "medister", "kotelet", "spegepølse"]
@@ -756,7 +799,7 @@ _KIND_KEYS = [
     ("kylling", ["hakket_kylling", "kyllingebryst", "kyllingelaar", "hel_kylling"]),
     ("okse", ["hakket_okse", "boef", "okse_tern"]),
     ("gris", ["hakket_gris", "hakket_gris_kalv", "bacon", "stegeflaesk", "medister", "flaeskesteg", "moerbrad",
-              "koteletter", "poelser"]),
+              "koteletter", "poelser", "chorizo"]),
 ]
 _MEAT_KEYS = {k for _, keys in _KIND_KEYS for k in keys}
 
@@ -874,7 +917,7 @@ def ingredients_payload() -> list[dict]:
     """Ingredienserne med mønstre, så browseren kan læse egne opskrifter."""
     return [
         {"key": k, "name": name, "patterns": patterns, "exclude": exclude, "price": list(NORMAL_PRICES[k]),
-         "veg": k in VEGETABLES, "dept": department(k)}
+         "veg": k in VEGETABLES, "dept": department(k), "replaces": REPLACES.get(k, [])}
         for k, (name, patterns, exclude) in INGREDIENTS.items()
     ]
 
