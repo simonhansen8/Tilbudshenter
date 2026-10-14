@@ -38,7 +38,7 @@ DEFAULT_CATEGORIES: dict[str, dict] = {
         "navn": "Drikkevarer",
         "noegleord": [
             "monster", "royal club", "shaker", "proteinshake", "proteindrik", "ready to drink", "nupo", "ingefærshot", "shot",
-            "sodavand", "cola", "coca cola", "fanta", "squash", "pepsi", "faxe kondi", "juice", "saft",
+            "sodavand", "cola", "coca cola", "fanta", "tuborg squash", "pepsi", "faxe kondi", "juice", "saft",
             "vand ", "kildevand", "danskvand", "energidrik", "smoothie", "iste",
             "powerade", "monster energy", "red bull", "drik", "rynkeby",
             "ribena", "solbærdrik", "cocio", "kakaomælk",

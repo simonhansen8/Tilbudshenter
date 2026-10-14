@@ -1,7 +1,10 @@
 import json
 
 from tilbudshenter.cli import main
-from tilbudshenter.mealplan import INGREDIENTS, NORMAL_PRICES, RECIPES, ingredient_keys, recipes_payload
+from tilbudshenter.mealplan import (
+    INGREDIENTS, MIN_VEG_PER_PERSON, NORMAL_PRICES, RECIPES, VEGETABLES, ingredient_keys, recipe_items,
+    recipes_payload, vegetables_per_person,
+)
 
 
 def test_ingredient_keys():
@@ -25,6 +28,7 @@ def test_ingredient_keys_skip_non_raw_goods():
         "Irma gastrik, æble- eller pærecidereddike",
         "RAHBEK Indbagt laks med spinat eller rejer med asparges",
         "De Cecco pastasauce",
+        "Butternut squash",
         "FRESHONA Broccoli- eller blomkålsris",
         "GRILLMESTER Kalkunhakkebøffer",
     ]:
@@ -56,8 +60,21 @@ def test_recipes_payload_is_json():
     bolognese = next(r for r in data if r["id"] == "bolognese")
     assert bolognese["items"][0] == {
         "amount": 500, "unit": "g", "name": "hakket kød (okse eller grise- og kalv)", "keys": ["hakket_okse", "hakket_gris_kalv"],
-        "main": True, "price_kg": 100, "piece_g": 0,
+        "main": True, "side": False, "prices": {"hakket_okse": [100, 0], "hakket_gris_kalv": [75, 0]},
     }
+    assert bolognese["veg_g"] == 278
+
+
+def test_dishes_with_few_vegetables_get_a_side():
+    carbonara = next(r for r in RECIPES if r.id == "carbonara")
+    assert vegetables_per_person(carbonara.items) == 0
+    side = recipe_items(carbonara)[-1]
+    assert side.keys and all(k in VEGETABLES for k in side.keys)
+    assert vegetables_per_person(recipe_items(carbonara)) >= MIN_VEG_PER_PERSON
+    chili = next(r for r in RECIPES if r.id == "chili")
+    assert recipe_items(chili) == chili.items
+    data = {r["id"]: r for r in recipes_payload()}
+    assert data["carbonara"]["items"][-1]["side"] and data["carbonara"]["veg_g"] == 125
 
 
 def test_site_has_recipes_and_ingredients(tmp_path):
