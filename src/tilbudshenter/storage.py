@@ -48,6 +48,22 @@ CREATE TABLE IF NOT EXISTS offers (
     fetched_at  TEXT NOT NULL
 );
 
+-- Indkøbslisten gemmer en kopi af tilbuddet, så den overlever, at
+-- tilbuddet udløber. Egne varer har ingen pris.
+CREATE TABLE IF NOT EXISTS shopping_list (
+    id          TEXT PRIMARY KEY,
+    dealer      TEXT,
+    heading     TEXT NOT NULL,
+    description TEXT,
+    price       REAL,
+    unit        TEXT,
+    amount      REAL,
+    run_from    TEXT,
+    run_till    TEXT,
+    added_at    TEXT NOT NULL,
+    checked     INTEGER NOT NULL DEFAULT 0
+);
+
 CREATE INDEX IF NOT EXISTS offers_run_till ON offers(run_till);
 CREATE INDEX IF NOT EXISTS offers_product ON offers(product_key, unit);
 """
@@ -213,3 +229,48 @@ class Storage:
             for key, values in prices.items()
             if len(catalogs_seen[key]) >= 2
         }
+
+    # -- Indkøbsliste ---------------------------------------------------
+    def shopping_list(self) -> list[dict]:
+        rows = self.conn.execute(
+            "SELECT * FROM shopping_list ORDER BY dealer IS NULL, dealer, added_at"
+        ).fetchall()
+        return [{**dict(r), "checked": bool(r["checked"])} for r in rows]
+
+    def add_to_list(self, offer_id: str) -> bool:
+        """Lægger et tilbud på listen. Returnerer False, hvis tilbuddet ikke findes."""
+        cur = self.conn.execute(
+            """
+            INSERT OR IGNORE INTO shopping_list
+                (id, dealer, heading, description, price, unit, amount, run_from, run_till, added_at)
+            SELECT id, dealer, heading, description, price, unit, amount, run_from, run_till, ?
+            FROM offers WHERE id = ?
+            """,
+            (_now(), offer_id),
+        )
+        self.conn.commit()
+        return cur.rowcount > 0 or self.conn.execute(
+            "SELECT 1 FROM shopping_list WHERE id = ?", (offer_id,)
+        ).fetchone() is not None
+
+    def add_text_to_list(self, text: str) -> str:
+        """Lægger en egen vare (fx "mælk") på listen."""
+        item_id = f"egen-{datetime.now(timezone.utc).timestamp():.6f}"
+        self.conn.execute(
+            "INSERT INTO shopping_list (id, heading, added_at) VALUES (?, ?, ?)",
+            (item_id, text.strip(), _now()),
+        )
+        self.conn.commit()
+        return item_id
+
+    def set_list_checked(self, item_id: str, checked: bool) -> None:
+        self.conn.execute("UPDATE shopping_list SET checked = ? WHERE id = ?", (int(checked), item_id))
+        self.conn.commit()
+
+    def remove_from_list(self, item_id: str) -> None:
+        self.conn.execute("DELETE FROM shopping_list WHERE id = ?", (item_id,))
+        self.conn.commit()
+
+    def clear_list(self, only_checked: bool = False) -> None:
+        self.conn.execute("DELETE FROM shopping_list" + (" WHERE checked = 1" if only_checked else ""))
+        self.conn.commit()

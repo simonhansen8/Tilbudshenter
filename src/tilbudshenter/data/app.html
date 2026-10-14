@@ -101,6 +101,30 @@ label.field input { padding: 8px 10px; border: 1px solid var(--line); border-rad
 .store-catalogs .period { color: var(--muted); }
 .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 6px; }
 .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 14px; max-width: calc(100vw - 32px); }
+.add { margin-top: 8px; align-self: flex-start; }
+.add.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.list-store { margin-top: 14px; }
+.list-store h3 { margin: 0 0 4px; font-size: 15px; display: flex; justify-content: space-between; gap: 8px; }
+.list-store h3 .sum { color: var(--muted); font-weight: 500; }
+.item { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.item input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--accent); flex: none; }
+.item .what { flex: 1; min-width: 0; }
+.item .sub { color: var(--muted); font-size: 12px; }
+.item.done .what { text-decoration: line-through; color: var(--muted); }
+.item .x { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; line-height: 1; padding: 0 4px; }
+.item .p { white-space: nowrap; font-weight: 600; }
+.expired { color: var(--error); }
+.add-own { display: flex; gap: 8px; margin-top: 12px; }
+.add-own input { flex: 1; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
+#print-area { display: none; }
+@media print {
+  body { background: #fff; color: #000; }
+  main, dialog, .toast { display: none !important; }
+  #print-area { display: block; font: 13px/1.4 system-ui, sans-serif; }
+  #print-area h1 { font-size: 18px; margin: 0 0 8px; }
+  #print-area h2 { font-size: 15px; margin: 14px 0 4px; }
+  #print-area li { list-style: "☐  "; margin: 2px 0; }
+}
 [hidden] { display: none !important; }
 @media (max-width: 520px) {
   h1 { font-size: 21px; }
@@ -120,6 +144,7 @@ label.field input { padding: 8px 10px; border: 1px solid var(--line); border-rad
     </div>
     <div class="actions">
       <button class="btn primary" id="btn-scan">Hent nye tilbud</button>
+      <button class="btn" id="btn-list">Indkøbsliste <span id="list-count"></span></button>
       <button class="btn" id="btn-settings">Indstillinger</button>
     </div>
   </header>
@@ -212,6 +237,31 @@ label.field input { padding: 8px 10px; border: 1px solid var(--line); border-rad
   </form>
 </dialog>
 
+<dialog id="list-dlg">
+  <div class="dlg">
+    <div class="dlg-head">
+      <h2>Indkøbsliste</h2>
+      <button class="btn small" id="btn-list-close">Luk</button>
+    </div>
+    <div class="dlg-body">
+      <form class="add-own" id="add-own">
+        <input id="own-text" placeholder="Tilføj egen vare, fx mælk eller toiletpapir" maxlength="200">
+        <button class="btn small">Tilføj</button>
+      </form>
+      <div id="list-body"></div>
+    </div>
+    <div class="dlg-foot" style="flex-wrap:wrap">
+      <button class="btn small" id="btn-list-clear-checked">Fjern afkrydsede</button>
+      <button class="btn small" id="btn-list-clear">Tøm listen</button>
+      <span style="flex:1"></span>
+      <button class="btn small" id="btn-list-copy">Kopiér</button>
+      <a class="btn small" id="btn-list-mail" href="#" style="text-decoration:none;color:inherit">Send som mail</a>
+      <button class="btn small primary" id="btn-list-print">Udskriv</button>
+    </div>
+  </div>
+</dialog>
+<div id="print-area"></div>
+
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -220,7 +270,7 @@ const PAGE = 120;
 const state = {
   offers: [], settings: null, categories: [], stores: new Set(), cats: new Set(),
   q: "", sort: "best", knownOnly: false, hideMember: false, limit: PAGE, catalogList: null, scanning: false,
-  periods: new Set(["now", "later"]),
+  periods: new Set(["now", "later"]), list: [],
 };
 
 // "now": gælder i dag, "later": avisen starter først om nogle dage
@@ -410,6 +460,7 @@ function card(o) {
     ${o.unit_price_text ? `<div class="unit">${esc(o.unit_price_text)}</div>` : ""}
     ${o.reasons.length ? `<div class="why">${esc(o.reasons.join(", "))}</div>` : ""}
     <div class="meta">${esc(o.category_name)} · ${esc(o.period_text)}${o.catalog_label ? ` · ${esc(o.catalog_label)}` : ""}</div>
+    ${listButton(o.id)}
   </article>`;
 }
 
@@ -431,6 +482,86 @@ function render() {
     + (list.length < state.offers.length ? ` (${state.offers.length} i alt)` : "");
   $("grid").innerHTML = list.slice(0, state.limit).map(card).join("");
   $("btn-more").hidden = list.length <= state.limit;
+}
+
+// -- Indkøbsliste -------------------------------------------------------
+function onList(id) { return state.list.some(i => i.id === id); }
+
+function listButton(id) {
+  return onList(id)
+    ? `<button class="btn small add on" data-list="${esc(id)}">✓ På listen</button>`
+    : `<button class="btn small add" data-list="${esc(id)}">+ Indkøbsliste</button>`;
+}
+
+async function loadList() {
+  state.list = (await api("/api/list")).items;
+  renderListCount();
+}
+
+async function changeList(body) {
+  try {
+    state.list = (await api("/api/list", body)).items;
+  } catch (e) { toast(e.message); }
+  renderListCount();
+  if ($("list-dlg").open) renderList();
+}
+
+function renderListCount() {
+  const open = state.list.filter(i => !i.checked).length;
+  $("list-count").textContent = state.list.length ? `(${open})` : "";
+  document.querySelectorAll("[data-list]").forEach(b => { b.outerHTML = listButton(b.dataset.list); });
+}
+
+// Varer grupperet efter butik; egne varer til sidst
+function listGroups() {
+  const groups = new Map();
+  for (const i of state.list) {
+    const key = i.dealer || "Andre varer";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(i);
+  }
+  return [...groups.entries()];
+}
+
+function money(n) { return n.toLocaleString("da-DK", {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " kr"; }
+
+function renderList() {
+  $("btn-list-mail").href = "mailto:?subject=" + encodeURIComponent("Indkøbsliste") + "&body=" + encodeURIComponent(listText());
+  if (!state.list.length) {
+    $("list-body").innerHTML = `<p class="hint" style="margin-top:14px">Listen er tom. Tryk "+ Indkøbsliste" på et tilbud for at lægge det her.</p>`;
+    return;
+  }
+  const total = state.list.reduce((s, i) => s + (i.price || 0), 0);
+  $("list-body").innerHTML = listGroups().map(([store, items]) => {
+    const sum = items.reduce((s, i) => s + (i.price || 0), 0);
+    return `<div class="list-store"><h3>${esc(store)}${sum ? `<span class="sum">${money(sum)}</span>` : ""}</h3>
+      ${items.map(i => `<div class="item${i.checked ? " done" : ""}">
+        <input type="checkbox" data-check="${esc(i.id)}" ${i.checked ? "checked" : ""}>
+        <div class="what">${esc(i.heading)}
+          <div class="sub">${[i.unit_price_text, i.period_text, i.member].filter(Boolean).map(esc).join(" · ")}
+          ${i.expired ? ` · <span class="expired">Tilbuddet er udløbet</span>` : ""}</div></div>
+        ${i.price_text ? `<span class="p">${esc(i.price_text)}</span>` : ""}
+        <button class="x" data-remove="${esc(i.id)}" title="Fjern">×</button>
+      </div>`).join("")}</div>`;
+  }).join("") + (total ? `<p style="text-align:right;font-weight:700;margin:12px 0 0">I alt ${money(total)}</p>` : "");
+}
+
+function listText() {
+  return listGroups().map(([store, items]) =>
+    `${store}:\n` + items.filter(i => !i.checked).map(i => `- ${i.heading}${i.price_text ? ` (${i.price_text})` : ""}`).join("\n")
+  ).join("\n\n");
+}
+
+function openList() {
+  renderList();
+  $("list-dlg").showModal();
+}
+
+function printList() {
+  $("print-area").innerHTML = `<h1>Indkøbsliste</h1>` + listGroups().map(([store, items]) =>
+    `<h2>${esc(store)}</h2><ul>${items.filter(i => !i.checked).map(i =>
+      `<li>${esc(i.heading)}${i.price_text ? ` · ${esc(i.price_text)}` : ""}</li>`).join("")}</ul>`).join("");
+  window.print();
 }
 
 // -- Indstillinger ------------------------------------------------------
@@ -526,6 +657,34 @@ async function saveSettings() {
 // -- Hændelser ----------------------------------------------------------
 $("btn-scan").addEventListener("click", () => startScan(false));
 $("btn-settings").addEventListener("click", openSettings);
+$("btn-list").addEventListener("click", openList);
+$("btn-list-close").addEventListener("click", () => $("list-dlg").close());
+$("btn-list-print").addEventListener("click", printList);
+$("btn-list-copy").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(listText()); toast("Listen er kopieret"); }
+  catch (e) { toast("Kunne ikke kopiere listen"); }
+});
+$("btn-list-clear-checked").addEventListener("click", () => changeList({action: "clear", only_checked: true}));
+$("btn-list-clear").addEventListener("click", () => { if (confirm("Tøm hele indkøbslisten?")) changeList({action: "clear"}); });
+$("add-own").addEventListener("submit", e => {
+  e.preventDefault();
+  const text = $("own-text").value.trim();
+  if (text) { changeList({action: "add_text", text}); $("own-text").value = ""; }
+});
+$("list-body").addEventListener("click", e => {
+  const id = e.target.dataset.remove;
+  if (id) changeList({action: "remove", id});
+});
+$("list-body").addEventListener("change", e => {
+  const id = e.target.dataset.check;
+  if (id) changeList({action: "check", id, checked: e.target.checked});
+});
+$("grid").addEventListener("click", e => {
+  const b = e.target.closest("[data-list]");
+  if (!b) return;
+  const id = b.dataset.list;
+  changeList(onList(id) ? {action: "remove", id} : {action: "add", id});
+});
 $("btn-load-stores").addEventListener("click", loadStores);
 $("btn-more").addEventListener("click", () => { state.limit += PAGE; render(); });
 $("search").addEventListener("input", e => { state.q = e.target.value; state.limit = PAGE; render(); });
@@ -561,6 +720,7 @@ $("settings-form").addEventListener("submit", e => {
   loadPrefs();
   try {
     const s = await refreshState();
+    await loadList();
     await loadOffers();
     // Første gang: hent tilbud med det samme
     if (!s.last_scan && !s.scan.running) startScan();
