@@ -256,6 +256,10 @@ hakket oksekød er billigt.
 - For hver vare vises det billigste tilbud pr. kg, helst fra den butik, hvor
   hovedingrediensen købes, så en ret kan købes ind ét sted. Du kan også
   vælge én bestemt butik.
+- Hver ret har en samlet pris og en pris pr. person. Den regnes for de
+  mængder, retten bruger, med tilbuddets pris pr. kg, liter eller stk, og for
+  varer uden tilbud med en anslået normalpris (`NORMAL_PRICES` i
+  `mealplan.py`). Hele pakker kan koste mere.
 - Vælg antal retter, antal personer (mængderne skaleres) og kost (alt, uden
   svinekød, uden fisk eller vegetar). **Byt ret** giver det næste bedste
   forslag, og **Ny madplan** giver helt nye retter.

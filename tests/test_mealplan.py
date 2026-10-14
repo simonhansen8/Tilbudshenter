@@ -1,7 +1,7 @@
 import json
 
 from tilbudshenter.cli import main
-from tilbudshenter.mealplan import INGREDIENTS, RECIPES, ingredient_keys, recipes_payload
+from tilbudshenter.mealplan import INGREDIENTS, NORMAL_PRICES, RECIPES, ingredient_keys, recipes_payload
 
 
 def test_ingredient_keys():
@@ -42,14 +42,21 @@ def test_recipes_are_consistent():
         for i in r.items:
             assert i.keys and all(k in INGREDIENTS for k in i.keys), (r.id, i.name)
             assert i.amount > 0 and i.unit
+            # Stk, dåser osv. kan kun prissættes med en vægt pr. stk
+            price_kg, piece_g = NORMAL_PRICES[i.keys[0]]
+            assert price_kg > 0 and (i.unit in ("g", "dl") or piece_g > 0), (r.id, i.name)
+
+
+def test_every_ingredient_has_a_normal_price():
+    assert set(NORMAL_PRICES) == set(INGREDIENTS)
 
 
 def test_recipes_payload_is_json():
     data = json.loads(json.dumps(recipes_payload()))
     bolognese = next(r for r in data if r["id"] == "bolognese")
     assert bolognese["items"][0] == {
-        "amount": 500, "unit": "g", "name": "hakket oksekød", "keys": ["hakket_okse", "hakket_gris_kalv"],
-        "main": True,
+        "amount": 500, "unit": "g", "name": "hakket kød (okse eller grise- og kalv)", "keys": ["hakket_okse", "hakket_gris_kalv"],
+        "main": True, "price_kg": 100, "piece_g": 0,
     }
 
 
