@@ -69,7 +69,7 @@ I appen kan du:
 - søge og filtrere på butik og kategori, sortere efter rabat eller pris pr. kg,
 - vælge mellem tilbud der gælder nu, og dem der starter senere,
 - se hvilke tilbud der kræver Lidl Plus, kædens app eller medlemskab (og skjule dem),
-- lægge tilbud og egne varer på en **indkøbsliste**, delt op efter butik, som
+- lægge tilbud og egne varer på en **indkøbsliste**, delt op efter butik og afdeling, som
   kan kopieres, sendes som mail eller udskrives,
 - lave en **madplan** ud fra ugens tilbud (se nedenfor),
 - vælge butikker, aviser, kategorier og din placering under **Indstillinger**.
@@ -106,6 +106,7 @@ Demodata gemmes adskilt fra dine rigtige data (`tilbud.demo.db` og
 | `tilbudshenter overvaag` | Scanner automatisk hver 6. time (`--interval` ændrer det). |
 | `tilbudshenter init` | Opretter en konfigurationsfil med forklaringer. |
 | `tilbudshenter side` | Henter tilbud og bygger den statiske side til GitHub Pages. |
+| `tilbudshenter opskrifter` | Henter opskrifterne i `opskrifter.txt` fra madsiderne til madplanen. |
 
 Eksempler på `tilbud`:
 
@@ -234,6 +235,7 @@ src/tilbudshenter/
   comparison.py   sammenligning af samme vare på tværs af butikker
   selection.py    filtrering og rangering
   mealplan.py     retter og ingredienser til madplanen
+  opskrifter.py   opskrifter fra madsider (schema.org/Recipe)
   storage.py      SQLite: aviser, tilbud og prishistorik
   report.py       HTML, Markdown, JSON og terminal
 ```
@@ -264,14 +266,44 @@ hakket oksekød er billigt.
   mængder, retten bruger, med tilbuddets pris pr. kg, liter eller stk, og for
   varer uden tilbud med en anslået normalpris (`NORMAL_PRICES` i
   `mealplan.py`). Hele pakker kan koste mere.
-- Vælg antal retter, antal personer (mængderne skaleres) og kost (alt, uden
-  svinekød, uden fisk eller vegetar). **Byt ret** giver det næste bedste
-  forslag, og **Ny madplan** giver helt nye retter.
+- Vælg første dag, antal dage, antal personer (mængderne skaleres) og kost
+  (alt, uden svinekød, uden fisk eller vegetar). Hver ret får en dag: retter
+  over 45 minutter lægges i weekenden og de hurtige på hverdagene. **↑** og
+  **↓** flytter en ret, **Byt ret** giver det næste bedste forslag, og **Ny
+  madplan** giver helt nye retter.
+- **Dobbelt portion** laver retten til to dage, så resten spises dagen efter.
+- **Det har jeg allerede**: skriv, hvad du har i køleskabet eller skabet
+  (eller tryk **har jeg** ved en vare). Retter, der bruger det, kommer
+  først, det koster ikke noget i planen, og det kommer ikke på
+  indkøbslisten.
+- **Mine opskrifter**: tilføj dine egne retter ved at skrive eller kopiere
+  ingredienslisten ind. Hver linje som "500 g hakket oksekød" genkendes som
+  tilbuddene, og retten kommer på madplanen, når hovedingrediensen er på
+  tilbud, eller når du trykker **Sæt på madplanen**. I appen kan du også
+  indsætte et link til en opskrift. Egne opskrifter gemmes i browseren.
 - **Læg på indkøbslisten** lægger tilbuddene og de varer, der ikke er på
-  tilbud, på indkøbslisten. Krydderier, olie og mel regnes som noget, man
-  har derhjemme.
+  tilbud, på indkøbslisten. Samme vare i flere retter lægges sammen, med en
+  note om mængden og retterne. Krydderier, olie og mel regnes som noget, man
+  har derhjemme. Indkøbslisten er sorteret efter afdeling i butikken.
 
 Madplanen huskes i browseren, ligesom indkøbslisten.
+
+### Flere opskrifter fra madsider
+
+Næsten alle madsider beskriver deres opskrifter med
+[schema.org/Recipe](https://schema.org/Recipe), så Google kan vise dem. Det
+bruger Tilbudshenter til at hente opskrifter automatisk:
+
+1. Skriv adressen på en opskrift, eller et sitemap fra en madside, i
+   `opskrifter.txt` (én pr. linje; se eksemplerne i filen).
+2. Næste gang siden bygges, henter GitHub de nye opskrifter, gemmer dem i
+   `src/tilbudshenter/data/opskrifter.json` og lægger dem ind i madplanen.
+   Hver side hentes kun én gang.
+
+Kun navn, antal personer, tid og ingredienser gemmes; madplanen linker til
+madsiden for fremgangsmåden. Opskrifter med kød eller fisk, som ikke kan
+genkendes i aviserne, eller med for mange ukendte varer, springes over, da
+de ikke kan prissættes.
 
 ## Udvikling
 

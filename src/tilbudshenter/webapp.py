@@ -20,7 +20,8 @@ from urllib.parse import urlparse
 from .categories import UNCATEGORIZED, Categorizer, merge_categories
 from .cli import best_offers, load_app_config, make_source
 from .config import Config, example_config, save_config
-from .mealplan import ingredient_keys, recipes_payload
+from .mealplan import ingredient_keys, plan_payload
+from .opskrifter import extract_recipe, fetch
 from .models import Offer
 from .report import discount_text, kr, period_text, unit_price_text, write_reports
 from .scanner import scan
@@ -150,14 +151,15 @@ class App:
         action = data.get("action")
         cfg = self.config()
         with Storage(cfg.database) as storage:
+            note = str(data.get("note") or "")[:200] or None
             if action == "add":
-                if not storage.add_to_list(str(data.get("id", ""))):
+                if not storage.add_to_list(str(data.get("id", "")), note):
                     raise ValueError("Tilbuddet findes ikke længere")
             elif action == "add_text":
                 text = str(data.get("text", "")).strip()
                 if not text:
                     raise ValueError("Skriv hvad der skal på listen")
-                storage.add_text_to_list(text[:200])
+                storage.add_text_to_list(text[:200], note, str(data.get("category") or "")[:40] or None)
             elif action == "check":
                 storage.set_list_checked(str(data.get("id", "")), bool(data.get("checked")))
             elif action == "remove":
@@ -311,7 +313,7 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/list":
                 return self._json(self.app.shopping_list())
             if path == "/api/recipes":
-                return self._json({"recipes": recipes_payload()})
+                return self._json(plan_payload())
         except SourceError as exc:
             return self._error(HTTPStatus.BAD_GATEWAY, str(exc))
         except Exception as exc:
@@ -338,11 +340,27 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/list":
                 self.app.change_list(data)
                 return self._json(self.app.shopping_list())
+            if path == "/api/import_recipe":
+                return self._json({"recipe": import_recipe(str(data.get("url", "")))})
         except (ValueError, TypeError) as exc:
             return self._error(HTTPStatus.BAD_REQUEST, str(exc))
         except Exception as exc:
             return self._error(HTTPStatus.INTERNAL_SERVER_ERROR, f"Fejl: {exc}")
         self._error(HTTPStatus.NOT_FOUND, "Ikke fundet")
+
+
+def import_recipe(url: str) -> dict:
+    """Opskriften på en madside, til brugerens egne opskrifter."""
+    if urlparse(url).scheme not in ("http", "https"):
+        raise ValueError("Skriv hele adressen på opskriften, fx https://...")
+    try:
+        page = fetch(url)
+    except OSError as exc:
+        raise ValueError(f"Kunne ikke hente siden: {exc}") from exc
+    recipe = extract_recipe(page, url)
+    if not recipe:
+        raise ValueError("Fandt ingen opskrift på siden. Kopiér i stedet ingredienslisten ind.")
+    return recipe
 
 
 def make_server(app: App, port: int = DEFAULT_PORT, tries: int = 10) -> ThreadingHTTPServer:
