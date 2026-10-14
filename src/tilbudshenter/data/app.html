@@ -1450,6 +1450,10 @@ let planData = null, ING = {};
 const KIND_NAMES = {okse: "Okse", gris: "Gris", kylling: "Kylling", fisk: "Fisk", vegetar: "Vegetar", andet: "Andet kød"};
 const RED = new Set(["okse", "gris", "andet"]);
 const PLAN_MAX_PER_KIND = 2;
+// En tilbudsret: hovedingrediensen er på tilbud, og tilbuddene skal også
+// bære retten: mindst to varer på tilbud (eller alle, hvis retten kun har én),
+// mindst halvdelen af prisen fra tilbud og mindst 10 % sparet mod basisvarerne
+const OFFER_MIN_ITEMS = 2, OFFER_MIN_SHARE = 0.5, OFFER_MIN_SAVING = 0.1;
 const WEEKDAYS = ["søndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag"];
 
 async function loadPlanData() {
@@ -1739,7 +1743,8 @@ function rankRecipes() {
       return {item, offer, have: false};
     });
     const fridge = items.filter(y => y.have && !y.item.side).length;
-    const entry = {recipe: r, items, main, fridge, eligible: !!main || mainItems.some(haveItem)};
+    const entry = {recipe: r, items, main, fridge};
+    entry.eligible = mainItems.some(haveItem) || (!!main && offerDish(entry));
     ranked.push({...entry, score: recipeScore(entry)});
   }
   return ranked.sort((a, b) => b.score - a.score);
@@ -1762,12 +1767,28 @@ function recipeScore(entry) {
   return fridge - 20 * clamp(waste / 100) + (plan.focus === "cheap" ? 70 * cheap + 15 * saving + 15 * green : 35 * cheap + 35 * saving + 30 * green);
 }
 
+// Bærer tilbuddene retten? Tilbehøret og det, man har derhjemme, tæller ikke.
+function offerStats(entry) {
+  const lines = entry.items.filter(y => !y.have && !y.item.side && y.item.keys.length && y.item.amount);
+  const on = lines.filter(y => y.offer);
+  const costs = lines.map(y => itemCost(y.item, y.offer));
+  const cost = costs.reduce((s, c) => s + c.cost, 0), normal = costs.reduce((s, c) => s + c.normal, 0);
+  const offerCost = lines.reduce((s, y, i) => s + (y.offer ? costs[i].cost : 0), 0);
+  return {on: on.length, lines: lines.length, share: cost ? offerCost / cost : 0, saving: normal ? 1 - cost / normal : 0};
+}
+
+function offerDish(entry) {
+  const st = offerStats(entry);
+  return st.on >= Math.min(OFFER_MIN_ITEMS, st.lines) && st.share >= OFFER_MIN_SHARE && st.saving >= OFFER_MIN_SAVING;
+}
+
 // Vælger n retter efter kostrådene: fisk hver uge (to gange ved 6-7 retter),
 // en grøntsagsret ved 4 eller flere retter, højst halvdelen med rødt kød,
 // højst to af samme slags og ikke det samme hovedtilbud to gange. Er der
 // for få, fyldes op uden de krav og til sidst med retter, der er byttet væk.
 function choosePlan(ranked, keep, n) {
-  const chosen = keep.map(id => ranked.find(x => x.recipe.id === id)).filter(Boolean);
+  // En gemt ret, der ikke længere er en tilbudsret, skiftes ud; egne retter bliver
+  const chosen = keep.map(id => ranked.find(x => x.recipe.id === id)).filter(x => x && (x.eligible || x.recipe.own));
   const usable = ranked.filter(x => x.eligible);
   const pool = usable.filter(x => !chosen.includes(x) && !plan.skipped.has(x.recipe.id));
   const count = (pred) => chosen.filter(pred).length;
@@ -1828,11 +1849,13 @@ function arrange(entries) {
   const rest = entries.filter(x => !result.includes(x)).sort((a, b) => a.recipe.minutes - b.recipe.minutes);
   // Hurtige først til hverdagene; resten fylder ud
   const order = result.map(x => x || rest.shift());
-  // En ret, hvis hovedtilbud først starter senere i perioden, rykkes til en dag, hvor det gælder
+  // En ret, hvis hovedtilbud først starter senere i perioden, rykkes til en dag,
+  // hvor det gælder, og en ret, hvis tilbud slutter i dag, kommer i dag
   const out = [], n = order.length;
   for (let i = 0; i < n; i++) {
     const day = addDays(startDate(), i);
-    const k = order.findIndex(x => !x.main || validOn(x.main, day));
+    const last = order.findIndex(x => x.main && validOn(x.main, day) && !validOn(x.main, addDays(day, 1)));
+    const k = last >= 0 ? last : order.findIndex(x => !x.main || validOn(x.main, day));
     out.push(order.splice(k >= 0 ? k : 0, 1)[0]);
   }
   return out;
@@ -1921,6 +1944,9 @@ function packNeed(item, offer, mult = 1) {
     return {need: pieces, size: perPack, price: offer.price || offer.unit_price, stk: perPack === 1, key, pieces: true};
   }
   const size = (offer.unit === "kg" || offer.unit === "l") && offer.amount ? offer.amount : null;
+  // "2 dåser tun", og tilbuddet er én dåse (140 g mod normalt 185 g): 2 pakker
+  if (size && item.unit !== "g" && item.unit !== "dl" && pieceG && size >= pieceG / 2000 && size <= pieceG * 1.6 / 1000)
+    return {need: n, size: 1, price: offer.price, stk: false, key, pieces: true};
   return {need: kg, size, price: offer.price, stk: false, key};
 }
 
@@ -2074,7 +2100,7 @@ function renderPlan() {
       <div class="dish-head"><h3>${esc(r.name)}</h3>
         <span class="price-tag">ca. ${kr(pay)}</span></div>
       <div class="sub">${Math.abs(pay - cost) >= 1 ? `Retten bruger for ca. ${kr(cost)} · ` : ""}${kr(cost / plan.persons / x.mult)} pr. person · ${esc(KIND_NAMES[r.kind] || r.kind)}
-        ${r.minutes ? ` · ${r.minutes} min` : ""} · ${r.veg_g} g grønt pr. person · ${onOffer} af ${x.items.length} varer på tilbud
+        ${r.minutes ? ` · ${r.minutes} min` : ""} · ${r.veg_g} g grønt pr. person · ${onOffer} af ${x.items.length} varer på tilbud${onOffer ? ` (${Math.round(offerStats(x).share * 100)} % af prisen)` : ""}
         ${have ? ` · ${have} har du` : ""}${source ? ` · ${esc(source)}` : ""}
         ${normal - cost >= 5 ? ` · <b class="save">sparer ca. ${kr(normal - cost)}</b>` : ""}</div>
       ${x.mult === 2 ? `<div class="leftover">Dobbelt portion: lav det hele ${esc(WEEKDAYS[x.day.getDay()])}, og gem halvdelen til ${esc(WEEKDAYS[addDays(x.day, 1).getDay()])}.</div>` : ""}
