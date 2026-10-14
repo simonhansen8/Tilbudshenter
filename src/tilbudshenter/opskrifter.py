@@ -48,7 +48,7 @@ GOOD_SITEMAPS = ("opskrift", "recipe", "post")
 NOT_RECIPES = ("/kategori/", "/category/", "/tag/", "/author/", "/forfatter/", "/page/", "/side/", "/soeg", "/search")
 # Hæves, når opskrifter kan læses fra flere slags sider, så de sider, der
 # blev sprunget over før, prøves igen
-VERSION = 3
+VERSION = 4
 
 
 def _ascii_url(url: str) -> str:
