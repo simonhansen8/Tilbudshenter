@@ -237,7 +237,8 @@ def cmd_recipes(args: argparse.Namespace) -> int:
 
     result = update(args.list, args.out or DEFAULT_JSON, delay=args.delay)
     print(f"{result['recipes']} opskrifter i samlingen, {result['added']} nye. "
-          f"{result['skipped']} sider kunne ikke bruges, {result['failed']} kunne ikke hentes.")
+          f"{result['skipped']} sider kunne ikke bruges, {result['failed']} kunne ikke hentes."
+          + (f" {result['pending']} hentes næste gang." if result.get("pending") else ""))
     return 0
 
 

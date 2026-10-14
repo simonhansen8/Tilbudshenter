@@ -20,6 +20,7 @@ import json
 import logging
 import re
 import time
+from itertools import zip_longest
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -33,7 +34,15 @@ log = logging.getLogger(__name__)
 USER_AGENT = "Tilbudshenter/0.1 (madplan; https://github.com/simonhansen8/Tilbudshenter)"
 MAX_BYTES = 3_000_000
 DEFAULT_JSON = Path(__file__).parent / "data" / "opskrifter.json"
-SITEMAP_LIMIT = 100
+SITEMAP_LIMIT = 300
+# Højst så mange nye sider pr. kørsel, så siden stadig bygges hurtigt;
+# resten hentes de næste gange
+NEW_PER_RUN = 150
+# Sitemaps og sider, der ikke er opskrifter
+SKIP_SITEMAPS = ("category", "categories", "kategori", "tag", "author", "forfatter", "page-sitemap", "attachment",
+                 "product", "produkt", "video", "image", "news", "nyhed")
+GOOD_SITEMAPS = ("opskrift", "recipe", "post")
+NOT_RECIPES = ("/kategori/", "/category/", "/tag/", "/author/", "/forfatter/", "/page/", "/side/", "/soeg", "/search")
 # Hæves, når opskrifter kan læses fra flere slags sider, så de sider, der
 # blev sprunget over før, prøves igen
 VERSION = 3
@@ -244,6 +253,38 @@ def read_list(path: Path) -> list[str]:
     return lines
 
 
+def _sitemaps(url: str, fetcher) -> list[str]:
+    """Sitemaps for en linje. Står der kun madsidens adresse, findes de i robots.txt."""
+    p = urlparse(url)
+    if p.path not in ("", "/"):
+        return [url]
+    base = f"{p.scheme}://{p.netloc}"
+    try:
+        found = re.findall(r"(?im)^\s*sitemap:\s*(\S+)", fetcher(base + "/robots.txt"))
+    except Exception:  # noqa: BLE001 - så prøves de almindelige adresser
+        found = []
+    return found or [base + "/sitemap_index.xml", base + "/sitemap.xml", base + "/wp-sitemap.xml"]
+
+
+def _sitemap_pages(url: str, fetcher, ok, enough: int, depth: int = 0) -> list[str]:
+    """Siderne i et sitemap, der består ``ok``. Et sitemap-indeks peger på flere
+    sitemaps; dem med opskrifter læses først, og kategorier o.l. springes over."""
+    urls = sitemap_urls(fetcher(url))
+    subs = [u for u in urls if u.split("?")[0].endswith((".xml", ".xml.gz"))]
+    pages = [u for u in urls if u not in subs and ok(u)]
+    if depth < 2:
+        subs = [u for u in subs if not any(w in u.lower() for w in SKIP_SITEMAPS)]
+        subs.sort(key=lambda u: not any(w in u.lower() for w in GOOD_SITEMAPS))
+        for sub in subs:
+            if len(pages) >= enough:
+                break
+            try:
+                pages += _sitemap_pages(sub, fetcher, ok, enough - len(pages), depth + 1)
+            except Exception as exc:  # noqa: BLE001
+                log.warning("Kunne ikke læse %s: %s", sub, exc)
+    return pages
+
+
 def _expand(line: str, fetcher, limit: int, known: set[str], skipped: set[str]) -> list[str]:
     """Adresserne på en linje.
 
@@ -259,23 +300,30 @@ def _expand(line: str, fetcher, limit: int, known: set[str], skipped: set[str]) 
     have = [u for u in known if urlparse(u).netloc == host and must in u]
     if len(have) >= limit:
         return have[:limit]
-    urls = sitemap_urls(fetcher(url))
-    # Et sitemap-indeks peger på flere sitemaps
-    if urls and all(u.endswith((".xml", ".xml.gz")) for u in urls):
-        found: list[str] = []
-        for sub in urls:
-            if len(found) >= 5 * limit:
-                break
-            found += sitemap_urls(fetcher(sub))
-        urls = found
-    new = [u for u in urls if must in u and not u.endswith((".xml", ".xml.gz")) and u not in known]
+
+    def ok(u: str) -> bool:
+        p = urlparse(u)
+        return must in u and p.netloc == host and p.path.strip("/") != "" and not any(w in p.path for w in NOT_RECIPES)
+
+    urls: list[str] = []
+    errors = []
+    for sm in _sitemaps(url, fetcher):
+        try:
+            urls += _sitemap_pages(sm, fetcher, ok, 5 * limit)
+        except Exception as exc:  # noqa: BLE001
+            errors.append(exc)
+        if len(urls) >= 5 * limit:
+            break
+    if not urls and errors:
+        raise errors[0]
+    new = [u for u in dict.fromkeys(urls) if u not in known]
     tried = [u for u in new if u in skipped]
     fresh = [u for u in new if u not in skipped][: limit - len(have)]
     return have + fresh + tried
 
 
 def update(list_path: Path, json_path: Path = DEFAULT_JSON, fetcher=None, delay: float = 1.0,
-           limit: int = SITEMAP_LIMIT) -> dict:
+           limit: int = SITEMAP_LIMIT, max_new: int = NEW_PER_RUN) -> dict:
     """Henter de opskrifter i listen, der ikke er hentet før.
 
     Opskrifter, der er fjernet fra listen, fjernes også fra samlingen.
@@ -285,23 +333,30 @@ def update(list_path: Path, json_path: Path = DEFAULT_JSON, fetcher=None, delay:
     old = json.loads(json_path.read_text(encoding="utf-8")) if json_path.exists() else {}
     known = {r["url"]: r for r in old.get("recipes", [])}
     skipped: dict[str, str] = dict(old.get("skipped", {})) if old.get("version", 1) >= VERSION else {}
-    wanted: list[str] = []
+    per_line: list[list[str]] = []
     for line in read_list(list_path):
         try:
-            wanted += _expand(line, fetcher, limit, set(known), set(skipped))
+            per_line.append(_expand(line, fetcher, limit, set(known), set(skipped)))
         except Exception as exc:  # noqa: BLE001 - et dårligt sitemap må ikke stoppe resten
             # Behold det, der allerede er hentet, til sitemappet virker igen
             log.warning("Kunne ikke læse %s: %s", line, exc)
             parts = line.split()
             host = urlparse(parts[1] if parts[0].lower() == "sitemap:" and len(parts) > 1 else parts[0]).netloc
-            wanted += [u for u in known if urlparse(u).netloc == host]
-    recipes, added, failed = [], 0, 0
+            per_line.append([u for u in known if urlparse(u).netloc == host])
+    # Skiftevis fra hver linje, så alle madsider får nye opskrifter, også når
+    # der hentes højst NEW_PER_RUN sider
+    wanted = [u for group in zip_longest(*per_line) for u in group if u]
+    recipes, added, failed, tried, pending = [], 0, 0, 0, 0
     for url in dict.fromkeys(wanted):
         if url in known:
             recipes.append(known[url])
             continue
         if url in skipped or urlparse(url).scheme not in ("http", "https"):
             continue
+        if tried >= max_new:
+            pending += 1
+            continue
+        tried += 1
         try:
             found = extract_recipe(fetcher(url), url)
         except Exception as exc:  # noqa: BLE001
@@ -331,4 +386,5 @@ def update(list_path: Path, json_path: Path = DEFAULT_JSON, fetcher=None, delay:
     }
     if data != old:
         json_path.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-    return {"recipes": len(recipes), "added": added, "failed": failed, "skipped": len(data["skipped"])}
+    result = {"recipes": len(recipes), "added": added, "failed": failed, "skipped": len(data["skipped"])}
+    return {**result, "pending": pending} if pending else result
