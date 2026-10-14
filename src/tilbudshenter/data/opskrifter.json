@@ -1,5 +1,5 @@
 {
- "version": 2,
+ "version": 3,
  "recipes": [
   {
    "url": "https://www.valdemarsro.dk/kaalfad-med-hakket-oksekoed/",
@@ -79,6 +79,68 @@
     "salt og friskkværnet peber",
     "1 håndfuld frisk koriander, eller bredbladet persille",
     "1 spsk sriracha chilisauce, efter smag"
+   ],
+   "fetched": "2026-10-14"
+  },
+  {
+   "url": "https://www.valdemarsro.dk/texmex-risret-med-oksekoed/",
+   "name": "texmex risret med oksekød og masser af smovs og smag",
+   "category": "Aftensmad",
+   "persons": 4,
+   "minutes": 35,
+   "ingredients": [
+    "1 løg, finthakket",
+    "4 fed hvidløg, finthakket",
+    "1 gulerødder, groftrevet",
+    "400 g hakket oksekød",
+    "200 g squash, groftrevet",
+    "2 tsk stødt spidskommen",
+    "2 tsk stødt koriander",
+    "½ tsk stødt kanel",
+    "2 tsk røget paprika",
+    "250 g basmati ris",
+    "7 dl grøntsagsbouillon",
+    "30 g soltørrede tomater i olie, finthakket",
+    "400 g hakkede tomater på dåse",
+    "1 dåse sorte bønner",
+    "125 g cherrytomater, skåret i tynde både",
+    "140 g majs, fra dåse eller frost",
+    "30 g jalapenos, finthakkede",
+    "2 spsk olivenolie, til stegning",
+    "salt og friskkværnet peber",
+    "1 avocado, skåret i tern",
+    "1 håndfuld frisk koriander, grofthakket",
+    "25 g jalapenos",
+    "125 g cheddar, friskrevet",
+    "1 dl cremefraiche 18 %",
+    "75 g nachos",
+    "1 lime, skåret i både"
+   ],
+   "fetched": "2026-10-14"
+  },
+  {
+   "url": "https://www.valdemarsro.dk/hakkeboeffer-i-fad/",
+   "name": "Hakkebøffer i fad med krydret tomatflødesauce",
+   "category": "Aftensmad",
+   "persons": 4,
+   "minutes": 30,
+   "ingredients": [
+    "400 g hakket oksekød",
+    "200 g champignon, skåret i kvarte",
+    "2 løg, finthakkede",
+    "2 porre, i tynde skiver",
+    "50 g chorizo, finthakket",
+    "1 tsk tørret timian",
+    "2 fed hvidløg, finthakket",
+    "2 rød peberfrugt, i tern",
+    "1 tsk sød paprika, eller røget paprika",
+    "1 dl piskefløde",
+    "100 g pikant flødeost",
+    "400 g hakkede tomater på dåse",
+    "2 spsk olivenolie, eller smør til stegning",
+    "salt og friskkværnet peber",
+    "3 dl basmati ris, kogt efter anvisning",
+    "1 håndfuld bredbladet persille"
    ],
    "fetched": "2026-10-14"
   },
@@ -305,6 +367,53 @@
    "fetched": "2026-10-14"
   },
   {
+   "url": "https://www.valdemarsro.dk/kaalwok-med-kylling/",
+   "name": "Kålwok med kylling",
+   "category": "Aftensmad",
+   "persons": 4,
+   "minutes": 20,
+   "ingredients": [
+    "2 spsk soja",
+    "4 spsk hoisin sauce",
+    "3 spsk sesamolie",
+    "2 spsk honning",
+    "½ lime, saften herfra",
+    "2 fed hvidløg, pressede",
+    "1 tsk ingefær, fintrevet",
+    "400 g kyllingefilet, i tern",
+    "400 g spidskål, fintsnittet",
+    "100 g rødkål, fintsnittet",
+    "300 g gulerødder, i strimler",
+    "2 spsk sesamolie",
+    "friskkværnet peber",
+    "30 g cashewnødder",
+    "2 stængler forårsløg, fintsnittet",
+    "25 g sesamfrø"
+   ],
+   "fetched": "2026-10-14"
+  },
+  {
+   "url": "https://www.valdemarsro.dk/kylling-med-appelsin/",
+   "name": "Kylling med appelsin og krydderier",
+   "category": "Aftensmad",
+   "persons": 4,
+   "minutes": 20,
+   "ingredients": [
+    "4 kyllingelår",
+    "2 dl kærnemælk",
+    "1 øko appelsin",
+    "3 kanelstang",
+    "1 tsk stødt kardemomme",
+    "30 g tranebær",
+    "3 fed hvidløg, pressede",
+    "2 stængler frisk rosmarin",
+    "2 spsk olivenolie, til at brune kyllingen i",
+    "salt og friskkværnet peber",
+    "3 dl basmati ris, kogt efter anvisning"
+   ],
+   "fetched": "2026-10-14"
+  },
+  {
    "url": "https://www.valdemarsro.dk/kylling-i-roemertopf/",
    "name": "Kylling i Rømertopf",
    "category": "Aftensmad",
@@ -474,6 +583,68 @@
    "fetched": "2026-10-14"
   },
   {
+   "url": "https://www.valdemarsro.dk/tacos-med-torsk/",
+   "name": "Fisketacos med torsk og krydret mangosalsa",
+   "category": "Aftensmad",
+   "persons": 4,
+   "minutes": 30,
+   "ingredients": [
+    "1 mango, skåret i små tern",
+    "5 cherrytomater, skåret i både",
+    "½ agurk, i små tern",
+    "1 forårsløg, finthakket",
+    "1 håndfuld frisk koriander, finthakket",
+    "½ rød chili, finthakket",
+    "1 øko lime, saft og fintrevet skal",
+    "800 g torskefilet, skåret i flotte stykker",
+    "25 g rasp",
+    "½ øko citron, fintrevet skal",
+    "1 tsk frisk mynte, finthakket",
+    "salt og friskkværnet peber",
+    "8 tortillas pandekager, små",
+    "60 g baby spinat",
+    "2 avocado, skåret i tern",
+    "1 håndfuld frisk koriander"
+   ],
+   "fetched": "2026-10-14"
+  },
+  {
+   "url": "https://www.valdemarsro.dk/sproed-mexi-torsk-med-mangosalsa/",
+   "name": "Sprød mexi torsk med mangosalsa og pico de gallo",
+   "category": "Aftensmad",
+   "persons": 4,
+   "minutes": 45,
+   "ingredients": [
+    "1 mango, i små tern",
+    "2 avocado, i små tern",
+    "1 håndfuld frisk koriander, finthakket",
+    "1 håndfuld frisk basilikum, finthakket",
+    "2 øko lime, saft og fintrevet skal",
+    "½ rød chili, finthakket",
+    "salt og friskkværnet peber",
+    "300 g tomater, finthakkede",
+    "½ agurk, i små tern",
+    "1 rødløg, finthakket",
+    "½ rød chili, finthakket",
+    "1 fed hvidløg, presset",
+    "1 håndfuld frisk koriander, finthakket",
+    "2 øko lime, fintrevet skal og saft",
+    "30 g jalapenos, finthakkede",
+    "salt og friskkværnet peber",
+    "800 g torskefilet",
+    "½ tsk stødt spidskommen",
+    "½ tsk stødt koriander",
+    "½ tsk sød paprika",
+    "½ tsk cayenne peber",
+    "1 æg, sammenpiskede",
+    "50 g pankorasp",
+    "2 spsk olivenolie, til stegning",
+    "20 g smør, til stegning",
+    "salt og friskkværnet peber"
+   ],
+   "fetched": "2026-10-14"
+  },
+  {
    "url": "https://www.valdemarsro.dk/vegetar-gryderet/",
    "name": "Vegetar gryderet med grøntsager og kikærter",
    "category": "Aftensmad",
@@ -592,6 +763,34 @@
    "fetched": "2026-10-14"
   },
   {
+   "url": "https://www.valdemarsro.dk/vegetarisk-lasagnesuppe/",
+   "name": "Vegetarisk lasagnesuppe med masser af grøntsager",
+   "category": "Aftensmad",
+   "persons": 4,
+   "minutes": 30,
+   "ingredients": [
+    "1 løg, finthakket",
+    "3 fed hvidløg",
+    "2 gulerødder, i små tern",
+    "2 stængler bladselleri, i små tern",
+    "40 g soltørrede tomater i olie, finthakket",
+    "1 tsk tørret timian",
+    "1 tsk tørret rosmarin",
+    "75 g røde linser",
+    "150 g belugalinser",
+    "400 g hakkede tomater på dåse",
+    "1 liter grøntsagsbouillon",
+    "100 g friske lasagneplader",
+    "1 håndfuld frisk basilikum",
+    "2 spsk olivenolie",
+    "salt og friskkværnet peber",
+    "1 burrata",
+    "75 g parmesan, friskrevet",
+    "1 håndfuld frisk basilikum"
+   ],
+   "fetched": "2026-10-14"
+  },
+  {
    "url": "https://www.valdemarsro.dk/vegetarisk-shepards-pie/",
    "name": "Vegetarisk shepherds pie eller måske rettere Gardeners Pie",
    "category": "Aftensmad",
@@ -660,6 +859,37 @@
    "fetched": "2026-10-14"
   },
   {
+   "url": "https://www.valdemarsro.dk/marokkansk-linsegryde/",
+   "name": "Marokkansk linsegryde med kikærter og skøn smag",
+   "category": "Aftensmad",
+   "persons": 4,
+   "minutes": 30,
+   "ingredients": [
+    "2 løg, finthakkede",
+    "3 fed hvidløg, finthakket",
+    "10 g hvedemel",
+    "1 knivspids safran, stødt",
+    "1 tsk stødt koriander",
+    "1 tsk stødt kanel",
+    "1 knivspids stødt nellike",
+    "1 tsk stødt spidskommen",
+    "40 g tørrede abrikoser, finthakket",
+    "30 g dadler, finthakket",
+    "250 g le puy delikatesse linser",
+    "400 g hakkede tomater på dåse",
+    "4 dl grøntsagsbouillon",
+    "½ øko citron, saft og lidt fintrevet skal",
+    "1 dåse kikærter, drænet og skyllet",
+    "50 g cashewnødder, grofthakkede",
+    "2 spsk olivenolie, til stegning",
+    "salt og friskkværnet peber",
+    "3 dl basmati ris, kogt efter anvisning på emballagen",
+    "1 håndfuld frisk koriander",
+    "1 håndfuld frisk mynte"
+   ],
+   "fetched": "2026-10-14"
+  },
+  {
    "url": "https://www.valdemarsro.dk/millionlinser/",
    "name": "millionlinser med kartoffelmos og blomkål",
    "category": "Aftensmad",
@@ -715,6 +945,34 @@
    "fetched": "2026-10-14"
   },
   {
+   "url": "https://www.valdemarsro.dk/paprikagryde/",
+   "name": "Paprikagryde",
+   "category": "Aftensmad",
+   "persons": 4,
+   "minutes": 20,
+   "ingredients": [
+    "100 g bacon, i skiver",
+    "200 g champignon, i kvarte",
+    "3 løg, finthakkede",
+    "450 g svinemørbrad, i tern",
+    "120 g wienerpølser, i stykker a ca 1 cm",
+    "30 g chorizo, i små tern",
+    "2 spsk sød paprika",
+    "½ tsk røget paprika",
+    "75 g koncentreret tomatpuré",
+    "400 g hakkede tomater på dåse",
+    "2 rød peberfrugt, i tern",
+    "2½ dl piskefløde",
+    "1 dl vand",
+    "1 spsk majsstivelse",
+    "1 spsk olivenolie, til stegning",
+    "salt og friskkværnet peber",
+    "3 dl basmati ris, kogt efter anvisning på emballagen",
+    "1 håndfuld persille, til at drysse over"
+   ],
+   "fetched": "2026-10-14"
+  },
+  {
    "url": "https://www.valdemarsro.dk/moerbradboeffer-med-bloede-loeg/",
    "name": "Mørbradbøffer med bløde løg og champignon",
    "category": "Aftensmad",
@@ -731,6 +989,34 @@
     "1 tsk tørret timian",
     "salt og friskkværnet peber",
     "1 håndfuld frisk timian, eller persille, til anretning"
+   ],
+   "fetched": "2026-10-14"
+  },
+  {
+   "url": "https://www.valdemarsro.dk/citrongraes-moerbrad/",
+   "name": "Citrongræs mørbrad med nudler og grøntsager",
+   "category": "Aftensmad",
+   "persons": 4,
+   "minutes": 30,
+   "ingredients": [
+    "1 svinemørbrad, skåret i tynde strimler",
+    "1 citrongræs, finthakket",
+    "15 g ingefær, fintrevet",
+    "2 lime, saften herfra",
+    "1 spsk fishsauce",
+    "2 spsk sukker",
+    "2 spsk sesamolie, eller anden olie til stegning",
+    "200 g nudler",
+    "1 spsk sesamolie, eller anden madolie",
+    "200 g spidskål, fintsnittet",
+    "½ agurk, skåret i skiver",
+    "1 avocado, skåret i skiver",
+    "1 håndfuld frisk mynte",
+    "1 håndfuld frisk basilikum",
+    "1 håndfuld frisk koriander",
+    "40 g saltede peanuts, finthakkede",
+    "½ tsk chiliflager",
+    "1 lime, skåret i kvarte"
    ],
    "fetched": "2026-10-14"
   },
@@ -771,6 +1057,31 @@
     "1 tsk salt og friskkværnet peber",
     "50 g parmesan, friskrevet",
     "1 håndfuld frisk basilikum, friske"
+   ],
+   "fetched": "2026-10-14"
+  },
+  {
+   "url": "https://www.valdemarsro.dk/one-pot-pasta/",
+   "name": "One pot pasta",
+   "category": "Aftensmad",
+   "persons": 4,
+   "minutes": 10,
+   "ingredients": [
+    "400 g spaghetti",
+    "400 g hakkede tomater på dåse",
+    "1 håndfuld frisk basilikum, bladene herfra",
+    "1 løg, finthakket",
+    "2 fed hvidløg, finthakket",
+    "20 cherrytomater, skåret i både",
+    "½ squash, groftrevet",
+    "1 tsk tørret oregano",
+    "50 g chorizo, finthakket",
+    "5 dl grøntsagsbouillon",
+    "2 spsk olivenolie, til stegning",
+    "½ tsk chiliflager, kan undlades",
+    "salt og friskkværnet peber",
+    "50 g parmesan, friskrevet til servering",
+    "1 håndfuld frisk basilikum, blade"
    ],
    "fetched": "2026-10-14"
   },
@@ -907,6 +1218,35 @@
    "fetched": "2026-10-14"
   },
   {
+   "url": "https://www.arla.dk/opskrifter/tacosalat-med-sprod-kylling/",
+   "name": "Tacosalat med sprød kylling",
+   "category": "Salater, Hovedretter, Aftensmad",
+   "persons": 4,
+   "minutes": 35,
+   "ingredients": [
+    "100 g cheddarost",
+    "3 spsk pankorasp",
+    "1 tsk tørrede chiliflager",
+    "¼ tsk groft salt",
+    "1 æg",
+    "300 g kyllingefilet",
+    "3 dl skyr naturel",
+    "¾ tsk groft salt",
+    "3 spsk vand",
+    "1 dåse skyllede og afdryppede sorte bønner i lage (ca. 240 g)",
+    "400 g majs",
+    "2 spsk friskpresset limesaft",
+    "½ tsk groft salt",
+    "2 røde snackpebere i strimler",
+    "1 agurk i tern (ca. 300 g)",
+    "1 hjertesalat delt i blade (ca. 75 g)",
+    "¼ tsk flagesalt",
+    "2 dl frisk koriander",
+    "75 g tortillachips med salt"
+   ],
+   "fetched": "2026-10-14"
+  },
+  {
    "url": "https://www.arla.dk/opskrifter/pasta-med-kylling-og-broccoli/",
    "name": "Pasta med kylling og broccoli",
    "category": "Hovedretter, Aftensmad",
@@ -921,6 +1261,33 @@
     "1¼ tsk groft salt",
     "150 g pastaost",
     "300 g tørret pasta, fx spaghetti - koges"
+   ],
+   "fetched": "2026-10-14"
+  },
+  {
+   "url": "https://www.arla.dk/opskrifter/pasta-med-kylling/",
+   "name": "Pasta med kylling",
+   "category": "Hovedretter, Aftensmad",
+   "persons": 4,
+   "minutes": 30,
+   "ingredients": [
+    "2½ liter vand",
+    "2½ tsk groft salt",
+    "300 g tørret fuldkornspasta, fx skruer",
+    "300 g kyllingeinderfileter",
+    "¾ tsk groft salt",
+    "20 g smør",
+    "200 g champignoner i kvarte",
+    "1 finthakket løg",
+    "2 finthakkede fed hvidløg",
+    "2 dl madlavningsfløde",
+    "1½ tsk groft salt",
+    "50 g fintrevet parmigiano reggiano",
+    "1 citron (usprøjtet)",
+    "200 g frisk spinat",
+    "200 g halverede cherrytomater",
+    "50 g parmigiano reggiano i tynde flager",
+    "friskkværnet peber"
    ],
    "fetched": "2026-10-14"
   },
@@ -1101,6 +1468,33 @@
    "fetched": "2026-10-14"
   },
   {
+   "url": "https://www.arla.dk/opskrifter/gron-salat-med-laks/",
+   "name": "Grøn salat med laks",
+   "category": "Salater, Hovedretter, Aftensmad",
+   "persons": 4,
+   "minutes": 30,
+   "ingredients": [
+    "2 hjertesalat skåret i mindre stykker (ca. 275 g)",
+    "250 g ærter",
+    "2 avocadoer",
+    "2 spsk friskpresset citronsaft",
+    "¼ tsk groft salt",
+    "2 bundter forårsløg i tynde ringe (ca. 200 g)",
+    "600 g laksefilet (ca. g)",
+    "1 spsk olie",
+    "15 g smør",
+    "½ tsk groft salt",
+    "100 g salatost i tern - smuldret",
+    "4 spsk olie",
+    "2 spsk hvid balsamicoeddike",
+    "1 spsk honning",
+    "2 tsk friskpresset citronsaft",
+    "¼ tsk groft salt",
+    "240 g groft brød"
+   ],
+   "fetched": "2026-10-14"
+  },
+  {
    "url": "https://www.arla.dk/opskrifter/grontsagslasagne/",
    "name": "Grøntsagslasagne",
    "category": "Hovedretter, Aftensmad",
@@ -1179,6 +1573,32 @@
    "fetched": "2026-10-14"
   },
   {
+   "url": "https://www.arla.dk/opskrifter/krydret-morbrad/",
+   "name": "Krydret mørbrad",
+   "category": "Hovedretter, Aftensmad",
+   "persons": 4,
+   "minutes": 45,
+   "ingredients": [
+    "2 svinemørbrader (ca. 700 g)",
+    "25 g smør",
+    "1½ tsk karry",
+    "2 dl vand",
+    "1 tsk groft salt",
+    "1 tsk stødt koriander",
+    "1½ dl creme fraiche",
+    "2 tsk soja",
+    "1 tsk majsstivelse, fx Maizena",
+    "2 spsk hakket sød syltet ingefær",
+    "2 tsk lage fra sød syltet ingefær",
+    "½ dl friskpresset appelsinsaft",
+    "200 g friske bønnespirer",
+    "1 grøn squash i tændstiktynde stave (ca. 200 g)",
+    "4 dl løse ris, parboiled - koges",
+    "1 mango i tern eller tynde skiver (ca. 200 g)"
+   ],
+   "fetched": "2026-10-14"
+  },
+  {
    "url": "https://www.arla.dk/opskrifter/farsbrod/",
    "name": "Farsbrød",
    "category": "Hovedretter, Aftensmad",
@@ -1231,6 +1651,34 @@
    "fetched": "2026-10-14"
   },
   {
+   "url": "https://www.arla.dk/opskrifter/one-pot-med-kylling-og-nudler/",
+   "name": "One pot med kylling og nudler",
+   "category": "Hovedretter, Aftensmad",
+   "persons": 4,
+   "minutes": 25,
+   "ingredients": [
+    "½ liter hønsebouillon",
+    "2 spsk fiskesauce",
+    "2 spsk soja",
+    "2 spsk lage fra sød syltet ingefær",
+    "2 store hakkede fed hvidløg",
+    "1 tsk tørrede chiliflager",
+    "400 g rensede kyllingeinderfileter",
+    "200 g tørrede ægnudler",
+    "4 rødløg i både (ca. 300 g)",
+    "1 glaskål i stave (ca. 200 g)",
+    "½ knoldselleri eller ræddiker i stave eller hele radiser (ca. 200 g)",
+    "½ tsk groft salt",
+    "3 dl græsk yoghurt",
+    "2 spsk hakket sød syltet ingefær",
+    "½ tsk groft salt",
+    "friskkværnet peber",
+    "3 dl frisk koriander",
+    "lime i både"
+   ],
+   "fetched": "2026-10-14"
+  },
+  {
    "url": "https://www.arla.dk/opskrifter/pastaret-med-kylling/",
    "name": "Pastaret med kylling",
    "category": "Hovedretter, Aftensmad",
@@ -1251,6 +1699,35 @@
     "3 dl basilikumblade",
     "50 g høvlet parmigiano reggiano",
     "friskkværnet peber"
+   ],
+   "fetched": "2026-10-14"
+  },
+  {
+   "url": "https://www.arla.dk/opskrifter/stegte-kyllingelar-med-pastasalat/",
+   "name": "Stegte kyllingelår med pastasalat",
+   "category": "Salater, Hovedretter, Aftensmad",
+   "persons": 4,
+   "minutes": 60,
+   "ingredients": [
+    "8 rensede kyllingeunderlår (ca. 1 kg)",
+    "1 æg",
+    "5 spsk rasp",
+    "1 tsk mild paprika",
+    "½ tsk groft salt",
+    "friskkværnet peber",
+    "150 g tørret pasta, fx penne",
+    "200 g grønne bønner i halve",
+    "200 g grøn squash i strimler",
+    "1 bundt fintsnittede forårsløg (ca. 100 g)",
+    "100 g cherrytomater i halve",
+    "100 g smuldret salatost",
+    "1 dl grofthakket bredbladet persille",
+    "2 små knuste fed hvidløg",
+    "1 spsk friskpresset citronsaft",
+    "1 tsk groft salt",
+    "friskkværnet peber",
+    "bredbladet persille",
+    "240 g groft brød"
    ],
    "fetched": "2026-10-14"
   },
@@ -1369,6 +1846,29 @@
     "salt og friskkværnet peber",
     "1 bundt grønne asparges (i mindre stykker)",
     "1 håndfuld persille (hakket)"
+   ],
+   "fetched": "2026-10-14"
+  },
+  {
+   "url": "https://madensverden.dk/grydestegt-kyllingebryst/",
+   "name": "Grydestegt kyllingebryst",
+   "category": "Aftensmad",
+   "persons": 4,
+   "minutes": 35,
+   "ingredients": [
+    "4 kyllingebryst",
+    "1 spsk. smør (til stegning)",
+    "salt og friskkværnet peber",
+    "1 løg (hakkes groft)",
+    "2 spsk. soltørrede tomater (i olie, hakket fint)",
+    "5 dl vand",
+    "1 bouillonterning (høns)",
+    "1 håndfuld persille",
+    "4 dl stegesky (fra kogningen)",
+    "1 dl fløde",
+    "1 spsk. majsstivelse (udrørt i lidt vand)",
+    "1 spsk. gastrik (eller eddike)",
+    "1 spsk. ribsgele"
    ],
    "fetched": "2026-10-14"
   },
@@ -2016,29 +2516,11 @@
   }
  ],
  "skipped": {
-  "https://madensverden.dk/grydestegt-kyllingebryst/": "for mange ukendte varer: soltørrede tomater, stegesky, gastrik",
   "https://madensverden.dk/ovnbagt-laks/": "for få kendte ingredienser",
   "https://madensverden.dk/pandestegt-laks/": "for få kendte ingredienser",
-  "https://www.arla.dk/opskrifter/gron-salat-med-laks/": "for mange ukendte varer: avocadoer, friskpresset citronsaft, bundter forårsløg i tynde ringe",
-  "https://www.arla.dk/opskrifter/krydret-morbrad/": "ukendt kød eller fisk: svinemørbrader",
-  "https://www.arla.dk/opskrifter/one-pot-med-kylling-og-nudler/": "ukendt kød eller fisk: fiskesauce",
   "https://www.arla.dk/opskrifter/pasta-med-kylling-og-gronne-bonner/": "ukendt kød eller fisk: hel, grillet kylling",
-  "https://www.arla.dk/opskrifter/pasta-med-kylling/": "ukendt kød eller fisk: kyllingeinderfileter",
-  "https://www.arla.dk/opskrifter/stegte-kyllingelar-med-pastasalat/": "for mange ukendte varer: fintsnittede forårsløg, cherrytomater i halve, smuldret salatost",
-  "https://www.arla.dk/opskrifter/tacosalat-med-sprod-kylling/": "for mange ukendte varer: cheddarost, skyr naturel, friskpresset limesaft",
-  "https://www.valdemarsro.dk/citrongraes-moerbrad/": "for mange ukendte varer: citrongræs, finthakket, lime, saften herfra, fishsauce",
   "https://www.valdemarsro.dk/frikadeller-med-pandesauce/": "ukendt kød eller fisk: Pandesmuldr og stegefedt fra frikadellerne",
   "https://www.valdemarsro.dk/fyldte-pandekager-oksekoed/": "ikke aftensmad",
-  "https://www.valdemarsro.dk/hakkeboeffer-i-fad/": "ukendt kød eller fisk: chorizo, finthakket",
-  "https://www.valdemarsro.dk/kaalwok-med-kylling/": "for mange ukendte varer: hoisin sauce, lime, saften herfra, cashewnødder",
-  "https://www.valdemarsro.dk/kylling-med-appelsin/": "for mange ukendte varer: kærnemælk, øko appelsin, tranebær",
-  "https://www.valdemarsro.dk/marokkansk-linsegryde/": "for mange ukendte varer: tørrede abrikoser, finthakket, dadler, finthakket, le puy delikatesse linser",
-  "https://www.valdemarsro.dk/one-pot-pasta/": "ukendt kød eller fisk: chorizo, finthakket",
-  "https://www.valdemarsro.dk/paprikagryde/": "ukendt kød eller fisk: chorizo, i små tern",
-  "https://www.valdemarsro.dk/sproed-mexi-torsk-med-mangosalsa/": "for mange ukendte varer: mango, i små tern, avocado, i små tern, øko lime, saft og fintrevet skal",
-  "https://www.valdemarsro.dk/tacos-med-torsk/": "for mange ukendte varer: mango, skåret i små tern, cherrytomater, skåret i både, forårsløg, finthakket",
-  "https://www.valdemarsro.dk/texmex-risret-med-oksekoed/": "for mange ukendte varer: cherrytomater, skåret i tynde både, jalapenos, finthakkede, avocado, skåret i tern",
-  "https://www.valdemarsro.dk/torskefad-med-rejer-og-skaldyrsdressing/": "ikke aftensmad",
-  "https://www.valdemarsro.dk/vegetarisk-lasagnesuppe/": "for mange ukendte varer: stængler bladselleri, i små tern, røde linser, belugalinser"
+  "https://www.valdemarsro.dk/torskefad-med-rejer-og-skaldyrsdressing/": "ikke aftensmad"
  }
 }
