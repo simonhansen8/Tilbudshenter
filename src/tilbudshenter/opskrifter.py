@@ -259,6 +259,22 @@ def sitemap_urls(xml: str) -> list[str]:
     return [htmllib.unescape(u.strip()) for u in re.findall(r"<loc>\s*(.*?)\s*</loc>", xml, re.DOTALL)]
 
 
+def _looks_like_recipe(url: str) -> bool:
+    """Opskrifter har lange navne ("kylling-i-fad-med-groent"), oversigter
+    korte ("fisk-opskrifter/laks")."""
+    return urlparse(url).path.rstrip("/").rsplit("/", 1)[-1].count("-") >= 2
+
+
+def _newest_first(xml: str, urls: list[str]) -> list[str]:
+    """Siderne med den nyeste <lastmod> først. Mange sitemaps står ældst
+    først, og de ældste sider er ofte blogindlæg."""
+    lastmod = {
+        htmllib.unescape(loc.strip()): mod.strip()
+        for loc, mod in re.findall(r"<loc>\s*(.*?)\s*</loc>\s*<lastmod>\s*(.*?)\s*</lastmod>", xml, re.DOTALL)
+    }
+    return sorted(urls, key=lambda u: lastmod.get(u, ""), reverse=True)
+
+
 # -- Samlingen ---------------------------------------------------------
 def read_list(path: Path) -> list[str]:
     """Linjerne i opskrifter.txt uden kommentarer."""
@@ -293,9 +309,10 @@ def _sitemaps(url: str, fetcher) -> list[str]:
 def _sitemap_pages(url: str, fetcher, ok, enough: int, depth: int = 0) -> list[str]:
     """Siderne i et sitemap, der består ``ok``. Et sitemap-indeks peger på flere
     sitemaps; dem med opskrifter læses først, og kategorier o.l. springes over."""
-    urls = sitemap_urls(fetcher(url))
+    xml = fetcher(url)
+    urls = sitemap_urls(xml)
     subs = [u for u in urls if u.split("?")[0].endswith((".xml", ".xml.gz"))]
-    pages = [u for u in urls if u not in subs and ok(u)]
+    pages = _newest_first(xml, [u for u in urls if u not in subs and ok(u)])
     if depth < 2:
         subs = [u for u in subs if not any(w in u.lower() for w in SKIP_SITEMAPS)]
         subs.sort(key=lambda u: not any(w in u.lower() for w in GOOD_SITEMAPS))
@@ -340,7 +357,8 @@ def _expand(line: str, fetcher, limit: int, known: set[str], skipped: set[str]) 
             break
     if not urls and errors:
         raise errors[0]
-    new = [u for u in dict.fromkeys(urls) if u not in known]
+    # Sider, der ligner opskrifter, først; oversigter og artikler til sidst
+    new = sorted((u for u in dict.fromkeys(urls) if u not in known), key=lambda u: not _looks_like_recipe(u))
     tried = [u for u in new if u in skipped]
     fresh = [u for u in new if u not in skipped][: limit - len(have)]
     return have + fresh + tried
@@ -383,16 +401,21 @@ def update(list_path: Path, json_path: Path = DEFAULT_JSON, fetcher=None, delay:
     old = json.loads(json_path.read_text(encoding="utf-8")) if json_path.exists() else {}
     known = {r["url"]: r for r in old.get("recipes", [])}
     skipped: dict[str, str] = dict(old.get("skipped", {})) if old.get("version", 1) >= VERSION else {}
-    per_line: list[list[str]] = []
-    for line in read_list(list_path):
+    known_urls, skipped_urls = set(known), set(skipped)
+
+    def expand(line: str) -> list[str]:
         try:
-            per_line.append(_expand(line, fetcher, limit, set(known), set(skipped)))
+            return _expand(line, fetcher, limit, known_urls, skipped_urls)
         except Exception as exc:  # noqa: BLE001 - et dårligt sitemap må ikke stoppe resten
             # Behold det, der allerede er hentet, til sitemappet virker igen
             log.warning("Kunne ikke læse %s: %s", line, exc)
             parts = line.split()
             site = _site(parts[1] if parts[0].lower() == "sitemap:" and len(parts) > 1 else parts[0])
-            per_line.append([u for u in known if _site(u) == site])
+            return [u for u in known if _site(u) == site]
+
+    # Sitemaps fra alle madsider læses samtidig
+    with ThreadPoolExecutor(16) as pool:
+        per_line = list(pool.map(expand, read_list(list_path)))
     # Skiftevis fra hver linje, så alle madsider får nye opskrifter, også når
     # der hentes højst NEW_PER_RUN sider
     wanted = [u for group in zip_longest(*per_line) for u in group if u]

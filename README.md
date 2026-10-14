@@ -293,9 +293,11 @@ plan giver nye retter.
   hovedingrediensen købes, så en ret kan købes ind ét sted. Du kan også
   vælge én bestemt butik.
 - Et tilbud bruges kun, når det er billigere end **basisvaren**: den
-  almindelige pris uden tilbud på den billigste udgave, fx kædens eget mærke
-  (`NORMAL_PRICES` i `mealplan.py`, anslået ud fra discountbutikkernes
-  hyldepriser). En stor rabat på et dyrt mærke er altså ikke nok. Under
+  almindelige hyldepris uden tilbud på en almindelig udgave af varen
+  (`NORMAL_PRICES` i `mealplan.py`, anslået ud fra hyldepriserne i 2026).
+  Koster varen typisk mere på tilbud i aviserne (medianen af mindst 6 tilbud
+  i prishistorikken), bruges det i stedet, dog højst halvanden gang den
+  anslåede pris. En stor rabat på et dyrt mærke er altså ikke nok. Under
   **Basispriser** kan du rette priserne til det, du selv giver; dine priser
   gemmes i browseren.
 - Hver ret har en samlet pris og en pris pr. person. Den regnes for de

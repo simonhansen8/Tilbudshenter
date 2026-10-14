@@ -210,3 +210,23 @@ def test_addresses_with_danish_letters_can_be_fetched():
 
     assert _ascii_url("https://www.opskrifter.dk/opskrift/447-kødsauce") == "https://www.opskrifter.dk/opskrift/447-k%C3%B8dsauce"
     assert _ascii_url("https://mad.dk/beh%c3%b8ver/?side=2") == "https://mad.dk/beh%c3%b8ver/?side=2"
+
+
+def test_recipes_and_new_pages_are_fetched_first(tmp_path):
+    xml = """<urlset>
+      <url><loc>https://mad.dk/gammelt-blogindlaeg-fra-2012/</loc><lastmod>2012-05-01</lastmod></url>
+      <url><loc>https://mad.dk/fisk/</loc><lastmod>2026-01-01</lastmod></url>
+      <url><loc>https://mad.dk/kylling-i-fad-med-groent/</loc><lastmod>2025-03-01</lastmod></url>
+    </urlset>"""
+    pages = {"https://mad.dk/sitemap.xml": xml}
+    lst = tmp_path / "opskrifter.txt"
+    lst.write_text("sitemap: https://mad.dk/sitemap.xml\n", encoding="utf-8")
+    fetched = []
+
+    def fetcher(url):
+        fetched.append(url)
+        return pages.get(url, PAGE)
+
+    update(lst, tmp_path / "opskrifter.json", fetcher, delay=0)
+    assert fetched[1:] == ["https://mad.dk/kylling-i-fad-med-groent/", "https://mad.dk/gammelt-blogindlaeg-fra-2012/",
+                           "https://mad.dk/fisk/"]
