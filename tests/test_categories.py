@@ -57,3 +57,22 @@ def test_custom_category_and_extra_keywords():
 def test_price_text_is_not_rice():
     # "Prisen" må ikke matche nøgleordet "ris"
     assert Categorizer().categorize("Apparat", "Prisen gælder kun i dag") == UNCATEGORIZED
+
+
+@pytest.mark.parametrize("heading, expected", [
+    ("Bagatella Zinfandel", "oel_og_vin"),
+    ("Samsø rødløg", "frugt_og_groent"),
+    ("Kinder mælkesnitte eller Pingui", "slik_og_snacks"),
+    ("Karen Volf æbleskiver", "broed_og_bager"),
+    ("Trick or treat slikskål", "nonfood"),
+    ("Elvital Growth booster conditioner", "personlig_pleje"),
+    ("KitKat plade", "slik_og_snacks"),
+    ("Monster", "drikkevarer"),
+    ("Klorin", "husholdning"),
+    ("Dansk spidskål", "frugt_og_groent"),
+    ("LUPILU Bleer", "baby"),
+    ("Coop cocktailpølser", "koed"),
+    ("PREMIER IS UNDERGROUND, ISPINDE ELLER ISBÅD", "slik_og_snacks"),
+])
+def test_more_keywords(categorizer, heading, expected):
+    assert categorizer.categorize(heading) == expected

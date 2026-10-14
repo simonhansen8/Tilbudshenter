@@ -127,3 +127,32 @@ def test_all_stores_and_new_config_not_changed(tmp_path):
     before = path.read_text(encoding="utf-8")
     load_app_config(path, demo=False)
     assert path.read_text(encoding="utf-8") == before
+
+
+def test_shopping_list(server):
+    h = {"X-Tilbudshenter": "1"}
+    assert request(server + "/api/scan", {}, h)[0] == 200
+    for _ in range(100):
+        if not request(server + "/api/state")[1]["scan"]["running"]:
+            break
+        time.sleep(0.05)
+    offer = request(server + "/api/offers")[1]["offers"][0]
+
+    status, data = request(server + "/api/list", {"action": "add", "id": offer["id"]}, h)
+    assert status == 200 and [i["id"] for i in data["items"]] == [offer["id"]]
+    item = data["items"][0]
+    assert item["dealer"] == offer["dealer"] and item["price_text"] == offer["price_text"]
+
+    # Samme tilbud to gange giver kun én linje; egne varer kan tilføjes
+    request(server + "/api/list", {"action": "add", "id": offer["id"]}, h)
+    data = request(server + "/api/list", {"action": "add_text", "text": "Mælk"}, h)[1]
+    assert [i["heading"] for i in data["items"]] == [offer["heading"], "Mælk"]
+
+    data = request(server + "/api/list", {"action": "check", "id": offer["id"], "checked": True}, h)[1]
+    assert data["items"][0]["checked"]
+    data = request(server + "/api/list", {"action": "clear", "only_checked": True}, h)[1]
+    assert [i["heading"] for i in data["items"]] == ["Mælk"]
+
+    assert request(server + "/api/list", {"action": "add", "id": "findes-ikke"}, h)[0] == 400
+    assert request(server + "/api/list", {"action": "clear"})[0] == 403
+    assert request(server + "/api/list", {"action": "clear"}, h)[1]["items"] == []

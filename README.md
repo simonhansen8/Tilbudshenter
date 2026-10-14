@@ -44,6 +44,10 @@ I appen kan du:
 - hente nye tilbud med knappen **Hent nye tilbud** (første gang sker det
   automatisk),
 - søge og filtrere på butik og kategori, sortere efter rabat eller pris pr. kg,
+- vælge mellem tilbud der gælder nu, og dem der starter senere,
+- se hvilke tilbud der kræver Lidl Plus, kædens app eller medlemskab (og skjule dem),
+- lægge tilbud og egne varer på en **indkøbsliste**, delt op efter butik, som
+  kan kopieres, sendes som mail eller udskrives,
 - vælge butikker, aviser, kategorier og din placering under **Indstillinger**.
 
 Appen kører kun på din egen computer. Luk konsolvinduet for at stoppe den.
@@ -152,7 +156,10 @@ noegleord = ["tatar"]          # ekstra nøgleord til en eksisterende kategori
    kyllingebryst, bacon, laks, mælk, æg, kartofler og kaffe (se
    `comparison.py`). Tilbud på flere forskellige varer ("Hakket okse- eller
    grisekød"), færdigretter, pålæg og økologiske varer sammenlignes ikke.
-4. **Favoritter** får en bonus (`favorit_bonus`), og store besparelser i kroner
+4. **Laveste pris i X uger**: er prisen pr. kg/liter lavere end i alle
+   tidligere aviser i mindst 3 uger, vises det på tilbuddet, og det rykker
+   lidt op. Det kræver, at programmet har kørt i et par uger.
+5. **Favoritter** får en bonus (`favorit_bonus`), og store besparelser i kroner
    giver et lille ekstra skub.
 
 Mange kæder (fx Netto og REMA 1000) oplyser sjældent en normalpris, og

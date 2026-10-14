@@ -20,6 +20,7 @@ from urllib.parse import urlparse
 from .categories import UNCATEGORIZED, Categorizer, merge_categories
 from .cli import best_offers, load_app_config, make_source
 from .config import Config, example_config, save_config
+from .models import Offer
 from .report import discount_text, kr, period_text, unit_price_text, write_reports
 from .scanner import scan
 from .selection import catalog_selected, store_selected
@@ -133,6 +134,50 @@ class App:
                 for name, items in sorted(stores.items(), key=lambda kv: kv[0].casefold())
             ]
         }
+
+    # -- Indkøbsliste ---------------------------------------------------
+    def shopping_list(self) -> dict:
+        cfg = self.config()
+        with Storage(cfg.database) as storage:
+            items = storage.shopping_list()
+        now = datetime.now(timezone.utc)
+        for item in items:
+            offer = Offer(
+                id=item["id"], catalog_id="", dealer=item["dealer"] or "", heading=item["heading"],
+                description=item["description"] or "", price=item["price"] or 0.0,
+                amount=item["amount"], unit=item["unit"],
+                run_from=datetime.fromisoformat(item["run_from"]) if item["run_from"] else None,
+                run_till=datetime.fromisoformat(item["run_till"]) if item["run_till"] else None,
+            )
+            item.update(
+                price_text=kr(item["price"]) if item["price"] is not None else "",
+                unit_price_text=unit_price_text(offer) if item["price"] is not None else "",
+                period_text=period_text(offer),
+                expired=bool(offer.run_till and offer.run_till < now),
+                member=offer.member,
+            )
+        return {"items": items}
+
+    def change_list(self, data: dict) -> None:
+        action = data.get("action")
+        cfg = self.config()
+        with Storage(cfg.database) as storage:
+            if action == "add":
+                if not storage.add_to_list(str(data.get("id", ""))):
+                    raise ValueError("Tilbuddet findes ikke længere")
+            elif action == "add_text":
+                text = str(data.get("text", "")).strip()
+                if not text:
+                    raise ValueError("Skriv hvad der skal på listen")
+                storage.add_text_to_list(text[:200])
+            elif action == "check":
+                storage.set_list_checked(str(data.get("id", "")), bool(data.get("checked")))
+            elif action == "remove":
+                storage.remove_from_list(str(data.get("id", "")))
+            elif action == "clear":
+                storage.clear_list(only_checked=bool(data.get("only_checked")))
+            else:
+                raise ValueError(f"Ukendt handling: {action}")
 
     # -- Handlinger -----------------------------------------------------
     def save_settings(self, data: dict) -> None:
@@ -259,6 +304,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(self.app.offers())
             if path == "/api/catalogs":
                 return self._json(self.app.catalogs())
+            if path == "/api/list":
+                return self._json(self.app.shopping_list())
         except SourceError as exc:
             return self._error(HTTPStatus.BAD_GATEWAY, str(exc))
         except Exception as exc:
@@ -282,6 +329,9 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/settings":
                 self.app.save_settings(data)
                 return self._json({"ok": True})
+            if path == "/api/list":
+                self.app.change_list(data)
+                return self._json(self.app.shopping_list())
         except (ValueError, TypeError) as exc:
             return self._error(HTTPStatus.BAD_REQUEST, str(exc))
         except Exception as exc:

@@ -87,3 +87,36 @@ def test_per_category_and_limit(cfg, categorizer):
 def test_duplicate_offers_removed(cfg, categorizer):
     offers = [offer("Kaffe", 30, 60, id="a"), offer("Kaffe", 30, 60, id="b")]
     assert len(select_offers(offers, cfg, categorizer)) == 1
+
+
+def test_lowest_price_in_weeks(cfg, categorizer):
+    from datetime import datetime, timedelta, timezone
+
+    from tilbudshenter.models import Catalog
+    from tilbudshenter.storage import Storage
+
+    start = datetime(2026, 9, 1, tzinfo=timezone.utc)
+
+    def week(n, price, dealer="Netto"):
+        cat = Catalog(id=f"c{n}{dealer}", dealer=dealer, label=f"Uge {n}",
+                      run_from=start + timedelta(weeks=n), run_till=start + timedelta(weeks=n, days=6))
+        o = Offer(id=f"o{n}{dealer}", catalog_id=cat.id, dealer=dealer, heading="Hakket oksekød",
+                  description="500 g", price=price, run_from=cat.run_from, run_till=cat.run_till)
+        return cat, o
+
+    with Storage(":memory:") as storage:
+        for n, price, dealer in [(0, 40, "Netto"), (2, 38, "Lidl"), (3, 42, "Netto")]:
+            cat, o = week(n, price, dealer)
+            storage.save_catalog(cat, "test", scanned=True)
+            storage.save_offers([o])
+        _, cheap = week(4, 35)
+        _, same = week(4, 38, "føtex")
+        _, early = week(1, 30, "føtex")
+        lows = storage.price_lows([cheap, same, early])
+        # 35 kr er lavere end alt i 4 uger; 38 kr er ikke lavere end Lidls 38 kr;
+        # i uge 1 er historikken kun 1 uge lang
+        assert lows == {cheap.id: 4}
+
+        result = select_offers([cheap, same], cfg, categorizer, lows=lows)
+        assert result[0].id == cheap.id
+        assert "laveste pris i 4 uger" in result[0].reasons and result[0].lowest_weeks == 4

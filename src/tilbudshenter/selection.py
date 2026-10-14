@@ -42,11 +42,16 @@ def _contains_any(text: str, words: list[str]) -> str | None:
     return next((w for w in words if w.strip() and w.casefold() in lowered), None)
 
 
+# Ekstra point til et tilbud med den laveste pris i flere uger
+LOWEST_PRICE_BONUS = 5.0
+
+
 def score_offer(
     offer: Offer,
     cfg: Config,
     typical_prices: dict[tuple[str, str], float] | None = None,
     comparisons: dict[str, Comparison] | None = None,
+    lows: dict[str, int] | None = None,
 ) -> float | None:
     """Beregner en score (højere = bedre) og udfylder ``offer.reasons``.
 
@@ -77,6 +82,10 @@ def score_offer(
         )
 
     score = discount or 0.0
+    offer.lowest_weeks = (lows or {}).get(offer.id)
+    if offer.lowest_weeks:
+        score += LOWEST_PRICE_BONUS
+        reasons.append(f"laveste pris i {offer.lowest_weeks} uger")
     if offer.savings:
         score += min(offer.savings, 100) / 20
     if favorite := _contains_any(offer.text, cfg.favorites):
@@ -96,6 +105,7 @@ def select_offers(
     categorizer: Categorizer,
     typical_prices: dict[tuple[str, str], float] | None = None,
     limit: int | None = None,
+    lows: dict[str, int] | None = None,
 ) -> list[Offer]:
     """Filtrerer tilbud efter butik, kategori og filtre og sorterer de
     bedste først."""
@@ -119,7 +129,7 @@ def select_offers(
         if _contains_any(offer.text, cfg.exclude_keywords):
             continue
 
-        discount = score_offer(offer, cfg, typical_prices, comparisons)
+        discount = score_offer(offer, cfg, typical_prices, comparisons, lows)
         if not _contains_any(offer.text, cfg.favorites):
             if discount is None and cfg.only_known_discount:
                 continue

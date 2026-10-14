@@ -88,3 +88,17 @@ def test_enrich_from_text():
     assert offer.unit_price == pytest.approx(70)
     assert offer.unit == "kg"
     assert offer.pre_price == pytest.approx(46.67)
+
+
+def test_member_requirement():
+    from tilbudshenter.models import member_requirement
+
+    assert member_requirement("0,2 % fedt. 1 kg. Med Lidl Plus³") == "Lidl Plus"
+    assert member_requirement("+ PRIS 10.- Pr. kg 80,00 Gælder kun med Netto+ appen") == "Kræver app"
+    assert member_requirement("plus pris 20,- Gælder kun med føtex plus appen") == "Kræver app"
+    assert member_requirement("PLUS PRIS FRIT VALG") == "Kræver app"
+    assert member_requirement("1 kg. Kg-pris 20,00. 1 bakke. Pris ikke-medlem 26,00") == "Medlemspris"
+    assert member_requirement("MEDLEMSPRIS*") == "Medlemspris"
+    assert member_requirement("• 3D hotAir Plus-teknologi") is None
+    assert member_requirement("Model: D20 Plus") is None
+    assert member_requirement("Pr. kg 79,90. Max 3 stk. pr. kunde") is None

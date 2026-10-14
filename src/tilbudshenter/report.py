@@ -83,6 +83,8 @@ def render_markdown(offers: list[Offer], categorizer: Categorizer, title: str, g
     ]
     for i, o in enumerate(offers, 1):
         name = o.heading.replace("|", "/")
+        if o.member:
+            name += f" ({o.member})"
         if o.description:
             name += f" <br><small>{_short(o.description, 60).replace('|', '/')}</small>"
         out.append(
@@ -152,11 +154,12 @@ def render_html(offers: list[Offer], categorizer: Categorizer, title: str, gener
         badge = f'<span class="badge{est}">{discount_text(o)}</span>' if discount_text(o) else ""
         unit = f'<div class="desc">{unit_price_text(o)}</div>' if o.unit_price else ""
         why = f'<div class="why">{e(", ".join(o.reasons))}</div>' if o.reasons else ""
+        member = f'<div class="desc"><b>{e(o.member)}</b></div>' if o.member else ""
         cards.append(
             f'<div class="card" data-store="{e(o.dealer)}" data-cat="{e(o.category or "")}">'
             f'{img}<div class="top"><span>#{i} · {e(o.dealer)}</span>{badge}</div>'
             f'<div class="name">{e(o.heading)}</div><div class="desc">{e(o.description)}</div>'
-            f'<div class="price">{kr(o.price)}{pre}</div>{unit}{why}'
+            f'<div class="price">{kr(o.price)}{pre}</div>{member}{unit}{why}'
             f'<div class="desc">{e(categorizer.display_name(o.category))} · {period_text(o)}</div></div>'
         )
     body = "".join(cards) if cards else "<p>Ingen tilbud matcher dine valg.</p>"
