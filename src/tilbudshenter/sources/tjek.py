@@ -78,6 +78,7 @@ def catalog_from_api(data: dict) -> Catalog:
         run_from=parse_datetime(data.get("run_from")),
         run_till=parse_datetime(data.get("run_till")),
         offer_count=data.get("offer_count"),
+        dealer_id=data.get("dealer_id"),
     )
 
 
@@ -172,6 +173,19 @@ class TjekSource:
             "order_by": "-publication_date",
         }
         return [catalog_from_api(item) for item in self._paginate("catalogs", params)]
+
+    def list_stores(self, dealer_id: str) -> list[dict]:
+        """Kædens butikker i hele landet med adresse og koordinater."""
+        return [
+            {
+                "latitude": float(item["latitude"]),
+                "longitude": float(item["longitude"]),
+                "zip_code": str(item.get("zip_code") or "").strip(),
+                "city": str(item.get("city") or "").strip(),
+            }
+            for item in self._paginate("stores", {"dealer_ids": dealer_id})
+            if item.get("latitude") is not None and item.get("longitude") is not None
+        ]
 
     def list_offers(self, catalog: Catalog) -> list[Offer]:
         offers = []
