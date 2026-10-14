@@ -201,4 +201,6 @@ def build_site(
         json.dumps(pages_data(cfg, now), separators=(",", ":")), encoding="utf-8"
     )
     (out_dir / ".nojekyll").write_text("", encoding="utf-8")
+    # Siden skal ikke kunne findes via søgemaskiner
+    (out_dir / "robots.txt").write_text("User-agent: *\nDisallow: /\n", encoding="utf-8")
     return data
