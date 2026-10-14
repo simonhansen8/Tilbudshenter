@@ -2,7 +2,7 @@ import json
 
 from tilbudshenter.cli import main
 from tilbudshenter.mealplan import parse_line, recipe_from_lines
-from tilbudshenter.opskrifter import _minutes, extract_recipe, update
+from tilbudshenter.opskrifter import _minutes, extract_recipe, is_dinner, update
 
 PAGE = """<html><head>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebSite", "name": "Madsiden"}</script>
@@ -10,6 +10,7 @@ PAGE = """<html><head>
 {"@context": "https://schema.org", "@graph": [
   {"@type": "BreadcrumbList"},
   {"@type": ["Recipe"], "name": "Chili con carne &amp; ris", "recipeYield": ["2", "2 personer"],
+   "recipeCategory": ["Aftensmad", "Hovedret"],
    "totalTime": "PT1H5M",
    "recipeIngredient": ["250 g hakket oksekød", "1 løg", "1 dåse hakkede tomater", "1 dåse kidneybønner",
                         "1 rød peberfrugt", "150 g ris", "1 tsk spidskommen", "salt og peber"],
@@ -56,7 +57,8 @@ def test_minutes():
 def test_extract_recipe():
     data = extract_recipe(PAGE, "https://mad.dk/chili")
     assert data == {
-        "url": "https://mad.dk/chili", "name": "Chili con carne & ris", "persons": 2, "minutes": 65,
+        "url": "https://mad.dk/chili", "name": "Chili con carne & ris", "category": "Aftensmad, Hovedret",
+        "persons": 2, "minutes": 65,
         "ingredients": ["250 g hakket oksekød", "1 løg", "1 dåse hakkede tomater", "1 dåse kidneybønner",
                         "1 rød peberfrugt", "150 g ris", "1 tsk spidskommen", "salt og peber"],
         "method": "Brun kødet. Kog ris.",
@@ -98,3 +100,11 @@ def test_cli_recipes(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr("tilbudshenter.opskrifter.fetch", lambda url: PAGE)
     assert main(["opskrifter", "--liste", str(lst), "--ud", str(tmp_path / "o.json"), "--pause", "0"]) == 0
     assert "1 opskrifter i samlingen, 1 nye" in capsys.readouterr().out
+
+
+def test_only_dinners():
+    assert is_dinner({"name": "Boller i karry", "category": "Aftensmad"})
+    assert is_dinner({"name": "Farsbrød med kartofler"})
+    assert not is_dinner({"name": "Chokoladekage"})
+    assert not is_dinner({"name": "Bananbrød", "category": "Bagværk"})
+    assert not is_dinner({"name": "Ovnbagt rodfrugter", "category": "Tilbehør"})

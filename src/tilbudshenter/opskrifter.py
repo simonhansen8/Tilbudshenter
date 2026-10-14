@@ -25,6 +25,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 
+from .comparison import _has_word, _tokens
 from .mealplan import recipe_from_lines
 
 log = logging.getLogger(__name__)
@@ -66,6 +67,10 @@ def _find_recipe(node) -> dict | None:
             if key in node and (found := _find_recipe(node[key])) is not None:
                 return found
     return None
+
+
+def _as_list(value) -> list:
+    return value if isinstance(value, list) else [value] if value else []
 
 
 def _text(value) -> str:
@@ -124,11 +129,24 @@ def extract_recipe(page: str, url: str) -> dict | None:
         if not name or not lines:
             continue
         minutes = _minutes(node.get("totalTime")) or _minutes(node.get("prepTime")) + _minutes(node.get("cookTime"))
+        category = ", ".join(t for t in (_text(c) for c in _as_list(node.get("recipeCategory"))) if t)
         return {
-            "url": url, "name": name[:80], "persons": _persons(node.get("recipeYield")), "minutes": minutes,
+            "url": url, "name": name[:80], "category": category[:80],
+            "persons": _persons(node.get("recipeYield")), "minutes": minutes,
             "ingredients": lines[:40], "method": " ".join(_steps(node.get("recipeInstructions")))[:4000],
         }
     return None
+
+
+# Opskrifter, der ikke er aftensmad (et sitemap har også kager og drinks)
+NOT_DINNER = ["kage", "kager", "muffin", "cookie", "småkage", "brød ", "dessert", "desserter", "is ", "smoothie",
+              "drink", "cocktail", "marmelade", "syltetøj", "dressing", "snack", "konfekt", "chokolade", "grød",
+              "bagværk", "drikke", "tilbehør", "forret", "forretter", "morgenmad"]
+
+
+def is_dinner(recipe: dict) -> bool:
+    text = f"{recipe['name']} {recipe.get('category', '')}"
+    return not any(_has_word(_tokens(text), w) for w in NOT_DINNER)
 
 
 def sitemap_urls(xml: str) -> list[str]:
@@ -216,7 +234,9 @@ def update(list_path: Path, json_path: Path = DEFAULT_JSON, fetcher=None, delay:
             if delay:
                 time.sleep(delay)
         why = "ingen opskrift på siden"
-        if found:
+        if found and not is_dinner(found):
+            why = "ikke aftensmad"
+        elif found:
             found.pop("method")
             recipe, why = recipe_from_lines("", found["name"], found["ingredients"], found["persons"])
             if recipe:
