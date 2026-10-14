@@ -58,6 +58,14 @@ select { padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; 
 .chip .n { color: var(--muted); margin-left: 4px; }
 .chip.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
 .chip.on .n { color: inherit; opacity: .7; }
+.filter-menu { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); margin-top: 4px; }
+.filter-menu > summary { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; padding: 10px 14px; cursor: pointer; list-style: none; user-select: none; }
+.filter-menu > summary::-webkit-details-marker { display: none; }
+.filter-menu > summary::before { content: "▸"; color: var(--muted); transition: transform .15s; }
+.filter-menu[open] > summary::before { transform: rotate(90deg); }
+.filter-menu > summary b { font-weight: 650; }
+.filter-menu .sum { color: var(--muted); font-size: 13px; flex: 1 1 200px; }
+.filter-menu .body { padding: 0 14px 12px; border-top: 1px solid var(--line); }
 
 .count { color: var(--muted); font-size: 14px; margin: 18px 0 10px; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
@@ -249,12 +257,17 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
       <label class="check"><input type="checkbox" id="known-only"> Kun kendt rabat</label>
       <label class="check" title="Tilbud der kræver Lidl Plus, kædens app eller medlemskab"><input type="checkbox" id="hide-member"> Skjul medlems- og app-priser</label>
     </div>
-    <div class="group-label">Periode</div>
-    <div class="chips" id="period-chips"></div>
-    <div class="group-label">Butik <button class="link" data-all="stores">Vis alle</button></div>
-    <div class="chips" id="store-chips"></div>
-    <div class="group-label">Kategori <button class="link" data-all="cats">Vis alle</button> <button class="link" data-reset="cats">Mine kategorier</button></div>
-    <div class="chips" id="cat-chips"></div>
+    <details class="filter-menu" id="filter-menu">
+      <summary><b>Filtre</b> <span class="sum" id="filter-sum"></span></summary>
+      <div class="body">
+        <div class="group-label">Periode</div>
+        <div class="chips" id="period-chips"></div>
+        <div class="group-label">Butik <button class="link" data-all="stores">Vis alle</button></div>
+        <div class="chips" id="store-chips"></div>
+        <div class="group-label">Kategori <button class="link" data-all="cats">Vis alle</button> <button class="link" data-reset="cats">Mine kategorier</button></div>
+        <div class="chips" id="cat-chips"></div>
+      </div>
+    </details>
   </section>
 
   <div class="count" id="count"></div>
@@ -497,8 +510,8 @@ async function api(path, body) {
 }
 
 // Brugerens valg og indkøbsliste ligger i browseren under disse nøgler
-// (tilbudshenter.settings, tilbudshenter.list, tilbudshenter.prefs og
-// tilbudshenter.mealplan). De må ikke omdøbes, og gemte valg går altid
+// (tilbudshenter.settings, tilbudshenter.list, tilbudshenter.prefs,
+// tilbudshenter.filters og tilbudshenter.mealplan). De må ikke omdøbes, og gemte valg går altid
 // forud for standardvalgene i data.json, så en ny udgave af siden aldrig
 // nulstiller dem.
 const store = {
@@ -723,6 +736,22 @@ function loadPrefs() {
   $("sort").value = state.sort;
 }
 
+// Filtrene (periode, butikker, kategorier og "kun kendt rabat") huskes i
+// browseren. Butikker og kategorier gemmes som dem, der er slået fra, så nye
+// butikker og kategorier vises, indtil de selv bliver fravalgt.
+function savedFilters() { return store.get("filters", {}); }
+function saveFilters() {
+  if (!state.offers.length) return;
+  const dealers = new Set(state.offers.map(o => o.dealer));
+  store.set("filters", {
+    periods: [...state.periods],
+    hiddenStores: [...dealers].filter(d => !state.stores.has(d)),
+    hiddenCats: state.categories.map(c => c.key).filter(k => !state.cats.has(k)),
+    knownOnly: state.knownOnly,
+    open: $("filter-menu").open,
+  });
+}
+
 function splitList(text) { return text.split(",").map(s => s.trim()).filter(Boolean); }
 
 function timeAgo(iso) {
@@ -795,10 +824,24 @@ async function loadOffers() {
   state.offers = data.offers;
   state.papers = data.papers || {};
   const stores = new Set(state.offers.map(o => o.dealer));
-  state.stores = new Set([...stores].filter(s => state.stores.size === 0 || state.stores.has(s)));
+  if (!loadOffers.didInit) {
+    // Første gang: de gemte filtre, ellers standardvalgene
+    const f = savedFilters();
+    const hidden = new Set(f.hiddenStores || []);
+    state.stores = new Set([...stores].filter(s => !hidden.has(s)));
+    if (Array.isArray(f.periods)) state.periods = new Set(f.periods.filter(p => p === "now" || p === "later"));
+    if (Array.isArray(f.hiddenCats)) {
+      const hiddenCats = new Set(f.hiddenCats);
+      state.cats = new Set(state.categories.map(c => c.key).filter(k => !hiddenCats.has(k)));
+    } else resetCats();
+    state.knownOnly = typeof f.knownOnly === "boolean" ? f.knownOnly : state.settings.only_known_discount;
+    $("filter-menu").open = !!f.open;
+    loadOffers.didInit = true;
+  } else {
+    state.stores = new Set([...stores].filter(s => state.stores.size === 0 || state.stores.has(s)));
+  }
   if (state.stores.size === 0) state.stores = stores;
-  if (!loadOffers.didInitCats) { resetCats(); loadOffers.didInitCats = true; }
-  state.knownOnly = state.settings.only_known_discount;
+  if (state.periods.size === 0) state.periods = new Set(["now", "later"]);
   $("known-only").checked = state.knownOnly;
   state.limit = PAGE;
   render();
@@ -879,6 +922,19 @@ function renderChips() {
     .map(([k, label]) => chip("periods", k, label, periodCounts[k], state.periods.has(k))).join("");
   $("cat-chips").innerHTML = state.categories.filter(c => catCounts[c.key])
     .map(c => chip("cats", c.key, c.name, catCounts[c.key], state.cats.has(c.key))).join("");
+  // Kort oversigt, så filtrene kan ses, når menuen er lukket
+  const allStores = Object.keys(storeCounts).sort((a, b) => a.localeCompare(b, "da"));
+  const onStores = allStores.filter(s => state.stores.has(s));
+  const allCats = state.categories.filter(c => catCounts[c.key]), onCats = allCats.filter(c => state.cats.has(c.key));
+  const periodText = state.periods.size === 2 ? "Gælder nu og senere"
+    : state.periods.has("now") ? "Gælder nu" : state.periods.has("later") ? "Starter senere" : "Ingen periode";
+  const storeText = onStores.length === allStores.length ? "Alle butikker"
+    : onStores.length <= 3 ? onStores.join(", ") || "Ingen butikker"
+    : `${onStores.length} af ${allStores.length} butikker`;
+  const catText = onCats.length === allCats.length ? "alle kategorier"
+    : onCats.length <= 2 ? onCats.map(c => c.name).join(", ") || "ingen kategorier"
+    : `${onCats.length} af ${allCats.length} kategorier`;
+  $("filter-sum").textContent = [periodText, storeText, catText].join(" · ");
 }
 
 function card(o) {
@@ -2035,8 +2091,11 @@ async function saveSettings() {
   try {
     await api("/api/settings", body);
     await refreshState();
+    // Nye standardvalg i indstillingerne slår igennem i filtrene
     resetCats();
+    state.knownOnly = state.settings.only_known_discount;
     await loadOffers();
+    saveFilters();
     if (storesChanged && !STATIC) {
       showMessage(`<div class="grow">Indstillingerne er gemt. Hent tilbud for at få aviser fra dine nye valg med.</div>
         <button class="btn primary small" onclick="startScan()">Hent nu</button>`);
@@ -2071,7 +2130,7 @@ $("list-body").addEventListener("change", e => {
 });
 $("grid").addEventListener("click", e => {
   const only = e.target.closest("[data-only-store]");
-  if (only) { state.stores = new Set([only.dataset.onlyStore]); state.limit = PAGE; render(); window.scrollTo({top: $("filters").offsetTop}); return; }
+  if (only) { state.stores = new Set([only.dataset.onlyStore]); state.limit = PAGE; saveFilters(); render(); window.scrollTo({top: $("filters").offsetTop}); return; }
   if (e.target.closest("a")) return;
   const b = e.target.closest("[data-list]");
   if (b) {
@@ -2119,20 +2178,21 @@ $("btn-load-stores").addEventListener("click", loadStores);
 $("btn-more").addEventListener("click", () => { state.limit += PAGE; render(); });
 $("search").addEventListener("input", e => { state.q = e.target.value; state.limit = PAGE; render(); });
 $("sort").addEventListener("change", e => { state.sort = e.target.value; savePrefs(); render(); });
-$("known-only").addEventListener("change", e => { state.knownOnly = e.target.checked; render(); });
+$("known-only").addEventListener("change", e => { state.knownOnly = e.target.checked; saveFilters(); render(); });
+$("filter-menu").addEventListener("toggle", saveFilters);
 $("hide-member").addEventListener("change", e => { state.hideMember = e.target.checked; savePrefs(); render(); });
 $("filters").addEventListener("click", e => {
   const c = e.target.closest(".chip");
   if (c) {
     const set = state[c.dataset.kind];
     set.has(c.dataset.value) ? set.delete(c.dataset.value) : set.add(c.dataset.value);
-    state.limit = PAGE; render(); return;
+    state.limit = PAGE; saveFilters(); render(); return;
   }
   if (e.target.dataset.all === "stores") state.stores = new Set(state.offers.map(o => o.dealer));
   else if (e.target.dataset.all === "cats") state.cats = new Set(state.categories.map(c => c.key));
   else if (e.target.dataset.reset === "cats") resetCats();
   else return;
-  render();
+  saveFilters(); render();
 });
 $("store-list").addEventListener("change", e => {
   const t = e.target;

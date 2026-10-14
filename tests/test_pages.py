@@ -90,3 +90,10 @@ def test_saved_choices_survive_new_versions():
     assert 'localStorage.getItem("tilbudshenter." + key)' in html
     assert 'store.get("settings", {})' in html and 'store.get("list", [])' in html
     assert '{...siteData.default_settings, ...store.get("settings", {})}' in html
+
+
+def test_filters_are_saved():
+    # Periode, butikker og kategorier i filtermenuen huskes i browseren
+    html = static_html()
+    assert 'id="filter-menu"' in html
+    assert 'store.set("filters"' in html and 'store.get("filters", {})' in html
