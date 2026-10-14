@@ -102,6 +102,13 @@ def test_cli_recipes(tmp_path, monkeypatch, capsys):
     assert "1 opskrifter i samlingen, 1 nye" in capsys.readouterr().out
 
 
+def test_salads_need_a_main_course_category():
+    assert not is_dinner({"name": "Spidskålssalat med tomater på 5 minutter", "category": "Salat"})
+    assert not is_dinner({"name": "Asiatisk salat", "category": "Salater, Frokost, Madpakke"})
+    assert is_dinner({"name": "Grøn salat med laks", "category": "Salater, Hovedretter, Aftensmad"})
+    assert is_dinner({"name": "Chili con carne", "category": ""})
+
+
 def test_only_dinners():
     assert is_dinner({"name": "Boller i karry", "category": "Aftensmad"})
     assert is_dinner({"name": "Farsbrød med kartofler"})

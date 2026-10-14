@@ -29,6 +29,7 @@ RECIPES = [
     (["1 kg kartofler", "3 porrer", "1 l hønsebouillon", "2 dl fløde"], 6),
     (["4 kyllingebryst", "1 broccoli", "300 g ris", "1 dåse kokosmælk", "2 spsk karry"], 4),
     (["400 g pasta", "150 g bacon", "4 æg", "100 g revet ost"], 4),
+    (["500 g hakket oksekød", "1 æg", "2 spsk mælk", "1 løg"], 4),
 ]
 
 
