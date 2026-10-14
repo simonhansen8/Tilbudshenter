@@ -18,6 +18,7 @@ DEFAULT_CATEGORIES: dict[str, dict] = {
     "slik_og_snacks": {
         "navn": "Slik & snacks",
         "noegleord": [
+            "kinder", "kitkat", "ispinde", "m&m", "m ms", "milky way", "reeses", "carletti", "anthon berg", "merci", "lindor", "oreo", "toffypops", "malaco", "maoam", "trolli", "panda licorice", "candy king", "bonbon", "skippers", "spangsberg", "kims", "cantuccini", "roulade", "proteinbar", "proteinbarer", "müslibar", "crackers", "tuc", "mælkesnitte", "hasselnøddesnitte", "flødebolletoppe", "flødeis", "julekager", "donut", "donuts", "nøddebøtter", "pick up", "candy", "halloween minichokoladebarer", "sweet sour", "spooky mix", "scary party mix",
             "chokolade", "slik", "vingummi", "lakrids", "chips", "popcorn",
             "kiks", "småkager", "julekager", "marabou", "haribo", "toms", "pringles",
             "nødder", "nøddemix", "peanuts", "mandler", "flødeboller", "karamel",
@@ -36,6 +37,7 @@ DEFAULT_CATEGORIES: dict[str, dict] = {
     "drikkevarer": {
         "navn": "Drikkevarer",
         "noegleord": [
+            "monster", "royal club", "shaker", "proteinshake", "proteindrik", "ready to drink", "nupo", "ingefærshot", "shot",
             "sodavand", "cola", "coca cola", "fanta", "squash", "pepsi", "faxe kondi", "juice", "saft",
             "vand ", "kildevand", "danskvand", "energidrik", "smoothie", "iste",
             "powerade", "monster energy", "red bull", "drik", "rynkeby",
@@ -45,6 +47,7 @@ DEFAULT_CATEGORIES: dict[str, dict] = {
     "oel_og_vin": {
         "navn": "Øl, vin & spiritus",
         "noegleord": [
+            "breezer", "smirnoff", "somersby", "1664", "aalborg", "bitter", "baileys", "gløgg", "julebryg", "porter", "cocktail ", "chianti", "barbaresco", "barolo", "zinfandel", "primitivo", "spier", "yellow tail", "santa rita", "cono sur", "hardys", "viña", "maipo", "coyam", "upupa", "challis", "mchogan", "route 2", "adobe", "jam shed", "1000 stories", "joseph mellot", "grant burge", "noble house", "specialøl", "christmas ale",
             "øl", "ølmarked", "pilsner", "tuborg", "carlsberg", "ipa", "rødvin",
             "hvidvin", "rosé", "vin ", "vine", "cava", "prosecco", "champagne",
             "spiritus", "vodka", "gin ", "whisky", "rom ", "cider", "bag in box",
@@ -58,6 +61,7 @@ DEFAULT_CATEGORIES: dict[str, dict] = {
     "kaffe_og_te": {
         "navn": "Kaffe & te",
         "noegleord": [
+            "formalet", "hele bønner", "merrild", "peter larsen", "café noir", "cafe noir", "karat", "bki",
             "kaffe", "espresso", "kaffebønner", "kapsler", "te ", "tebreve",
             "gevalia", "lavazza", "helbønner", "l or", "chai", "latte", "nescafé", "nescafe",
         ],
@@ -65,6 +69,7 @@ DEFAULT_CATEGORIES: dict[str, dict] = {
     "koed": {
         "navn": "Kød & fjerkræ",
         "noegleord": [
+            "charcuteri", "kødboller", "kødbolle", "jamón", "jamon", "ibérico", "iberico", "pepperoni", "kæber", "svinekæber", "grisekæber", "frilandsgris", "pakkemarked", "brystfilet", "inderfilet", "grisekød", "pålægssalat", "landand", "burger boost", "hamburger",
             "oksekød", "kylling", "kalkun", "svinekød", "flæsk",
             "bacon", "mørbrad", "koteletter", "skinke", "medister", "pølser",
             "pølse", "bøf", "bøffer", "steak", "steaks", "steg", "okse",
@@ -84,6 +89,7 @@ DEFAULT_CATEGORIES: dict[str, dict] = {
     "fisk": {
         "navn": "Fisk & skaldyr",
         "noegleord": [
+            "vildlaks", "krebsehaler", "laksefilet", "laksesalat",
             "laks", "torsk", "fisk", "rejer", "tun ", "tunfisk", "makrel", "sild",
             "rødspætte", "kuller", "sej ", "fiskefrikadeller", "muslinger",
             "skaldyr", "hummer", "fiskefilet", "fiskefileter", "rogn", "sushi",
@@ -93,11 +99,12 @@ DEFAULT_CATEGORIES: dict[str, dict] = {
     "mejeri": {
         "navn": "Mejeri & æg",
         "noegleord": [
+            "kefir", "edamer", "cheese", "saint agur", "kærgården", "søhvide", "oatly", "risifrutti", "actimel", "ama ", "fedtstof",
             "mælk", "letmælk", "minimælk", "sødmælk", "yoghurt", "skyr",
             "ost", "smør", "fløde", "creme fraiche", "cremefraiche", "kærnemælk",
             "æg", "lurpak", "arla", "kvark", "hytteost", "piskefløde",
             "mozzarella", "feta", "parmesan", "riberhus", "smørbar", "danbo",
-            "havarti", "gouda", "tilsiter", "emmentaler", "cheddar", "samsø",
+            "havarti", "gouda", "tilsiter", "emmentaler", "cheddar",
             "grana padano", "brie", "camembert", "castello", "philadelphia",
             "mascarpone", "burrata", "danonino", "dronning dagmar", "margarine",
             "den leende ko", "fromage", "revet",
@@ -106,6 +113,7 @@ DEFAULT_CATEGORIES: dict[str, dict] = {
     "frugt_og_groent": {
         "navn": "Frugt & grønt",
         "noegleord": [
+            "aubergine", "knoldselleri", "selleri", "orangerødder", "rodfrugt", "rodfrugtmix",
             "æbler", "æble", "pærer", "bananer", "banan", "appelsiner",
             "citroner", "druer", "vindruer", "jordbær", "blåbær", "hindbær", "melon",
             "avocado", "tomater", "agurk", "peberfrugt", "salat", "løg",
@@ -120,6 +128,7 @@ DEFAULT_CATEGORIES: dict[str, dict] = {
     "broed_og_bager": {
         "navn": "Brød & bageri",
         "noegleord": [
+            "æbleskiver", "bread",
             "brød", "rugbrød", "franskbrød", "boller", "bolle", "rundstykker",
             "toastbrød", "wienerbrød", "croissant", "bagel", "tortilla",
             "pitabrød", "knækbrød", "flutes", "baguette", "snegl", "snegle",
@@ -140,6 +149,7 @@ DEFAULT_CATEGORIES: dict[str, dict] = {
     "kolonial": {
         "navn": "Kolonial",
         "noegleord": [
+            "noodles", "cup a soup", "soup", "dadler", "tranebær", "abrikoser", "figner", "oliven", "tomatpuré", "remoulade", "granola", "crüsli", "cruesli", "fras", "guldkorn", "grød", "risalamande", "pebermix", "aspargessnitter", "psyllium", "hummus", "patak", "blue dragon", "go tan", "asiatisk", "bbq", "bearnaise", "ravioli", "middagsret", "middagsretter", "platte", "pizzamel", "julefrokost", "kitchen joy", "knorr", "vaniljearoma",
             "pasta", "spaghetti", "ris ", "jasminris", "basmatiris", "risengrød",
             "mel", "sukker", "havregryn", "gryn", "müsli", "mysli", "cornflakes",
             "flakes", "havrefras", "morgenmad", "konserves", "flåede tomater",
@@ -157,6 +167,7 @@ DEFAULT_CATEGORIES: dict[str, dict] = {
     "husholdning": {
         "navn": "Husholdning",
         "noegleord": [
+            "vask", "klorin", "rodalon", "vanish", "calgon", "omo", "fryseposer", "viskestykke", "fyrfadslighter", "multibrænder", "vileda", "tændblokke", "duftolie", "sprinklervæske", "shopper",
             "vaskemiddel", "vaskepulver", "opvask", "toiletpapir", "papir",
             "køkkenrulle", "rengøring", "skyllemiddel", "affaldsposer",
             "opvasketabs", "neutral", "ajax", "fairy", "vim", "stearinlys",
@@ -168,6 +179,7 @@ DEFAULT_CATEGORIES: dict[str, dict] = {
     "personlig_pleje": {
         "navn": "Personlig pleje",
         "noegleord": [
+            "face", "cleanser", "cleansing", "day cream", "eye cream", "hand cream", "rens ", "pore", "hårprodukter", "hårfarve", "hårfarver", "styling", "taft", "got2b", "labello", "men expert", "nivea", "revitalift", "palmolive", "elvital", "conditioner", "cotton pads", "bioderma", "patch", "soap", "real techniques", "kosmetik", "glattejern", "hårtørrer", "vibrator", "stimulator", "satisfyer", "massage", "kosttilskud", "magnesium", "elektrolytter", "energy gel", "longo vital", "baldrian", "tryptonat", "kreatin kapsler", "asonor", "jordan", "salvequick", "id voks",
             "shampoo", "balsam", "tandpasta", "tandbørste", "deodorant", "deo ",
             "sæbe", "showergel", "shower", "creme", "barberblade", "bind",
             "tamponer", "tampax", "always", "tena", "hudpleje", "makeup",
@@ -185,6 +197,7 @@ DEFAULT_CATEGORIES: dict[str, dict] = {
     "dyr": {
         "navn": "Kæledyr",
         "noegleord": [
+            "vildtfuglefoder", "fuglefoder", "sheba", "cesar", "vitakraft", "purina",
             "hundemad", "kattemad", "kattegrus", "dyrefoder", "whiskas", "pedigree",
             "hund ", "hunde", "kat ", "katte", "halsbånd", "reflekssnor", "tyggeruller",
         ],
@@ -192,6 +205,7 @@ DEFAULT_CATEGORIES: dict[str, dict] = {
     "nonfood": {
         "navn": "Non-food",
         "noegleord": [
+            "bluey", "hama", "gabbys", "disney", "gurli gris", "sinful", "sence", "wasgij", "castus", "technic", "skriveartikler", "togbanesæt", "jernbanesæt", "skinnesæt", "vejbanesæt", "arbejdsbænk", "rolleleg", "legesæt", "w5", "perler", "perlesæt", "tegnetavle", "tegneplade", "tegnetablet", "markers", "dualmarkers", "twinmarkers", "akryl", "diamond art", "dragt", "fangedragt", "jumpsuit", "cardigan", "denimspencer", "hipsters", "boxers", "body", "natdragt", "jeggings", "joggers", "rullekrave", "baggy fit", "jogger fit", "wide fit", "sweatsæt", "keyboard", "walkie", "lg ", "zte", "ea sports", "vaske tørremaskine", "spejl", "genfærd", "edderkop", "edderkoppespind", "diy spind", "kranier", "kraniespand", "udklædning", "udklædningstilbehør", "udklædningsvåben", "vaser", "krukke", "træfad", "stavblendersæt", "varmtvandsdispenser", "vinkelmåler", "strygebræt", "tørrestativ", "vaskebalje", "kasser", "knagerække", "saksesæt", "vakuumopbevaringsposer", "gulvmoppe", "fejebakkesæt", "skomåtte", "udendørslys", "amaryllis", "hyacint", "hyancint", "tulipaner", "schlumbergera", "pinus", "kuvert", "donationskort", "notesbogsæt", "mal selv", "figur", "stabletårn", "plus plus", "super flyers", "game", "halloween varer", "halloween tilbehør", "vampyrtænder", "udskæresæt", "skæresæt", "keramik", "pyntegræskar", "græskarlys", "spøgelse", "spøgelser", "fiskars", "håndmixer", "røremaskine", "slikskål", "mælkeskummer", "sansebold", "stikbold", "smartstore", "sukkertopgran", "tyller", "udstikker", "udstiksforme", "pizzaovn", "hævekasse", "sigtesæt", "målekande", "møllehjul", "elefanthue", "imiteret lammeskind", "siddehynder", "rose i potte", "trefarvet rose", "spand med lys", "led spejl", "national geografic", "mysteriet", "lexibook", "led ", "børste i",
             "tv ", "fjernsyn", "telefon", "tøj ", "sko ", "legetøj", "værktøj",
             "møbler", "dyne", "pude", "sengetøj", "håndklæder", "gryde",
             "pande", "støvsuger", "kaffemaskine", "airfryer", "blomster",
