@@ -30,11 +30,24 @@ def store_selected(dealer: str, cfg: Config) -> bool:
     return not cfg.stores or matches(cfg.stores)
 
 
-def catalog_selected(label: str, cfg: Config) -> bool:
-    """Er avisen valgt? Matches på en del af avisens navn."""
-    if _contains_any(label, cfg.exclude_catalogs):
+def catalog_selected(label: str, cfg: Config, dealer: str = "") -> bool:
+    """Er avisen valgt? Matches på en del af avisens navn. "føtex: Uge 42"
+    gælder kun avisen "Uge 42" fra føtex, ikke de andre kæders "Uge 42"."""
+    if _catalog_matches(dealer, label, cfg.exclude_catalogs):
         return False
-    return not cfg.catalogs or bool(_contains_any(label, cfg.catalogs))
+    return not cfg.catalogs or _catalog_matches(dealer, label, cfg.catalogs)
+
+
+def _catalog_matches(dealer: str, label: str, words: list[str]) -> bool:
+    lowered = label.casefold()
+    for word in words:
+        chain, sep, part = word.partition(":")
+        if sep and _norm_store(chain) and part.strip():
+            if _norm_store(dealer).startswith(_norm_store(chain)) and part.strip().casefold() in lowered:
+                return True
+        elif word.strip() and word.casefold() in lowered:
+            return True
+    return False
 
 
 def _contains_any(text: str, words: list[str]) -> str | None:
@@ -111,7 +124,7 @@ def select_offers(
     bedste først."""
     candidates = [
         o for o in offers
-        if store_selected(o.dealer, cfg) and catalog_selected(o.catalog_label, cfg)
+        if store_selected(o.dealer, cfg) and catalog_selected(o.catalog_label, cfg, o.dealer)
     ]
     # Sammenlign med de valgte butikker, uanset kategori- og prisfiltre
     comparisons = compare_across_stores(candidates)
