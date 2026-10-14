@@ -131,7 +131,9 @@ label.field input { padding: 8px 10px; border: 1px solid var(--line); border-rad
 .dish ul { list-style: none; padding: 0; margin: 8px 0 0; }
 .dish li { display: flex; flex-wrap: wrap; gap: 2px 10px; padding: 4px 0; border-top: 1px solid var(--line); font-size: 14px; }
 .dish li .what { flex: 1 1 180px; }
-.dish li .src { flex: 2 1 240px; color: var(--muted); font-size: 13px; }
+.dish li .src { flex: 2 1 220px; color: var(--muted); font-size: 13px; }
+.dish li .cost { margin-left: auto; white-space: nowrap; font-weight: 600; font-size: 13px; }
+.dish .price-tag { font-weight: 700; font-size: 17px; white-space: nowrap; }
 .dish li.on .what::before { content: "✓ "; color: var(--accent); font-weight: 700; }
 .dish li.on .src { color: var(--fg); }
 .dish .pantry { color: var(--muted); font-size: 13px; margin-top: 6px; }
@@ -311,7 +313,8 @@ label.field input { padding: 8px 10px; border: 1px solid var(--line); border-rad
       <button class="btn small" id="btn-plan-close">Luk</button>
     </div>
     <div class="dlg-body">
-      <p class="hint">Aftensmad, hvor hovedingrediensen er på tilbud i dine butikker. ✓ betyder, at varen er på tilbud.</p>
+      <p class="hint">Aftensmad, hvor hovedingrediensen er på tilbud i dine butikker. ✓ betyder, at varen er på tilbud.
+        Prisen er for de mængder, retten bruger, med tilbudspris eller en anslået normalpris; hele pakker kan koste mere.</p>
       <div class="plan-controls">
         <label class="field">Retter <select id="plan-count"></select></label>
         <label class="field">Personer <select id="plan-persons"></select></label>
@@ -941,16 +944,45 @@ function choosePlan(ranked, keep) {
 }
 
 // Mængder er til 4 personer. Gram rundes til 50 g, resten til hele eller halve.
+function scaledAmount(item) {
+  const x = item.amount * plan.persons / 4;
+  if (item.unit === "g") return x >= 100 ? Math.round(x / 50) * 50 : Math.max(10, Math.round(x / 10) * 10);
+  if (item.unit === "dl") return Math.max(0.5, Math.round(x * 2) / 2);
+  return Math.max(1, Math.round(x));
+}
+
 function scaled(item) {
   if (!item.amount) return "";
-  const x = item.amount * plan.persons / 4;
-  if (item.unit === "g") return `${x >= 100 ? Math.round(x / 50) * 50 : Math.max(10, Math.round(x / 10) * 10)} g`;
-  if (item.unit === "dl") return `${(Math.max(0.5, Math.round(x * 2) / 2)).toLocaleString("da-DK")} dl`;
-  const n = Math.max(1, Math.round(x));
+  const n = scaledAmount(item);
+  if (item.unit === "g") return `${n} g`;
+  if (item.unit === "dl") return `${n.toLocaleString("da-DK")} dl`;
   if (item.unit === "stk") return String(n);
   if (item.unit === "dåse") return `${n} ${n === 1 ? "dåse" : "dåser"}`;
   return `${n} ${item.unit}`;
 }
+
+// Hvad den mængde, retten bruger, koster: med tilbuddets pris pr. kg, liter
+// eller stk, ellers med en anslået normalpris. Pakken kan koste mere.
+function itemCost(item, offer) {
+  const n = scaledAmount(item);
+  const kg = item.unit === "g" ? n / 1000 : item.unit === "dl" ? n / 10 : n * item.piece_g / 1000;
+  const pieces = item.unit === "g" || item.unit === "dl" ? (item.piece_g ? kg * 1000 / item.piece_g : null) : n;
+  const normal = kg * item.price_kg;
+  let cost = null;
+  if (offer && offer.unit_price) {
+    if (offer.unit === "kg" || offer.unit === "l") cost = kg * offer.unit_price;
+    else if (offer.unit === "stk" && pieces !== null) cost = pieces * offer.unit_price;
+  }
+  // En pris langt fra det normale skyldes som regel en fejl i mængden
+  if (cost === null || cost > normal * 3 || cost < normal / 5) return {cost: normal, estimate: true};
+  return {cost, estimate: false};
+}
+
+function dishCost(entry) {
+  return entry.items.reduce((s, {item, offer}) => s + itemCost(item, offer).cost, 0);
+}
+
+function kr(n) { return Math.round(n).toLocaleString("da-DK") + " kr"; }
 
 function itemText(item) { return [scaled(item), item.name].filter(Boolean).join(" "); }
 
@@ -989,14 +1021,19 @@ function renderPlan() {
   $("plan-body").innerHTML = entries.map((x, i) => {
     const r = x.recipe;
     const onOffer = x.items.filter(y => y.offer);
-    const sum = onOffer.reduce((s, y) => s + y.offer.price, 0);
+    const cost = dishCost(x);
     return `<article class="dish">
       <div class="dish-head"><h3>${esc(r.name)}</h3>
-        <span class="sub">${esc(KIND_NAMES[r.kind] || r.kind)} · ${r.minutes} min</span></div>
-      <div class="sub">${onOffer.length} af ${x.items.length} varer på tilbud${sum ? ` · tilbudsvarer ${money(sum)}` : ""}</div>
-      <ul>${x.items.map(({item, offer}) => `<li class="${offer ? "on" : ""}">
+        <span class="price-tag">ca. ${kr(cost)}</span></div>
+      <div class="sub">${kr(cost / plan.persons)} pr. person · ${esc(KIND_NAMES[r.kind] || r.kind)} · ${r.minutes} min
+        · ${onOffer.length} af ${x.items.length} varer på tilbud</div>
+      <ul>${x.items.map(({item, offer}) => {
+        const c = itemCost(item, offer);
+        return `<li class="${offer ? "on" : ""}">
         <span class="what">${esc(itemText(item))}</span>
-        <span class="src">${offer ? esc(offerLine(offer)) : "ikke på tilbud"}</span></li>`).join("")}</ul>
+        <span class="src">${offer ? esc(offerLine(offer)) : "ikke på tilbud, anslået normalpris"}</span>
+        <span class="cost">${c.estimate && offer ? "ca. " : ""}${kr(c.cost)}</span></li>`;
+      }).join("")}</ul>
       ${r.pantry.length ? `<div class="pantry">Har du derhjemme: ${esc(r.pantry.join(", "))}</div>` : ""}
       <details><summary>Sådan gør du</summary><p>${esc(r.method)}</p></details>
       <div class="dish-actions">
@@ -1005,8 +1042,8 @@ function renderPlan() {
       </div>
     </article>`;
   }).join("");
-  const total = planOffers(entries).reduce((s, o) => s + o.price, 0);
-  $("plan-sum").textContent = `${entries.length} retter · tilbudsvarer i alt ${money(total)}`;
+  const total = entries.reduce((s, x) => s + dishCost(x), 0);
+  $("plan-sum").textContent = `${entries.length} retter · ca. ${kr(total)} i alt (${kr(total / entries.length / plan.persons)} pr. person pr. ret)`;
 }
 
 async function openPlan() {

@@ -100,6 +100,28 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "aebler": PRODUCT_GROUPS["aebler"],
 }
 
+# Anslået normalpris (kr pr. kg eller liter) og vægt pr. stk, dåse, fed
+# eller bundt i gram. Bruges til rettens pris, når en vare ikke er på
+# tilbud, og til at omregne mellem stk og kg.
+NORMAL_PRICES: dict[str, tuple[float, float]] = {
+    "hakket_okse": (100, 0), "hakket_gris": (65, 0), "hakket_gris_kalv": (75, 0), "hakket_kylling": (90, 0),
+    "kyllingebryst": (110, 0), "kyllingelaar": (45, 0), "hel_kylling": (50, 1400), "bacon": (120, 0),
+    "stegeflaesk": (80, 0), "medister": (70, 0), "flaeskesteg": (70, 0), "moerbrad": (120, 0),
+    "koteletter": (70, 200), "poelser": (90, 60), "boef": (250, 150), "okse_tern": (150, 0),
+    "laksefilet": (200, 125), "hvid_fisk": (160, 125), "fiskefrikadeller": (100, 60), "tun": (100, 185),
+    "rejer": (150, 0),
+    "aeg": (50, 60), "maelk": (12, 0), "floede": (45, 0), "creme_fraiche": (40, 0), "revet_ost": (90, 0),
+    "feta": (100, 0), "smoer": (100, 0),
+    "pasta": (20, 0), "lasagneplader": (40, 0), "ris": (25, 0), "nudler": (40, 0), "tortilla": (60, 40),
+    "burgerboller": (50, 70), "poelsebroed": (40, 40), "pizzadej": (30, 400), "hakkede_tomater": (15, 400),
+    "kidneyboenner": (20, 400), "kokosmaelk": (40, 400), "majs": (30, 300),
+    "kartofler": (12, 0), "guleroedder": (10, 80), "loeg": (12, 150), "hvidloeg": (80, 5), "porrer": (25, 250),
+    "tomater": (30, 100), "agurk": (30, 400), "peberfrugt": (40, 200), "broccoli": (30, 400),
+    "blomkaal": (25, 800), "spidskaal": (15, 1000), "roedkaal": (25, 500), "champignon": (50, 0),
+    "spinat": (60, 0), "salat": (30, 400), "groenne_boenner": (30, 0), "aerter": (25, 0), "squash": (25, 300),
+    "wokgroent": (30, 0), "citron": (30, 100), "persille": (100, 30), "aebler": (20, 150),
+}
+
 # Ord der betyder, at tilbuddet ikke er en råvare
 _NOT_RAW = [
     "færdigret", "pålæg", "suppe", "sauce", "dressing", "chips", "snack", "juice", "spyd", "kebab",
@@ -138,7 +160,7 @@ def I(amount: float, unit: str, name: str, keys: str = "", main: bool = False) -
 RECIPES: list[Recipe] = [
     # -- Okse --------------------------------------------------------------
     Recipe("bolognese", "Spaghetti bolognese", "okse", 40, [
-        I(500, "g", "hakket oksekød", "hakket_okse|hakket_gris_kalv", True),
+        I(500, "g", "hakket kød (okse eller grise- og kalv)", "hakket_okse|hakket_gris_kalv", True),
         I(400, "g", "spaghetti", "pasta"),
         I(2, "dåse", "hakkede tomater", "hakkede_tomater"),
         I(1, "stk", "løg", "loeg"),
@@ -148,7 +170,7 @@ RECIPES: list[Recipe] = [
         "Svits hakket løg, hvidløg og revne gulerødder, og brun kødet. Tilsæt tomater og tomatpuré, "
         "og lad sovsen simre 20 minutter. Server med spaghetti."),
     Recipe("lasagne", "Lasagne", "okse", 75, [
-        I(500, "g", "hakket oksekød", "hakket_okse|hakket_gris_kalv", True),
+        I(500, "g", "hakket kød (okse eller grise- og kalv)", "hakket_okse|hakket_gris_kalv", True),
         I(250, "g", "lasagneplader", "lasagneplader"),
         I(2, "dåse", "hakkede tomater", "hakkede_tomater"),
         I(1, "stk", "løg", "loeg"),
@@ -170,7 +192,7 @@ RECIPES: list[Recipe] = [
         "Brun kødet med løg og peberfrugt, krydr med chili og spidskommen. Tilsæt tomater og bønner, "
         "og lad det simre 25 minutter. Server med ris og creme fraiche."),
     Recipe("tacos", "Tacos", "okse", 25, [
-        I(500, "g", "hakket oksekød", "hakket_okse|hakket_gris_kalv", True),
+        I(500, "g", "hakket kød (okse eller grise- og kalv)", "hakket_okse|hakket_gris_kalv", True),
         I(8, "stk", "tortillas", "tortilla"),
         I(1, "stk", "salathoved", "salat"),
         I(3, "stk", "tomater", "tomater"),
@@ -561,7 +583,11 @@ def recipes_payload() -> list[dict]:
             "kind": r.kind,
             "minutes": r.minutes,
             "items": [
-                {"amount": _amount(i.amount), "unit": i.unit, "name": i.name, "keys": i.keys, "main": i.main}
+                {
+                    "amount": _amount(i.amount), "unit": i.unit, "name": i.name, "keys": i.keys, "main": i.main,
+                    # Normalpris pr. kg og vægt pr. stk for den første ingrediens
+                    "price_kg": NORMAL_PRICES[i.keys[0]][0], "piece_g": NORMAL_PRICES[i.keys[0]][1],
+                }
                 for i in r.items
             ],
             "pantry": r.pantry,
