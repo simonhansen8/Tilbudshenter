@@ -20,6 +20,7 @@ from urllib.parse import urlparse
 from .categories import UNCATEGORIZED, Categorizer, merge_categories
 from .cli import best_offers, load_app_config, make_source
 from .config import Config, example_config, save_config
+from .mealplan import ingredient_keys, recipes_payload
 from .models import Offer
 from .report import discount_text, kr, period_text, unit_price_text, write_reports
 from .scanner import scan
@@ -212,8 +213,11 @@ class App:
 
 def offer_payload(o: Offer, categorizer: Categorizer) -> dict:
     """Et tilbud som appen viser det, med færdigformaterede tekster."""
+    ingredients = ingredient_keys(o.heading)
     return {
         **o.to_dict(),
+        # Ingredienser til madplanen; udeladt for de fleste tilbud
+        **({"ingredients": ingredients} if ingredients else {}),
         "category_name": categorizer.display_name(o.category),
         "price_text": kr(o.price),
         "pre_price_text": kr(o.pre_price) if o.pre_price else "",
@@ -306,6 +310,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(self.app.catalogs())
             if path == "/api/list":
                 return self._json(self.app.shopping_list())
+            if path == "/api/recipes":
+                return self._json({"recipes": recipes_payload()})
         except SourceError as exc:
             return self._error(HTTPStatus.BAD_GATEWAY, str(exc))
         except Exception as exc:

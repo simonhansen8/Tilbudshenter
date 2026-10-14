@@ -156,3 +156,8 @@ def test_shopping_list(server):
     assert request(server + "/api/list", {"action": "add", "id": "findes-ikke"}, h)[0] == 400
     assert request(server + "/api/list", {"action": "clear"})[0] == 403
     assert request(server + "/api/list", {"action": "clear"}, h)[1]["items"] == []
+
+
+def test_recipes(server):
+    status, data = request(server + "/api/recipes")
+    assert status == 200 and data["recipes"] and data["recipes"][0]["items"]

@@ -71,6 +71,7 @@ I appen kan du:
 - se hvilke tilbud der kræver Lidl Plus, kædens app eller medlemskab (og skjule dem),
 - lægge tilbud og egne varer på en **indkøbsliste**, delt op efter butik, som
   kan kopieres, sendes som mail eller udskrives,
+- lave en **madplan** ud fra ugens tilbud (se nedenfor),
 - vælge butikker, aviser, kategorier og din placering under **Indstillinger**.
 
 Appen kører kun på din egen computer. Luk konsolvinduet for at stoppe den.
@@ -232,6 +233,7 @@ src/tilbudshenter/
   categories.py   kategorisering ud fra nøgleord
   comparison.py   sammenligning af samme vare på tværs af butikker
   selection.py    filtrering og rangering
+  mealplan.py     retter og ingredienser til madplanen
   storage.py      SQLite: aviser, tilbud og prishistorik
   report.py       HTML, Markdown, JSON og terminal
 ```
@@ -239,18 +241,29 @@ src/tilbudshenter/
 En ny datakilde skal blot implementere `list_catalogs()` og `list_offers()`
 (se `sources/base.py`).
 
-## Madplan (planlagt)
+## Madplan
 
-Programmet er bygget, så en madplan kan lægges ovenpå:
+Knappen **Madplan** på siden og i appen foreslår aftensmad, hvor
+hovedingrediensen er på tilbud i dine butikker, fx spaghetti bolognese når
+hakket oksekød er billigt.
 
-- `Storage.current_offers()` giver alle aktuelle tilbud med kategori,
-  enhedspris og gyldighedsperiode.
-- `select_offers()` giver de bedste af dem ud fra brugerens valg.
-- `rapporter/seneste.json` indeholder det samme for programmer, der ikke er
-  skrevet i Python.
+- Retterne kommer fra en fast samling af omkring 40 danske hverdagsretter i
+  `mealplan.py`. Hver ingrediens genkendes i aviserne ud fra nøgleord, så
+  hvert tilbud ved, hvilke ingredienser det kan bruges som.
+- Retterne rangeres efter, hvor godt tilbuddet på hovedingrediensen er, og
+  hvor mange af de øvrige varer der også er på tilbud. Planen har højst to
+  retter af samme slags (okse, gris, kylling, fisk, vegetar).
+- For hver vare vises det billigste tilbud pr. kg, helst fra den butik, hvor
+  hovedingrediensen købes, så en ret kan købes ind ét sted. Du kan også
+  vælge én bestemt butik.
+- Vælg antal retter, antal personer (mængderne skaleres) og kost (alt, uden
+  svinekød, uden fisk eller vegetar). **Byt ret** giver det næste bedste
+  forslag, og **Ny madplan** giver helt nye retter.
+- **Læg på indkøbslisten** lægger tilbuddene og de varer, der ikke er på
+  tilbud, på indkøbslisten. Krydderier, olie og mel regnes som noget, man
+  har derhjemme.
 
-En madplan kan fx vælge opskrifter, hvis hovedingredienser (kød, fisk,
-grønt) er på tilbud i de valgte butikker i den pågældende uge.
+Madplanen huskes i browseren, ligesom indkøbslisten.
 
 ## Udvikling
 
