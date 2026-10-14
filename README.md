@@ -9,6 +9,26 @@ kædernes aviser.
 
 ## Kom i gang
 
+### Som hjemmeside (nemmest)
+
+Åbn **<https://simonhansen8.github.io/Tilbudshenter/>** på computer eller
+telefon. Der skal ikke installeres noget.
+
+GitHub henter selv de nye aviser to gange om dagen (workflowen
+`.github/workflows/side.yml`) og lægger tilbuddene på siden. Du kan også
+hente med det samme under *Actions → Opdater siden → Run workflow*.
+Indstillinger og indkøbsliste gemmes i din browser, så de følger ikke med
+fra computeren til telefonen. Siden har de samme filtre, sammenligninger og
+den samme indkøbsliste som appen, men placeringen er fast (København), og
+butikkerne er de almindelige dagligvarekæder.
+
+Første gang skal GitHub Pages slås til: *Settings → Pages*, vælg
+*Deploy from a branch*, grenen `gh-pages` og mappen `/ (root)`, og tryk
+*Save*. Grenen oprettes af workflowen første gang, den kører.
+
+Siden bygges med `tilbudshenter side --ud side`, som henter aviserne og
+skriver `index.html` og `data.json` i mappen `side`.
+
 Kræver Python 3.11 eller nyere. Der er ingen andre afhængigheder.
 
 ### Appen (anbefalet)
@@ -81,6 +101,7 @@ Demodata gemmes adskilt fra dine rigtige data (`tilbud.demo.db` og
 | `tilbudshenter kategorier` | Viser de typer tilbud du kan vælge mellem. |
 | `tilbudshenter overvaag` | Scanner automatisk hver 6. time (`--interval` ændrer det). |
 | `tilbudshenter init` | Opretter en konfigurationsfil med forklaringer. |
+| `tilbudshenter side` | Henter tilbud og bygger den statiske side til GitHub Pages. |
 
 Eksempler på `tilbud`:
 
@@ -201,6 +222,7 @@ Alternativt kan `tilbudshenter overvaag` køre i baggrunden.
 src/tilbudshenter/
   cli.py          kommandolinjen
   webapp.py       appen (lokal webserver); brugerfladen ligger i data/app.html
+  pages.py        den statiske udgave af appen til GitHub Pages
   config.py       indlæsning af tilbudshenter.toml
   scanner.py      finder nye aviser og henter tilbud
   sources/        datakilder (tjek.py = eTilbudsavis, demo.py = demodata)

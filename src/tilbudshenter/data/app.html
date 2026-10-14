@@ -192,7 +192,7 @@ label.field input { padding: 8px 10px; border: 1px solid var(--line); border-rad
       <button class="btn small" value="cancel" formnovalidate>Luk</button>
     </div>
     <div class="dlg-body">
-      <fieldset>
+      <fieldset id="s-location">
         <legend>Placering</legend>
         <p class="hint">Bruges til at finde aviserne i dit område. Find koordinater ved at højreklikke på et sted i Google Maps.</p>
         <div class="fields">
@@ -281,7 +281,12 @@ function startText(o) {
   return "Fra " + new Date(o.run_from).toLocaleDateString("da-DK", {weekday: "short", day: "numeric", month: "numeric"});
 }
 
+// Statisk udgave (GitHub Pages): tilbuddene ligger i data.json, og
+// indstillinger og indkøbsliste gemmes i browseren
+const STATIC = !!window.TILBUDSHENTER_STATIC;
+
 async function api(path, body) {
+  if (STATIC) return staticApi(path, body);
   const opts = body === undefined ? {} : {
     method: "POST", headers: {"Content-Type": "application/json", "X-Tilbudshenter": "1"}, body: JSON.stringify(body),
   };
@@ -289,6 +294,120 @@ async function api(path, body) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || `Fejl ${res.status}`);
   return data;
+}
+
+const store = {
+  get(key, fallback) {
+    try { const v = localStorage.getItem("tilbudshenter." + key); return v ? JSON.parse(v) : fallback; }
+    catch (e) { return fallback; }
+  },
+  set(key, value) { try { localStorage.setItem("tilbudshenter." + key, JSON.stringify(value)); } catch (e) {} },
+};
+
+let siteData = null;
+async function loadSiteData() {
+  if (!siteData) {
+    const res = await fetch("data.json", {cache: "no-cache"});
+    if (!res.ok) throw new Error(`Kunne ikke hente tilbuddene (fejl ${res.status})`);
+    siteData = await res.json();
+  }
+  return siteData;
+}
+
+function siteSettings() { return {...siteData.default_settings, ...store.get("settings", {})}; }
+
+// Samme regler som selection.py: butiksnavne matcher begyndelsen af
+// længere navne ("365" matcher "365discount"), aviser en del af navnet
+function normStore(name) { return name.toLowerCase().replace(/[^\p{L}\p{N}_]+/gu, ""); }
+function storeSelected(dealer, s) {
+  const d = normStore(dealer);
+  return !s.stores.length || s.stores.some(n => normStore(n) && d.startsWith(normStore(n)));
+}
+function containsAny(text, words) {
+  const t = text.toLowerCase();
+  return words.find(w => w.trim() && t.includes(w.toLowerCase()));
+}
+
+function siteOffers(s) {
+  let offers = siteData.offers.filter(o => {
+    const text = `${o.heading} ${o.description}`;
+    return storeSelected(o.dealer, s) && !containsAny(o.catalog_label || "", s.exclude_catalogs) &&
+      (s.max_price == null || o.price <= s.max_price) &&
+      (!s.include_keywords.length || containsAny(text, s.include_keywords)) &&
+      !containsAny(text, s.exclude_keywords);
+  });
+  if (s.favorites.length) {
+    offers = offers.map(o => {
+      const fav = containsAny(`${o.heading} ${o.description}`, s.favorites);
+      return fav ? {...o, score: o.score + siteData.favorite_bonus, reasons: [...o.reasons, `favorit (${fav})`]} : o;
+    }).sort((a, b) => b.score - a.score);
+  }
+  return offers;
+}
+
+function siteList() {
+  const now = new Date();
+  return store.get("list", []).map(i => ({...i, expired: !!(i.run_till && new Date(i.run_till) < now)}));
+}
+
+function changeSiteList(body) {
+  let items = store.get("list", []);
+  if (body.action === "add") {
+    const o = siteData.offers.find(o => o.id === body.id);
+    if (!o) throw new Error("Tilbuddet findes ikke længere");
+    if (!items.some(i => i.id === o.id)) {
+      items.push({
+        id: o.id, dealer: o.dealer, heading: o.heading, description: o.description, price: o.price,
+        price_text: o.price_text, unit_price_text: o.unit_price_text, period_text: o.period_text,
+        member: o.member, run_till: o.run_till, checked: false, added: Date.now(),
+      });
+    }
+  } else if (body.action === "add_text") {
+    const text = String(body.text || "").trim().slice(0, 200);
+    if (!text) throw new Error("Skriv hvad der skal på listen");
+    items.push({id: "egen-" + Date.now(), dealer: null, heading: text, description: "", price: null,
+      price_text: "", unit_price_text: "", period_text: "", member: null, checked: false, added: Date.now()});
+  } else if (body.action === "check") {
+    items = items.map(i => i.id === body.id ? {...i, checked: !!body.checked} : i);
+  } else if (body.action === "remove") {
+    items = items.filter(i => i.id !== body.id);
+  } else if (body.action === "clear") {
+    items = body.only_checked ? items.filter(i => !i.checked) : [];
+  }
+  // Som i den lokale app: efter butik, egne varer sidst
+  items.sort((a, b) => (a.dealer === null) - (b.dealer === null) ||
+    (a.dealer || "").localeCompare(b.dealer || "", "da") || a.added - b.added);
+  store.set("list", items);
+}
+
+function saveSiteSettings(body) {
+  const num = (v) => { const n = Number(v); if (!isFinite(n)) throw new Error("Ugyldigt tal"); return n; };
+  const s = {...store.get("settings", {}), ...body};
+  for (const k of ["latitude", "longitude", "radius_km", "min_discount_pct"]) if (k in body) s[k] = num(body[k]);
+  if ("max_price" in body) s.max_price = body.max_price === "" || body.max_price == null ? null : num(body.max_price);
+  store.set("settings", s);
+}
+
+async function staticApi(path, body) {
+  await loadSiteData();
+  const s = siteSettings();
+  if (path === "/api/state") {
+    return {demo: false, scan: {running: false}, settings: s, catalog_count: siteData.catalog_count,
+      last_scan: siteData.last_scan, categories: siteData.categories};
+  }
+  if (path === "/api/offers") return {offers: siteOffers(s)};
+  if (path === "/api/catalogs") {
+    return {stores: siteData.stores.map(st => ({
+      name: st.name, selected: storeSelected(st.name, s),
+      catalogs: st.catalogs.map(c => ({...c, selected: !containsAny(c.label, s.exclude_catalogs)})),
+    }))};
+  }
+  if (path === "/api/list") {
+    if (body !== undefined) changeSiteList(body);
+    return {items: siteList()};
+  }
+  if (path === "/api/settings") { saveSiteSettings(body); return {ok: true}; }
+  throw new Error("Tilbuddene hentes automatisk hver dag");
 }
 
 function esc(s) {
@@ -332,7 +451,8 @@ async function refreshState() {
   state.settings = s.settings;
   state.categories = s.categories;
   $("demo-tag").hidden = !s.demo;
-  $("status").textContent = `Sidst hentet: ${timeAgo(s.last_scan)} · ${s.catalog_count} aktive aviser`;
+  $("status").textContent = `Sidst hentet: ${timeAgo(s.last_scan)} · ${s.catalog_count} aktive aviser`
+    + (STATIC ? " · opdateres automatisk hver dag" : "");
   renderScan(s.scan);
   return s;
 }
@@ -473,6 +593,7 @@ function render() {
     $("grid").innerHTML = ""; $("count").textContent = ""; $("btn-more").hidden = true;
     $("empty").hidden = false;
     $("empty").innerHTML = state.scanning ? "Henter tilbud…"
+      : STATIC ? "Der er ingen tilbud endnu. De hentes automatisk hver dag."
       : "Der er ingen tilbud endnu.<br><br><button class='btn primary' onclick='startScan()'>Hent nye tilbud</button>";
     return;
   }
@@ -595,7 +716,7 @@ async function loadStores() {
     btn.hidden = true;
   } catch (e) {
     $("store-list").innerHTML = `<p class="hint" style="color:var(--error)">Kunne ikke hente butikker: ${esc(e.message)}</p>`;
-  } finally { btn.disabled = false; btn.textContent = "Vis butikker i mit område"; }
+  } finally { btn.disabled = false; btn.textContent = STATIC ? "Vælg butikker og aviser" : "Vis butikker i mit område"; }
 }
 
 function catalogExcluded(label, words) {
@@ -649,7 +770,7 @@ async function saveSettings() {
     await refreshState();
     resetCats();
     await loadOffers();
-    if (storesChanged) {
+    if (storesChanged && !STATIC) {
       showMessage(`<div class="grow">Indstillingerne er gemt. Hent tilbud for at få aviser fra dine nye valg med.</div>
         <button class="btn primary small" onclick="startScan()">Hent nu</button>`);
     } else toast("Indstillingerne er gemt");
@@ -719,13 +840,19 @@ $("settings-form").addEventListener("submit", e => {
 });
 
 (async function init() {
+  if (STATIC) {
+    // Aviserne hentes af GitHub, og placeringen er fast for siden
+    $("btn-scan").hidden = true;
+    $("s-location").hidden = true;
+    $("btn-load-stores").textContent = "Vælg butikker og aviser";
+  }
   loadPrefs();
   try {
     const s = await refreshState();
     await loadList();
     await loadOffers();
     // Første gang: hent tilbud med det samme
-    if (!s.last_scan && !s.scan.running) startScan();
+    if (!STATIC && !s.last_scan && !s.scan.running) startScan();
   } catch (e) {
     showMessage(`<div class="grow">Kunne ikke starte: ${esc(e.message)}</div>`, "error");
   }
