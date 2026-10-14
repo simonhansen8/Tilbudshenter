@@ -24,7 +24,7 @@ from .models import Catalog, Offer
 from .selection import store_selected
 from .sources.base import SourceError
 from .storage import Storage
-from .webapp import offer_payload, settings_from_config
+from .webapp import offer_payload, papers_payload, settings_from_config
 
 log = logging.getLogger(__name__)
 
@@ -76,6 +76,9 @@ class CountrySource:
 
     def list_offers(self, catalog: Catalog) -> list[Offer]:
         return self.source.list_offers(catalog)
+
+    def list_pages(self, catalog: Catalog) -> list[str]:
+        return self.source.list_pages(catalog) if hasattr(self.source, "list_pages") else []
 
     def store_locations(self, cfg: Config) -> dict[str, list[dict]]:
         """Butikkerne for de kæder, siden viser. En kæde, hvis butikker
@@ -166,8 +169,17 @@ def site_data(cfg: Config, now: datetime | None = None, stores: dict[str, list[d
         ],
         "places": places_from_stores(stores),
         "offers": [offer_payload(o, categorizer) for o in offers],
+        # Sidebillederne ligger i aviser.json, som først hentes, når de skal vises
+        "papers": papers_payload(catalogs, pages=False),
         "plan": plan_payload(),
     }
+
+
+def pages_data(cfg: Config, now: datetime | None = None) -> dict:
+    """Billederne af siderne i de aktuelle aviser, efter avisens id."""
+    now = now or datetime.now(timezone.utc)
+    with Storage(cfg.database) as storage:
+        return {c.id: c.pages for c in storage.catalogs(active_at=now) if c.pages}
 
 
 def static_html() -> str:
@@ -184,6 +196,9 @@ def build_site(
     (out_dir / "index.html").write_text(static_html(), encoding="utf-8")
     (out_dir / "data.json").write_text(
         json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
+    )
+    (out_dir / "aviser.json").write_text(
+        json.dumps(pages_data(cfg, now), separators=(",", ":")), encoding="utf-8"
     )
     (out_dir / ".nojekyll").write_text("", encoding="utf-8")
     return data

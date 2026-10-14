@@ -72,3 +72,39 @@ def test_pagination(monkeypatch):
     offers = TjekSource(pause=0).list_offers(catalog_from_api(CATALOG))
     assert [o.id for o in offers] == ["1", "2", "3"]
     assert calls == [("offers", 0), ("offers", 2)]
+
+
+def _placed(oid, page, x1, y1, x2, y2):
+    url = f"https://img/?u=p.webp&w=600&x1r={x1}&x2r={x2}&y1r={y1}&y2r={y2}&s=abc"
+    return {**OFFER, "id": oid, "catalog_page": page, "images": {"view": url}}
+
+
+def test_offers_get_paper_order():
+    # Side 2 står før side 1 i svaret; på side 1 er æg og brød én række,
+    # selvom brødet begynder lidt højere oppe end æggene
+    items = [
+        _placed("side2", 2, 0.0, 0.0, 1.0, 0.5),
+        _placed("kaffe", 1, 0.5, 0.5, 1.0, 0.9),
+        _placed("brod", 1, 0.5, 0.17, 1.0, 0.53),
+        _placed("aeg", 1, 0.0, 0.23, 0.5, 0.49),
+        _placed("pasta", 1, 0.0, 0.52, 0.5, 0.85),
+        {**OFFER, "id": "uden-side"},
+    ]
+    offers = tjek.offers_in_paper_order(items, catalog_from_api(CATALOG))
+    in_order = sorted(offers, key=lambda o: o.catalog_order)
+    assert [o.id for o in in_order] == ["aeg", "brod", "pasta", "kaffe", "side2", "uden-side"]
+    assert [o.catalog_page for o in in_order][:5] == [1, 1, 1, 1, 2]
+
+
+def test_image_box():
+    assert tjek.image_box("https://img/?u=x&x1r=0.5&x2r=0.95&y1r=0.56&y2r=0.97") == (0.5, 0.56, 0.95, 0.97)
+    assert tjek.image_box("v.jpg") is None and tjek.image_box(None) is None
+
+
+def test_catalog_url_and_pages(monkeypatch):
+    data = {**CATALOG, "dealer": {"markets": [{"slug": "Netto", "country_code": "DK"}]}}
+    assert catalog_from_api(data).url == "https://etilbudsavis.dk/Netto/tilbudsaviser/abc123"
+    assert catalog_from_api(CATALOG).url is None
+
+    monkeypatch.setattr(TjekSource, "_get", lambda self, path, params: [{"view": "p1.webp"}, {"zoom": "p2.webp"}])
+    assert TjekSource().list_pages(catalog_from_api(CATALOG)) == ["p1.webp", "p2.webp"]

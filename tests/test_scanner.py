@@ -49,3 +49,46 @@ def test_typical_prices_need_two_catalogs(storage):
                                    heading="Kaffe", description="1 kg", price=price)])
     assert storage.typical_unit_prices() == {("kaffe", "kg"): 50}
     assert storage.typical_unit_prices(exclude_catalogs={"c0", "c1"}) == {}
+
+
+def test_paper_details_are_stored_and_old_catalogs_fetched_again(tmp_path, cfg, categorizer):
+    import sqlite3
+
+    from tilbudshenter.storage import Storage
+
+    class WithPages(DemoSource):
+        def list_pages(self, catalog):
+            return [f"{catalog.id}-p1.webp", f"{catalog.id}-p2.webp"]
+
+    db = tmp_path / "tilbud.db"
+    with Storage(db) as storage:
+        scan(cfg, WithPages(now=NOW), storage, categorizer, now=NOW)
+        offers = storage.current_offers(NOW)
+        assert all(o.catalog_order for o in offers)
+        catalog = storage.catalogs()[0]
+        assert catalog.pages == [f"{catalog.id}-p1.webp", f"{catalog.id}-p2.webp"]
+
+    # En avis, der blev hentet før sidetal og rækkefølge kom med, hentes igen én gang
+    conn = sqlite3.connect(db)
+    conn.execute("UPDATE catalogs SET scan_version = NULL")
+    conn.commit()
+    conn.close()
+    with Storage(db) as storage:
+        assert len(scan(cfg, WithPages(now=NOW), storage, categorizer, now=NOW).new_catalogs) == 5
+        assert not scan(cfg, WithPages(now=NOW), storage, categorizer, now=NOW).found_new
+
+
+def test_old_database_gets_new_columns(tmp_path):
+    import sqlite3
+
+    from tilbudshenter.storage import SCHEMA, Storage
+
+    db = tmp_path / "gammel.db"
+    conn = sqlite3.connect(db)
+    conn.executescript(SCHEMA)  # Tabellerne, som de så ud før
+    conn.execute("INSERT INTO catalogs (id, source, dealer, first_seen, scanned_at) VALUES ('c', 'tjek', 'Netto', 'x', 'y')")
+    conn.commit()
+    conn.close()
+    with Storage(db) as storage:
+        assert not storage.is_scanned("c")
+        assert storage.catalogs()[0].pages == []

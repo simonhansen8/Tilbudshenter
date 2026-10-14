@@ -7,6 +7,7 @@ at vurdere tilbud uden førpris - og som en kommende madplan kan bygge på.
 
 from __future__ import annotations
 
+import json
 import re
 import sqlite3
 import statistics
@@ -14,6 +15,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .models import Catalog, Offer
+
+# Hæves, når der hentes mere om hver avis end før, så allerede scannede
+# aviser hentes igen én gang. 2: sidetal, rækkefølge og sidebilleder.
+SCAN_VERSION = 2
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS catalogs (
@@ -101,10 +106,21 @@ class Storage:
         self.conn.row_factory = sqlite3.Row
         self.conn.executescript(SCHEMA)
         # Kolonner der er kommet til siden databasen blev oprettet
-        columns = {r["name"] for r in self.conn.execute("PRAGMA table_info(shopping_list)")}
-        for column in ("note", "category"):
-            if column not in columns:
-                self.conn.execute(f"ALTER TABLE shopping_list ADD COLUMN {column} TEXT")
+        added = {
+            "shopping_list": {"note": "TEXT", "category": "TEXT"},
+            "catalogs": {"url": "TEXT", "pages": "TEXT", "scan_version": "INTEGER"},
+            "offers": {"catalog_page": "INTEGER", "catalog_order": "INTEGER"},
+        }
+        for table, wanted in added.items():
+            columns = {r["name"] for r in self.conn.execute(f"PRAGMA table_info({table})")}
+            for column, kind in wanted.items():
+                if column not in columns:
+                    try:
+                        self.conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {kind}")
+                    except sqlite3.OperationalError as exc:
+                        # En anden forbindelse (fx hentningen i appen) nåede det først
+                        if "duplicate column" not in str(exc):
+                            raise
 
     def close(self) -> None:
         self.conn.close()
@@ -118,26 +134,30 @@ class Storage:
     # -- Aviser ---------------------------------------------------------
     def is_scanned(self, catalog_id: str) -> bool:
         row = self.conn.execute(
-            "SELECT scanned_at FROM catalogs WHERE id = ?", (catalog_id,)
+            "SELECT scanned_at, scan_version FROM catalogs WHERE id = ?", (catalog_id,)
         ).fetchone()
-        return bool(row and row["scanned_at"])
+        return bool(row and row["scanned_at"] and (row["scan_version"] or 0) >= SCAN_VERSION)
 
     def save_catalog(self, catalog: Catalog, source: str, scanned: bool) -> None:
         self.conn.execute(
             """
             INSERT INTO catalogs (id, source, dealer, label, run_from, run_till,
-                                  offer_count, first_seen, scanned_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                  offer_count, first_seen, scanned_at, url, pages, scan_version)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
                 dealer = excluded.dealer, label = excluded.label,
                 run_from = excluded.run_from, run_till = excluded.run_till,
                 offer_count = excluded.offer_count,
-                scanned_at = COALESCE(excluded.scanned_at, catalogs.scanned_at)
+                scanned_at = COALESCE(excluded.scanned_at, catalogs.scanned_at),
+                url = COALESCE(excluded.url, catalogs.url),
+                pages = COALESCE(excluded.pages, catalogs.pages),
+                scan_version = COALESCE(excluded.scan_version, catalogs.scan_version)
             """,
             (
                 catalog.id, source, catalog.dealer, catalog.label,
                 _iso(catalog.run_from), _iso(catalog.run_till), catalog.offer_count,
-                _now(), _now() if scanned else None,
+                _now(), _now() if scanned else None, catalog.url,
+                json.dumps(catalog.pages) if catalog.pages else None, SCAN_VERSION if scanned else None,
             ),
         )
         self.conn.commit()
@@ -153,7 +173,8 @@ class Storage:
             Catalog(
                 id=r["id"], dealer=r["dealer"], label=r["label"],
                 run_from=_dt(r["run_from"]), run_till=_dt(r["run_till"]),
-                offer_count=r["offer_count"],
+                offer_count=r["offer_count"], url=r["url"],
+                pages=json.loads(r["pages"]) if r["pages"] else [],
             )
             for r in rows
         ]
@@ -170,8 +191,8 @@ class Storage:
             INSERT OR REPLACE INTO offers (
                 id, catalog_id, dealer, heading, description, product_key, price,
                 pre_price, currency, amount, unit, unit_price, category,
-                run_from, run_till, image_url, fetched_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                run_from, run_till, image_url, fetched_at, catalog_page, catalog_order)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
                 (
@@ -179,6 +200,7 @@ class Storage:
                     product_key(o.heading), o.price, o.pre_price, o.currency,
                     o.amount, o.unit, o.unit_price, o.category,
                     _iso(o.run_from), _iso(o.run_till), o.image_url, now,
+                    o.catalog_page, o.catalog_order,
                 )
                 for o in offers
             ],
@@ -205,6 +227,7 @@ class Storage:
                 run_from=_dt(r["run_from"]), run_till=_dt(r["run_till"]),
                 image_url=r["image_url"], category=r["category"],
                 catalog_label=r["catalog_label"] or "",
+                catalog_page=r["catalog_page"], catalog_order=r["catalog_order"],
             )
             for r in rows
         ]

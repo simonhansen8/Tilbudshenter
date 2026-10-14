@@ -14,7 +14,7 @@ from importlib import resources
 from pathlib import Path
 
 from ..models import Catalog, Offer
-from .tjek import catalog_from_api, offer_from_api
+from .tjek import catalog_from_api, offers_in_paper_order
 
 
 class DemoSource:
@@ -42,6 +42,5 @@ class DemoSource:
     def list_offers(self, catalog: Catalog) -> list[Offer]:
         for raw in self._data["catalogs"]:
             if str(raw["id"]) == catalog.id:
-                offers = (offer_from_api(item, catalog) for item in raw.get("offers", []))
-                return [o for o in offers if o is not None]
+                return offers_in_paper_order(raw.get("offers", []), catalog)
         return []

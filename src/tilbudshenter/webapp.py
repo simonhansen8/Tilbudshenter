@@ -22,7 +22,7 @@ from .cli import best_offers, load_app_config, make_source
 from .config import Config, example_config, save_config
 from .mealplan import ingredient_keys, plan_payload
 from .opskrifter import extract_recipe, fetch
-from .models import Offer
+from .models import Catalog, Offer
 from .report import discount_text, kr, period_text, unit_price_text, write_reports
 from .scanner import scan
 from .selection import catalog_selected, store_selected
@@ -93,9 +93,11 @@ class App:
             cfg, categories=[], exclude_categories=[], min_discount_pct=0.0,
             only_known_discount=False, top_n=0, per_category=0,
         )
+        now = datetime.now(timezone.utc)
         with Storage(cfg.database) as storage:
-            offers = best_offers(wide, storage, categorizer, datetime.now(timezone.utc), limit=0)
-        return {"offers": [offer_payload(o, categorizer) for o in offers]}
+            offers = best_offers(wide, storage, categorizer, now, limit=0)
+            catalogs = storage.catalogs(active_at=now)
+        return {"offers": [offer_payload(o, categorizer) for o in offers], "papers": papers_payload(catalogs)}
 
     def catalogs(self) -> dict:
         """Butikker og aviser i området (kræver netværk)."""
@@ -226,6 +228,22 @@ def offer_payload(o: Offer, categorizer: Categorizer) -> dict:
         "unit_price_text": unit_price_text(o),
         "discount_text": discount_text(o),
         "period_text": period_text(o),
+    }
+
+
+def papers_payload(catalogs: list[Catalog], pages: bool = True) -> dict:
+    """Aviserne efter id: link til eTilbudsavis og billeder af siderne.
+    Uden ``pages`` kun antallet af sider (siden henter billederne for sig)."""
+    return {
+        c.id: {
+            "dealer": c.dealer,
+            "label": c.label.strip(),
+            "run_from": c.run_from.isoformat() if c.run_from else None,
+            "url": c.url,
+            "page_count": len(c.pages),
+            **({"pages": c.pages} if pages else {}),
+        }
+        for c in catalogs
     }
 
 
