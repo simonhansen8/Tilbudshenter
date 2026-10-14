@@ -3,7 +3,9 @@ from datetime import timedelta
 
 from tilbudshenter.cli import main
 from tilbudshenter.models import Catalog
-from tilbudshenter.pages import SCAN_POINTS, STATIC_MARKER, CountrySource, places_from_stores, site_config
+from tilbudshenter.pages import (
+    SCAN_POINTS, STATIC_MARKER, CountrySource, places_from_stores, site_config, static_html,
+)
 from tilbudshenter.scanner import scan
 from tilbudshenter.sources.demo import DemoSource
 
@@ -74,3 +76,12 @@ def test_country_source_scans_all_points_and_fetches_stores():
     assert len(fake.points) == len(SCAN_POINTS)
     # Kun de kæder, siden viser
     assert list(country.store_locations(site_config())) == ["Netto"]
+
+
+def test_saved_choices_survive_new_versions():
+    # Gemte valg i browseren må ikke gå tabt, når siden opdateres: samme
+    # nøgler, og de gemte valg lægges oven på standardvalgene
+    html = static_html()
+    assert 'localStorage.getItem("tilbudshenter." + key)' in html
+    assert 'store.get("settings", {})' in html and 'store.get("list", [])' in html
+    assert '{...siteData.default_settings, ...store.get("settings", {})}' in html
