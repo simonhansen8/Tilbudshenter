@@ -185,6 +185,12 @@ label.field input { padding: 8px 10px; border: 1px solid var(--line); border-rad
 .dish details p { margin: 6px 0 0; }
 .dish a, .own-recipe a { color: var(--accent); }
 .dish-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.plan-total { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; margin-top: 14px; padding: 12px 14px;
+  border-radius: 12px; background: var(--accent-soft); }
+.plan-total .label { font-size: 13px; font-weight: 600; color: var(--accent); }
+.plan-total .sum { font-size: 26px; font-weight: 800; line-height: 1.1; white-space: nowrap; }
+.plan-total .details { flex: 1 1 220px; font-size: 13px; color: var(--muted); }
+.plan-total .save { color: var(--accent); font-weight: 600; }
 .dish .day { color: var(--accent); font-weight: 700; font-size: 13px; text-transform: none; margin-bottom: 2px; }
 .dish .leftover { background: var(--accent-soft); color: var(--accent); border-radius: 8px; padding: 6px 10px; margin-top: 8px; font-size: 13px; }
 .dish li.have .what { color: var(--muted); text-decoration: line-through; }
@@ -1668,7 +1674,7 @@ function renderPlan() {
     return;
   }
   $("btn-plan-list").disabled = false;
-  $("plan-body").innerHTML = entries.map((x, i) => {
+  $("plan-body").innerHTML = planTotal(entries) + entries.map((x, i) => {
     const r = x.recipe;
     const onOffer = x.items.filter(y => y.offer).length, have = x.items.filter(y => y.have).length;
     const cost = dishCost(x), normal = dishNormalCost(x);
@@ -1708,10 +1714,30 @@ function renderPlan() {
     </article>`;
   }).join("");
   const total = entries.reduce((s, x) => s + dishCost(x), 0);
+  $("plan-sum").innerHTML = `Ugen i alt <b>ca. ${kr(total)}</b>`;
+}
+
+// Den samlede pris for hele madplanen, øverst over retterne
+function planTotal(entries) {
+  const total = entries.reduce((s, x) => s + dishCost(x), 0);
   const saved = entries.reduce((s, x) => s + dishNormalCost(x), 0) - total;
   const days = entries.reduce((s, x) => s + x.mult, 0);
-  $("plan-sum").textContent = `${entries.length} retter til ${days} dage · ca. ${kr(total)} i alt (${kr(total / days / plan.persons)} pr. person pr. dag)`
-    + (saved >= 5 ? ` · sparer ca. ${kr(saved)}` : "");
+  const lines = entries.flatMap(x => x.items.map(y => ({y, c: lineCost(y, x.mult)})));
+  const have = lines.filter(l => l.y.have).length, unknown = lines.filter(l => !l.y.have && l.c.unknown).length;
+  const ends = entries.flatMap(x => [x.day, addDays(x.day, x.mult - 1)]).sort((a, b) => a - b);
+  const first = ends[0], last = ends[ends.length - 1];
+  const details = [
+    `${esc(cap(dayName(first)))} til ${esc(dayName(last))}`,
+    `${entries.length} retter til ${days} dage · ${kr(total / days)} pr. dag`,
+    `${kr(total / days / plan.persons)} pr. person pr. dag`,
+  ];
+  if (saved >= 5) details.push(`<span class="save">sparer ca. ${kr(saved)} med ugens tilbud</span>`);
+  const left = [have && `${have} ${have === 1 ? "vare" : "varer"}, du har derhjemme`,
+    unknown && `${unknown} ${unknown === 1 ? "vare" : "varer"} uden kendt pris`].filter(Boolean);
+  if (left.length) details.push(`Ikke regnet med: ${left.join(" og ")}`);
+  return `<div class="plan-total" id="plan-total">
+    <div><div class="label">Samlet pris for ugen</div><div class="sum">ca. ${kr(total)}</div></div>
+    <div class="details">${details.join("<br>")}</div></div>`;
 }
 
 async function openPlan() {

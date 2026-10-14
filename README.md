@@ -270,6 +270,9 @@ hakket oksekød er billigt.
   mængder, retten bruger, med tilbuddets pris pr. kg, liter eller stk, og for
   varer uden tilbud med en anslået normalpris (`NORMAL_PRICES` i
   `mealplan.py`). Hele pakker kan koste mere.
+- Øverst står den samlede pris for ugen med pris pr. dag og pr. person, og
+  hvor meget tilbuddene sparer. Varer, du har derhjemme, og varer uden kendt
+  pris er ikke regnet med.
 - Vælg første dag, antal dage, antal personer (mængderne skaleres) og kost
   (alt, uden svinekød, uden fisk eller vegetar). Hver ret får en dag: retter
   over 45 minutter lægges i weekenden og de hurtige på hverdagene. **↑** og
