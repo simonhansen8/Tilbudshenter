@@ -147,3 +147,33 @@ def test_old_collection_retries_skipped_pages(tmp_path):
                    encoding="utf-8")
     assert update(lst, out, lambda url: PAGE, delay=0)["added"] == 1
     assert json.loads(out.read_text(encoding="utf-8"))["version"] >= 2
+
+
+def test_sitemaps_from_robots_and_index(tmp_path):
+    pages = {
+        "https://mad.dk/robots.txt": "User-agent: *\nSitemap: https://mad.dk/sitemap_index.xml\n",
+        "https://mad.dk/sitemap_index.xml": """<sitemapindex><sitemap><loc>https://mad.dk/category-sitemap.xml</loc></sitemap>
+            <sitemap><loc>https://mad.dk/page-sitemap.xml</loc></sitemap>
+            <sitemap><loc>https://mad.dk/post-sitemap.xml</loc></sitemap></sitemapindex>""",
+        "https://mad.dk/post-sitemap.xml": """<urlset><url><loc>https://mad.dk/</loc></url>
+            <url><loc>https://mad.dk/chili/</loc></url><url><loc>https://mad.dk/kategori/aftensmad/</loc></url>
+            <url><loc>https://mad.dk/gryde/</loc></url><url><loc>https://mad.dk/suppe/</loc></url></urlset>""",
+        "https://mad.dk/chili/": PAGE, "https://mad.dk/gryde/": PAGE, "https://mad.dk/suppe/": PAGE,
+        "https://andet.dk/ret": PAGE,
+    }
+    fetched = []
+
+    def fetcher(url):
+        fetched.append(url)
+        return pages[url]
+
+    lst = tmp_path / "opskrifter.txt"
+    out = tmp_path / "opskrifter.json"
+    lst.write_text("sitemap: https://mad.dk/\nhttps://andet.dk/ret\n", encoding="utf-8")
+    # Højst to nye sider pr. kørsel, skiftevis fra hver linje
+    assert update(lst, out, fetcher, delay=0, max_new=2) == {
+        "recipes": 2, "added": 2, "failed": 0, "skipped": 0, "pending": 2}
+    assert "https://mad.dk/category-sitemap.xml" not in fetched and "https://mad.dk/page-sitemap.xml" not in fetched
+    assert [r["url"] for r in json.loads(out.read_text(encoding="utf-8"))["recipes"]] == [
+        "https://mad.dk/chili/", "https://andet.dk/ret"]
+    assert update(lst, out, fetcher, delay=0, max_new=2)["recipes"] == 4

@@ -1,16 +1,26 @@
 # Opskrifter til madplanen
 #
 # Én adresse pr. linje: en opskrift på en madside, eller et sitemap, hvorfra
-# de første 100 opskrifter hentes. Efter "sitemap:" og adressen kan der stå
-# et ord, som adresserne skal indeholde, fx /opskrift/.
+# op til 300 opskrifter hentes. Står der kun madsidens adresse efter
+# "sitemap:", findes sitemappet i madsidens robots.txt. Efter adressen kan der
+# stå et ord, som adresserne skal indeholde, fx /opskrifter/.
 #
 #   https://www.eksempel.dk/opskrift/lasagne
 #   sitemap: https://www.eksempel.dk/sitemap.xml /opskrift/
+#   sitemap: https://www.eksempel.dk/
 #
-# Siden henter nye opskrifter, næste gang den bygges. Kun navn, antal
-# personer, tid og ingredienser gemmes; madplanen linker til madsiden for
-# fremgangsmåden. Opskrifter med kød eller fisk, som ikke kan genkendes i
-# tilbudsaviserne, springes over.
+# Siden henter op til 150 nye opskrifter, hver gang den bygges, skiftevis fra
+# madsiderne. Kun navn, antal personer, tid og ingredienser gemmes; madplanen
+# linker til madsiden for fremgangsmåden. Kager, desserter og opskrifter med
+# kød eller fisk, som ikke kan genkendes i tilbudsaviserne, springes over.
+
+# Hele madsider
+sitemap: https://www.valdemarsro.dk/
+sitemap: https://madensverden.dk/
+sitemap: https://www.arla.dk/ /opskrifter/
+sitemap: https://www.madbanditten.dk/
+sitemap: https://www.mummum.dk/
+sitemap: https://www.spisbedre.dk/ /opskrifter/
 
 # Valdemarsro
 https://www.valdemarsro.dk/kaalfad-med-hakket-oksekoed/

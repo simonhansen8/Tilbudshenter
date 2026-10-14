@@ -265,13 +265,16 @@ hovedingrediensen er på tilbud i dine butikker, fx spaghetti bolognese når
 hakket oksekød er billigt.
 
 En ret kommer kun med, når tilbuddene bærer den: hovedingrediensen er på
-tilbud, mindst to varer er på tilbud (eller den ene, hvis retten kun har én),
-mindst halvdelen af prisen kommer fra tilbud, og retten sparer mindst 10 %
+tilbud, mindst halvdelen af rettens varer er på tilbud (og mindst to, eller
+den ene, hvis retten kun har én), mindst halvdelen af prisen kommer fra tilbud, og retten sparer mindst 10 %
 mod basisvarerne (`OFFER_MIN_*` i `app.html`). Grønt tilbehør og det, du har
 derhjemme, tæller ikke med. En ret med noget, du har derhjemme, som
 hovedingrediens, og dine egne retter, du sætter på planen, kommer altid med.
 En ret, hvis tilbud slutter tidligt i perioden, lægges på en dag, hvor
-tilbuddet stadig gælder.
+tilbuddet stadig gælder. Jo flere af rettens varer der er på tilbud, jo
+højere kommer den. Retter, der har været på en madplan de sidste 14 dage,
+kommer bagerst i køen (gemt i browseren), så **Ny madplan** og næste uges
+plan giver nye retter.
 
 - Retterne kommer fra en fast samling af omkring 40 danske hverdagsretter i
   `mealplan.py`. Hver ingrediens genkendes i aviserne ud fra nøgleord, så
@@ -345,9 +348,12 @@ Næsten alle madsider beskriver deres opskrifter med
 [schema.org/Recipe](https://schema.org/Recipe), så Google kan vise dem. Det
 bruger Tilbudshenter til at hente opskrifter automatisk:
 
-1. Skriv adressen på en opskrift, eller et sitemap fra en madside, i
-   `opskrifter.txt` (én pr. linje; se eksemplerne i filen).
-2. Næste gang siden bygges, henter GitHub de nye opskrifter, gemmer dem i
+1. Skriv adressen på en opskrift, et sitemap eller bare en madside (fx
+   `sitemap: https://www.valdemarsro.dk/`) i `opskrifter.txt` (én pr. linje;
+   se eksemplerne i filen). For en madside findes sitemappet i dens
+   robots.txt, og op til 300 opskrifter hentes.
+2. Hver gang siden bygges, henter GitHub op til 150 nye opskrifter,
+   skiftevis fra madsiderne, gemmer dem i
    `src/tilbudshenter/data/opskrifter.json` og lægger dem ind i madplanen.
    Hver side hentes kun én gang.
 

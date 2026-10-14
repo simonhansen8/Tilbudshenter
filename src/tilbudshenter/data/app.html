@@ -1452,9 +1452,13 @@ const KIND_NAMES = {okse: "Okse", gris: "Gris", kylling: "Kylling", fisk: "Fisk"
 const RED = new Set(["okse", "gris", "andet"]);
 const PLAN_MAX_PER_KIND = 2;
 // En tilbudsret: hovedingrediensen er på tilbud, og tilbuddene skal også
-// bære retten: mindst to varer på tilbud (eller alle, hvis retten kun har én),
-// mindst halvdelen af prisen fra tilbud og mindst 10 % sparet mod basisvarerne
-const OFFER_MIN_ITEMS = 2, OFFER_MIN_SHARE = 0.5, OFFER_MIN_SAVING = 0.1;
+// bære retten: mindst halvdelen af varerne på tilbud (og mindst to, eller
+// alle, hvis retten kun har én), mindst halvdelen af prisen fra tilbud og
+// mindst 10 % sparet mod basisvarerne
+const OFFER_MIN_ITEMS = 2, OFFER_MIN_RATIO = 0.5, OFFER_MIN_SHARE = 0.5, OFFER_MIN_SAVING = 0.1;
+// Retter, der er vist de sidste 14 dage, kommer bagerst i køen, så "Ny
+// madplan" og næste uges plan giver nye retter
+const SEEN_DAYS = 14, SEEN_PENALTY = 20;
 const WEEKDAYS = ["søndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag"];
 
 async function loadPlanData() {
@@ -1765,22 +1769,43 @@ function recipeScore(entry) {
   // Point fra, når hovedtilbuddet er en pakke langt større end retten bruger
   const waste = entry.items.filter(y => y.item.main && y.offer && y.offer === entry.main && y.item.amount)
     .reduce((s, y) => s + packPay(y.item, y.offer) - itemCost(y.item, y.offer).cost, 0);
-  return fridge - 20 * clamp(waste / 100) + (plan.focus === "cheap" ? 70 * cheap + 15 * saving + 15 * green : 35 * cheap + 35 * saving + 30 * green);
+  // Jo flere af rettens varer på tilbud, jo bedre
+  const cover = 25 * clamp((offerStats(entry).ratio - 0.5) / 0.5);
+  return fridge + cover - 20 * clamp(waste / 100) + (plan.focus === "cheap" ? 70 * cheap + 15 * saving + 15 * green : 35 * cheap + 35 * saving + 30 * green);
 }
 
 // Bærer tilbuddene retten? Tilbehøret og det, man har derhjemme, tæller ikke.
 function offerStats(entry) {
-  const lines = entry.items.filter(y => !y.have && !y.item.side && y.item.keys.length && y.item.amount);
-  const on = lines.filter(y => y.offer);
+  // Alle rettens varer tæller med, også dem uden kendt pris
+  const all = entry.items.filter(y => !y.have && !y.item.side);
+  const lines = all.filter(y => y.item.keys.length && y.item.amount);
+  const on = all.filter(y => y.offer);
   const costs = lines.map(y => itemCost(y.item, y.offer));
   const cost = costs.reduce((s, c) => s + c.cost, 0), normal = costs.reduce((s, c) => s + c.normal, 0);
   const offerCost = lines.reduce((s, y, i) => s + (y.offer ? costs[i].cost : 0), 0);
-  return {on: on.length, lines: lines.length, share: cost ? offerCost / cost : 0, saving: normal ? 1 - cost / normal : 0};
+  return {on: on.length, lines: all.length, ratio: all.length ? on.length / all.length : 0,
+    share: cost ? offerCost / cost : 0, saving: normal ? 1 - cost / normal : 0};
 }
 
 function offerDish(entry) {
   const st = offerStats(entry);
-  return st.on >= Math.min(OFFER_MIN_ITEMS, st.lines) && st.share >= OFFER_MIN_SHARE && st.saving >= OFFER_MIN_SAVING;
+  return st.on >= Math.min(OFFER_MIN_ITEMS, st.lines) && st.ratio >= OFFER_MIN_RATIO
+    && st.share >= OFFER_MIN_SHARE && st.saving >= OFFER_MIN_SAVING;
+}
+
+// Hvornår retterne sidst var på en madplan (tilbudshenter.seen)
+function markSeen(entries) {
+  const seen = store.get("seen", {}), now = isoDay(today());
+  const cutoff = isoDay(addDays(today(), -SEEN_DAYS));
+  for (const x of entries) seen[x.recipe.id] = now;
+  store.set("seen", Object.fromEntries(Object.entries(seen).filter(([, d]) => d >= cutoff)));
+}
+
+function seenPenalty(x) {
+  const d = (plan.seen || {})[x.recipe.id];
+  if (!d) return 0;
+  const days = (today() - new Date(d + "T12:00:00")) / 864e5;
+  return days >= SEEN_DAYS ? 0 : SEEN_PENALTY * (1 - Math.max(0, days) / SEEN_DAYS);
 }
 
 // Vælger n retter efter kostrådene: fisk hver uge (to gange ved 6-7 retter),
@@ -1803,7 +1828,7 @@ function choosePlan(ranked, keep, n) {
     let best = null, bestScore = -Infinity;
     for (const x of pool) {
       if (chosen.includes(x) || !pred(x)) continue;
-      const v = x.score + shareBonus(x, chosen);
+      const v = x.score + shareBonus(x, chosen) - seenPenalty(x);
       if (v > bestScore) { best = x; bestScore = v; }
     }
     return best;
@@ -1878,6 +1903,7 @@ function planEntries() {
   let entries = choosePlan(ranked, plan.ids, dishCount());
   if (fresh) entries = arrange(entries);
   plan.ids = entries.map(x => x.recipe.id);
+  markSeen(entries);
   plan.double = new Set([...plan.double].filter(id => plan.ids.includes(id)));
   savePlan();
   let day = 0;
@@ -2168,6 +2194,7 @@ async function openPlan() {
   plan.double = new Set(saved.double || []);
   plan.start = saved.start && new Date(saved.start + "T12:00:00") >= today() ? saved.start : isoDay(today());
   plan.skipped = new Set();
+  plan.seen = store.get("seen", {});
   const stores = [...new Set(state.offers.filter(planUsable).map(o => o.dealer))].sort((a, b) => a.localeCompare(b, "da"));
   plan.store = stores.includes(saved.store) ? saved.store : "";
   $("plan-store").innerHTML = `<option value="">Alle mine butikker</option>` +
