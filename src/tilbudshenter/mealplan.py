@@ -106,26 +106,29 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "aebler": PRODUCT_GROUPS["aebler"],
 }
 
-# Anslået normalpris (kr pr. kg eller liter) og vægt pr. stk, dåse, fed
-# eller bundt i gram. Bruges til rettens pris, når en vare ikke er på
-# tilbud, og til at omregne mellem stk og kg.
+# Basispris (kr pr. kg eller liter): den almindelige pris uden tilbud på den
+# billigste basisvare, fx kædens eget mærke i en discountbutik. Et tilbud
+# bruges kun i madplanen, når det er billigere end basisvaren, og
+# besparelsen regnes i forhold til den. Priserne er anslået ud fra
+# discountbutikkernes hyldepriser i 2025-26. Tallet efter prisen er vægten
+# pr. stk, dåse, fed eller bundt i gram, til at omregne mellem stk og kg.
 NORMAL_PRICES: dict[str, tuple[float, float]] = {
-    "hakket_okse": (100, 500), "hakket_gris": (65, 500), "hakket_gris_kalv": (75, 500), "hakket_kylling": (90, 500),
-    "kyllingebryst": (110, 150), "kyllingelaar": (45, 200), "hel_kylling": (50, 1400), "bacon": (120, 150),
-    "stegeflaesk": (80, 400), "medister": (70, 500), "flaeskesteg": (70, 1500), "moerbrad": (120, 500),
-    "koteletter": (70, 200), "poelser": (90, 60), "boef": (250, 150), "okse_tern": (150, 500),
-    "laksefilet": (200, 125), "hvid_fisk": (160, 125), "fiskefrikadeller": (100, 60), "tun": (100, 185),
-    "rejer": (150, 400),
-    "aeg": (50, 60), "maelk": (12, 1000), "floede": (45, 250), "creme_fraiche": (40, 200), "revet_ost": (90, 175),
-    "feta": (100, 200), "smoer": (100, 250),
-    "pasta": (20, 500), "lasagneplader": (40, 250), "ris": (25, 1000), "nudler": (40, 250), "tortilla": (60, 40),
-    "burgerboller": (50, 70), "poelsebroed": (40, 40), "pizzadej": (30, 400), "hakkede_tomater": (15, 400),
-    "kidneyboenner": (20, 400), "kokosmaelk": (40, 400), "majs": (30, 300),
-    "kartofler": (12, 100), "guleroedder": (10, 80), "loeg": (12, 150), "hvidloeg": (80, 5), "porrer": (25, 250),
-    "tomater": (30, 100), "agurk": (30, 400), "peberfrugt": (40, 200), "broccoli": (30, 400),
-    "blomkaal": (25, 800), "spidskaal": (15, 1000), "roedkaal": (25, 500), "champignon": (50, 250),
-    "spinat": (60, 250), "salat": (30, 400), "groenne_boenner": (30, 400), "aerter": (25, 450), "squash": (25, 300),
-    "wokgroent": (30, 600), "citron": (30, 100), "persille": (100, 30), "aebler": (20, 150),
+    "hakket_okse": (80, 500), "hakket_gris": (55, 500), "hakket_gris_kalv": (60, 500), "hakket_kylling": (70, 500),
+    "kyllingebryst": (85, 150), "kyllingelaar": (35, 200), "hel_kylling": (40, 1400), "bacon": (60, 150),
+    "stegeflaesk": (70, 400), "medister": (50, 500), "flaeskesteg": (50, 1500), "moerbrad": (85, 500),
+    "koteletter": (60, 200), "poelser": (60, 60), "boef": (200, 150), "okse_tern": (140, 500),
+    "laksefilet": (170, 125), "hvid_fisk": (120, 125), "fiskefrikadeller": (80, 60), "tun": (90, 185),
+    "rejer": (120, 400),
+    "aeg": (45, 60), "maelk": (11, 1000), "floede": (35, 250), "creme_fraiche": (30, 200), "revet_ost": (70, 175),
+    "feta": (60, 200), "smoer": (80, 250),
+    "pasta": (14, 500), "lasagneplader": (30, 250), "ris": (18, 1000), "nudler": (30, 250), "tortilla": (35, 40),
+    "burgerboller": (40, 70), "poelsebroed": (30, 40), "pizzadej": (25, 400), "hakkede_tomater": (12, 400),
+    "kidneyboenner": (15, 400), "kokosmaelk": (30, 400), "majs": (25, 300),
+    "kartofler": (8, 100), "guleroedder": (8, 80), "loeg": (8, 150), "hvidloeg": (60, 5), "porrer": (20, 250),
+    "tomater": (25, 100), "agurk": (20, 400), "peberfrugt": (35, 200), "broccoli": (30, 400),
+    "blomkaal": (20, 800), "spidskaal": (15, 1000), "roedkaal": (15, 500), "champignon": (45, 250),
+    "spinat": (40, 250), "salat": (30, 400), "groenne_boenner": (25, 400), "aerter": (20, 450), "squash": (20, 300),
+    "wokgroent": (25, 600), "citron": (25, 100), "persille": (100, 30), "aebler": (15, 150),
 }
 
 # Ord der betyder, at tilbuddet ikke er en råvare
@@ -623,7 +626,7 @@ def _item_payload(i: Item) -> dict:
     return {
         "amount": _amount(i.amount), "unit": i.unit, "name": i.name, "keys": i.keys, "main": i.main,
         "side": i is SIDE,
-        # Normalpris pr. kg og vægt pr. stk for hver ingrediens
+        # Basispris pr. kg og vægt pr. stk for hver ingrediens
         "prices": {k: list(NORMAL_PRICES[k]) for k in i.keys},
     }
 
@@ -686,8 +689,8 @@ UNITS: dict[str, tuple[str, float]] = {
     "dl": ("dl", 1), "l": ("dl", 10), "liter": ("dl", 10), "ml": ("dl", 0.01), "cl": ("dl", 0.1),
     "spsk": ("g", 15), "tsk": ("g", 5),
     "stk": ("stk", 1), "pk": ("stk", 1), "pakke": ("stk", 1), "pakker": ("stk", 1), "bakke": ("stk", 1),
-    "bakker": ("stk", 1), "pose": ("stk", 1), "poser": ("stk", 1), "glas": ("stk", 1), "skive": ("stk", 1),
-    "skiver": ("stk", 1), "hoved": ("stk", 1), "fed": ("fed", 1), "dåse": ("dåse", 1), "dåser": ("dåse", 1),
+    "bakker": ("stk", 1), "pose": ("stk", 1), "poser": ("stk", 1), "glas": ("stk", 1), "skive": ("g", 20),
+    "skiver": ("g", 20), "hoved": ("stk", 1), "fed": ("fed", 1), "dåse": ("dåse", 1), "dåser": ("dåse", 1),
     "ds": ("dåse", 1), "bundt": ("bundt", 1), "bdt": ("bundt", 1),
     "knivspids": ("", 0), "nip": ("", 0), "drys": ("", 0),
 }
