@@ -231,9 +231,18 @@ NOT_DINNER = ["kage", "kager", "muffin", "cookie", "småkage", "brød ", "desser
               "bagværk", "drikke", "tilbehør", "forret", "forretter", "morgenmad"]
 
 
+# Kategorier for salater og frokost: kun aftensmad, når madsiden også kalder
+# retten en hovedret, fx "Salater, Hovedretter, Aftensmad"
+SIDE_CATEGORIES = ["salat", "salater", "frokost", "madpakke", "tapas", "brunch"]
+MAIN_CATEGORIES = ["aftensmad", "hovedret", "hovedretter", "middag", "aftensretter"]
+
+
 def is_dinner(recipe: dict) -> bool:
     text = f"{recipe['name']} {recipe.get('category', '')}"
-    return not any(_has_word(_tokens(text), w) for w in NOT_DINNER)
+    if any(_has_word(_tokens(text), w) for w in NOT_DINNER):
+        return False
+    cats = _tokens(recipe.get("category") or "")
+    return not (any(_has_word(cats, w) for w in SIDE_CATEGORIES) and not any(_has_word(cats, w) for w in MAIN_CATEGORIES))
 
 
 def sitemap_urls(xml: str) -> list[str]:
@@ -349,7 +358,11 @@ def update(list_path: Path, json_path: Path = DEFAULT_JSON, fetcher=None, delay:
     recipes, added, failed, tried, pending = [], 0, 0, 0, 0
     for url in dict.fromkeys(wanted):
         if url in known:
-            recipes.append(known[url])
+            # Reglerne for aftensmad kan være blevet skærpet siden
+            if is_dinner(known[url]):
+                recipes.append(known[url])
+            else:
+                skipped[url] = "ikke aftensmad"
             continue
         if url in skipped or urlparse(url).scheme not in ("http", "https"):
             continue

@@ -693,7 +693,7 @@ def _recipe_payload(r: Recipe) -> dict:
         "kind": r.kind,
         "minutes": r.minutes,
         "items": [_item_payload(i) for i in items],
-        "veg_g": round(vegetables_per_person(items)),
+        "veg_g": int(vegetables_per_person(items) + 0.5),  # rundes som i browseren
         "pantry": r.pantry,
         "method": r.method,
         **({"source": r.source} if r.source else {}),
@@ -751,6 +751,8 @@ UNITS: dict[str, tuple[str, float]] = {
 }
 # Vægt pr. stk, når ingrediensen ellers kun sælges efter vægt
 DEFAULT_PIECE_G = 500
+# Sælges i liter, så skeer regnes om til dl
+LIQUIDS = {"maelk", "floede"}
 
 
 def _number(text: str) -> float:
@@ -872,6 +874,8 @@ def recipe_from_lines(
         amount *= scale
         if unit == "stk" and not NORMAL_PRICES[keys[0]][1]:
             amount, unit = amount * DEFAULT_PIECE_G, "g"
+        if unit == "g" and keys[0] in LIQUIDS:  # "2 spsk mælk" er 0,3 dl, ikke 30 g
+            amount, unit = amount / 100, "dl"
         if not amount:
             # "Smør til stegning" og lignende: regnes for at være derhjemme
             pantry.append(text)

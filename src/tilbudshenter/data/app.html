@@ -1626,6 +1626,8 @@ function itemGrams(i) {
 
 // En ret ud fra en egen opskrift, som recipe_from_lines i mealplan.py. Kød
 // og varer, der ikke kan genkendes, kommer med uden pris.
+const LIQUIDS = new Set(["maelk", "floede"]);
+
 function recipeFromLines(d) {
   const scale = 4 / Math.max(1, Math.min(12, Number(d.persons) || 4));
   // flags: kød eller fisk i fx bouillon; meat: kød eller fisk, der skal købes
@@ -1643,6 +1645,7 @@ function recipeFromLines(d) {
     }
     amount *= scale;
     if (unit === "stk" && !ING[keys[0]].price[1]) { amount *= planData.piece_g; unit = "g"; }
+    if (unit === "g" && LIQUIDS.has(keys[0])) { amount /= 100; unit = "dl"; }  // "2 spsk mælk" er 0,3 dl
     if (!amount) { pantry.push(text); continue; }
     items.push(makeItem(Math.round(amount * 100) / 100, unit, text.slice(0, 80), keys));
   }
@@ -1986,13 +1989,13 @@ function packNeed(item, offer, mult = 1) {
     const pieces = item.unit === "g" || item.unit === "dl" ? (pieceG ? kg * 1000 / pieceG : 1) : n;
     // Flere stk i en pakke (fx 8 æg til 16 kr): der købes hele pakker
     const perPack = offer.price ? Math.max(1, Math.round(offer.price / offer.unit_price)) : 1;
-    return {need: pieces, size: perPack, price: offer.price || offer.unit_price, stk: perPack === 1, key, pieces: true};
+    return {need: pieces, size: perPack, price: offer.price || offer.unit_price, stk: perPack === 1, key, pieces: true, kg, pieceG};
   }
   const size = (offer.unit === "kg" || offer.unit === "l") && offer.amount ? offer.amount : null;
   // "2 dåser tun", og tilbuddet er én dåse (140 g mod normalt 185 g): 2 pakker
   if (size && item.unit !== "g" && item.unit !== "dl" && pieceG && size >= pieceG / 2000 && size <= pieceG * 1.6 / 1000)
-    return {need: n, size: 1, price: offer.price, stk: false, key, pieces: true};
-  return {need: kg, size, price: offer.price, stk: false, key};
+    return {need: n, size: 1, price: offer.price, stk: false, key, pieces: true, kg, pieceG};
+  return {need: kg, size, price: offer.price, stk: false, key, kg, pieceG};
 }
 
 // Det samme for en vare uden tilbud: hele pakker af basisvaren (ING[k].pack
@@ -2003,7 +2006,7 @@ function basisNeed(item, mult = 1) {
   const n = scaledAmount(item, mult);
   const kg = item.unit === "g" ? n / 1000 : item.unit === "dl" ? n / 10 : n * pieceG / 1000;
   const size = (ING[key].pack || pieceG) / 1000;
-  return {need: kg, size, price: item.prices[key][0] * size, stk: false, key, pieceG};
+  return {need: kg, size, price: item.prices[key][0] * size, stk: false, key, kg, pieceG};
 }
 
 function basisPackText(p, count, item) {
@@ -2026,13 +2029,16 @@ function buyPacks(entries) {
       const p = y.offer ? packNeed(y.item, y.offer, x.mult) : basisNeed(y.item, x.mult);
       const id = y.offer ? y.offer.id : `basis:${p.key}`;
       let l = left.get(id);
-      // Er der nok tilbage af samme vare fra en anden pakke (fx et net løg),
-      // bruges den i stedet for at købe en ny
+      // Er der nok tilbage af samme vare fra en anden pakke (fx et net løg
+      // eller æbler fra en anden butik), bruges den i stedet for at købe en ny.
+      // Resten sammenlignes i kg, så stk og kg kan blandes.
       const other = byKey.get(p.key);
-      if ((!l || (p.size && l.amount < p.need * 0.9)) && other && !other.pieces && !p.pieces && p.size
-          && other.amount >= p.need * 0.9) {
-        l = other;
+      if ((!l || (p.size && l.amount < p.need * 0.9)) && other && other !== l && p.size && p.kg
+          && other.amount * other.unitKg >= p.kg * 0.9) {
+        other.amount = Math.max(0, other.amount - p.kg / other.unitKg);
         y = x.items[j] = {...y, offer: other.offer};
+        y.rest = other.entry === x ? "samme ret" : other.from;
+        return;
       }
       if (l && (!p.size || l.amount >= p.need * 0.9)) {
         if (p.size) l.amount = Math.max(0, l.amount - p.need);
@@ -2043,9 +2049,10 @@ function buyPacks(entries) {
       const count = p.size ? Math.max(1, Math.ceil((p.need - have) / p.size - 0.1)) : 1;
       y.buy = {count, price: count * p.price, stk: p.stk, text: y.offer ? "" : basisPackText(p, count, y.item)};
       const rest = {amount: p.size ? Math.max(0, have + count * p.size - p.need) : 0,
-        from: `${x.recipe.name}, ${dayName(x.day)}`, entry: x, offer: y.offer, pieces: !!p.pieces};
+        from: `${x.recipe.name}, ${dayName(x.day)}`, entry: x, offer: y.offer,
+        unitKg: p.pieces ? (p.pieceG || 0) / 1000 : 1};
       left.set(id, rest);
-      if (p.size) byKey.set(p.key, rest);
+      if (p.size && rest.unitKg) byKey.set(p.key, rest);
     });
   }
 }
@@ -2210,7 +2217,9 @@ async function openPlan() {
   plan.focus = saved.focus || "";
   plan.have = new Set(saved.have || []);
   plan.double = new Set(saved.double || []);
-  plan.start = saved.start && new Date(saved.start + "T12:00:00") >= today() ? saved.start : isoDay(today());
+  // Om aftenen (fra kl. 17) starter en ny plan i morgen, når aftensmaden for i dag er på plads
+  const first = new Date().getHours() >= 17 ? addDays(today(), 1) : today();
+  plan.start = saved.start && new Date(saved.start + "T12:00:00") >= first ? saved.start : isoDay(first);
   plan.skipped = new Set();
   plan.seen = store.get("seen", {});
   const stores = [...new Set(state.offers.filter(planUsable).map(o => o.dealer))].sort((a, b) => a.localeCompare(b, "da"));
