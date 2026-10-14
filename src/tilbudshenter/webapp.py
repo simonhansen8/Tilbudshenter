@@ -20,7 +20,7 @@ from urllib.parse import urlparse
 from .categories import UNCATEGORIZED, Categorizer, merge_categories
 from .cli import best_offers, load_app_config, make_source
 from .config import Config, example_config, save_config
-from .mealplan import ingredient_keys, plan_payload
+from .mealplan import ingredient_keys, ingredient_names, plan_payload
 from .opskrifter import extract_recipe, fetch
 from .models import Catalog, Offer
 from .report import discount_text, kr, period_text, unit_price_text, write_reports
@@ -155,7 +155,11 @@ class App:
         with Storage(cfg.database) as storage:
             note = str(data.get("note") or "")[:200] or None
             if action == "add":
-                if not storage.add_to_list(str(data.get("id", "")), note):
+                try:
+                    count = int(data.get("count") or 0) or None
+                except (TypeError, ValueError):
+                    count = None
+                if not storage.add_to_list(str(data.get("id", "")), note, count):
                     raise ValueError("Tilbuddet findes ikke længere")
             elif action == "add_text":
                 text = str(data.get("text", "")).strip()
@@ -222,6 +226,8 @@ def offer_payload(o: Offer, categorizer: Categorizer) -> dict:
         **o.to_dict(),
         # Ingredienser til madplanen; udeladt for de fleste tilbud
         **({"ingredients": ingredients} if ingredients else {}),
+        # Nævner tilbuddet flere varer, hvilken del der er hvilken ingrediens
+        **({"ingredient_names": names} if (names := ingredient_names(o.heading)) else {}),
         "category_name": categorizer.display_name(o.category),
         "price_text": kr(o.price),
         "pre_price_text": kr(o.pre_price) if o.pre_price else "",

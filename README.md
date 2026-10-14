@@ -266,7 +266,10 @@ hakket oksekød er billigt.
 
 - Retterne kommer fra en fast samling af omkring 40 danske hverdagsretter i
   `mealplan.py`. Hver ingrediens genkendes i aviserne ud fra nøgleord, så
-  hvert tilbud ved, hvilke ingredienser det kan bruges som.
+  hvert tilbud ved, hvilke ingredienser det kan bruges som. En bestemt vare
+  går forud for en bred: parmesan er ikke revet ost, og rucola og
+  romainesalat er ikke icebergsalat. Er et tilbud på to varer, fx "pasta
+  eller hakkede tomater", står kun den del, retten bruger.
 - Retterne får point for tre ting: lav pris pr. person, stor besparelse i
   forhold til normalprisen og meget grønt. Vælg **Lavest mulig pris** for at
   lægge mest vægt på prisen.
@@ -280,20 +283,25 @@ hakket oksekød er billigt.
 - Et tilbud bruges kun, når det er billigere end **basisvaren**: den
   almindelige pris uden tilbud på den billigste udgave, fx kædens eget mærke
   (`NORMAL_PRICES` i `mealplan.py`, anslået ud fra discountbutikkernes
-  hyldepriser). En stor rabat på et dyrt mærke er altså ikke nok.
+  hyldepriser). En stor rabat på et dyrt mærke er altså ikke nok. Under
+  **Basispriser** kan du rette priserne til det, du selv giver; dine priser
+  gemmes i browseren.
 - Hver ret har en samlet pris og en pris pr. person. Den regnes for de
   mængder, retten bruger, med tilbuddets pris pr. kg, liter eller stk, og for
   varer uden tilbud med basisvarens pris. Besparelsen regnes også i forhold
-  til basisvaren. Hele pakker kan koste mere.
-- Under hver vare står, hvad du betaler for hele pakken (eller de stk, du
-  skal bruge), og hvad varen koster pr. person i retten. Tryk på et tilbud
+  til basisvaren.
+- Du køber hele pakker. Under hver vare står, hvor mange pakker du køber og
+  hvad de koster, og hvad varen koster pr. person i retten. Bliver der nok
+  tilbage af en pakke til en senere ret, står der "Resten af pakken fra …",
+  og retter, der kan dele en pakke, foretrækkes. Tryk på et tilbud
   for at se det hele med billede, avis og hvad det bruges til i planen; du
   kan bladre mellem planens tilbud.
 - Et tilbud bruges kun på en dag, hvor det gælder. En ret, hvis tilbud først
   starter senere i perioden, lægges på en dag, hvor tilbuddet er startet.
 - Øverst står den samlede pris for ugen med pris pr. dag og pr. person, og
-  hvor meget tilbuddene sparer. Varer, du har derhjemme, og varer uden kendt
-  pris er ikke regnet med.
+  hvor meget tilbuddene sparer, og hvad du betaler i butikken for de hele
+  pakker. Varer, du har derhjemme, og varer uden kendt pris er ikke regnet
+  med.
 - Vælg første dag, antal dage, antal personer (mængderne skaleres) og kost
   (alt, uden svinekød, uden fisk eller vegetar). Hver ret får en dag: retter
   over 45 minutter lægges i weekenden og de hurtige på hverdagene. **↑** og
@@ -311,7 +319,8 @@ hakket oksekød er billigt.
   indsætte et link til en opskrift. Egne opskrifter gemmes i browseren.
 - **Læg på indkøbslisten** lægger tilbuddene og de varer, der ikke er på
   tilbud, på indkøbslisten. Samme vare i flere retter lægges sammen, med en
-  note om mængden og retterne. Krydderier, olie og mel regnes som noget, man
+  note om mængden og retterne, og antallet af pakker står på listen og
+  ganges med i prisen. Krydderier, olie og mel regnes som noget, man
   har derhjemme. Indkøbslisten er sorteret efter afdeling i butikken.
 
 Madplanen huskes i browseren, ligesom indkøbslisten.

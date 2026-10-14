@@ -36,7 +36,7 @@ DEFAULT_JSON = Path(__file__).parent / "data" / "opskrifter.json"
 SITEMAP_LIMIT = 100
 # Hæves, når opskrifter kan læses fra flere slags sider, så de sider, der
 # blev sprunget over før, prøves igen
-VERSION = 2
+VERSION = 3
 
 
 def fetch(url: str, timeout: float = 20) -> str:

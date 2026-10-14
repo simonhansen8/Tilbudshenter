@@ -20,6 +20,8 @@ LINES = [
     "250 g champignon eller svampe", "1 l hønsebouillon", "100 g revet ost", "2 porrer", "1 hel kylling",
     "600 g laks", "200 g frosne ærter", "1 squash", "Tuborg Squash", "1 bakke cherrytomater", "1½ dl ris",
     "2 tortillas", "1 knivspids muskat", "500 g hakket kød", "8 æg", "1 pose spinat", "1 broccoli",
+    "50 g revet parmesan", "2 romainesalat", "1 bakke cherrytomater", "200 g chorizo, i tern", "1 lime, saften herfra",
+    "1 bundt forårsløg", "2 dl græsk yoghurt", "1 tsk fiskesauce", "5 skiver bacon",
 ]
 RECIPES = [
     (["500 g hakket oksekød", "1 løg", "2 fed hvidløg", "1 dåse hakkede tomater", "400 g spaghetti", "salt"], 4),

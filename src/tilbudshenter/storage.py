@@ -108,7 +108,7 @@ class Storage:
         self.conn.executescript(SCHEMA)
         # Kolonner der er kommet til siden databasen blev oprettet
         added = {
-            "shopping_list": {"note": "TEXT", "category": "TEXT"},
+            "shopping_list": {"note": "TEXT", "category": "TEXT", "count": "INTEGER"},
             "catalogs": {"url": "TEXT", "pages": "TEXT", "scan_version": "INTEGER"},
             "offers": {"catalog_page": "INTEGER", "catalog_order": "INTEGER"},
         }
@@ -315,8 +315,9 @@ class Storage:
         ).fetchall()
         return [{**dict(r), "checked": bool(r["checked"])} for r in rows]
 
-    def add_to_list(self, offer_id: str, note: str | None = None) -> bool:
-        """Lægger et tilbud på listen. Returnerer False, hvis tilbuddet ikke findes."""
+    def add_to_list(self, offer_id: str, note: str | None = None, count: int | None = None) -> bool:
+        """Lægger et tilbud på listen, evt. i flere pakker. Returnerer False,
+        hvis tilbuddet ikke findes."""
         cur = self.conn.execute(
             """
             INSERT OR IGNORE INTO shopping_list
@@ -328,6 +329,8 @@ class Storage:
         )
         if note:
             self.conn.execute("UPDATE shopping_list SET note = ? WHERE id = ?", (note, offer_id))
+        if count:
+            self.conn.execute("UPDATE shopping_list SET count = ? WHERE id = ?", (max(1, min(99, count)), offer_id))
         self.conn.commit()
         return cur.rowcount > 0 or self.conn.execute(
             "SELECT 1 FROM shopping_list WHERE id = ?", (offer_id,)
