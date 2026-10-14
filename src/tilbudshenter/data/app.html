@@ -79,6 +79,40 @@ select { padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; 
 .tag.later { background: var(--accent-soft); color: var(--accent); }
 .tag.low { background: var(--badge); color: #fff; }
 .meta { color: var(--muted); font-size: 12px; margin-top: auto; padding-top: 6px; }
+.card[data-offer] { cursor: pointer; transition: border-color .15s, transform .15s; }
+.card[data-offer]:hover { border-color: var(--accent); }
+.card[data-offer]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.paper-head { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 14px 0 0; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+.paper-head:first-child { margin-top: 0; }
+.paper-head h3 { margin: 0; font-size: 17px; }
+.paper-head .sub { color: var(--muted); font-size: 13px; }
+.paper-head .acts { margin-left: auto; display: flex; gap: 12px; align-items: baseline; }
+.paper-head a, .od-info a.link { color: var(--accent); font-size: 13px; }
+#offer-dlg { width: min(920px, calc(100vw - 32px)); }
+.od { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px; padding-top: 12px; }
+.od-pic { min-width: 0; }
+.od-tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+.od-img { background: #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; min-height: 220px; overflow: hidden; }
+.od-img > img { max-width: 100%; max-height: 62vh; object-fit: contain; display: block; }
+.od-page { position: relative; line-height: 0; }
+.od-page img { width: 100%; height: auto; display: block; }
+.od-page .mark { position: absolute; border: 3px solid var(--badge); border-radius: 6px; box-shadow: 0 0 0 9999px rgba(0,0,0,.28); }
+.od-pagewrap { max-height: 62vh; overflow: auto; border-radius: 10px; background: #fff; }
+.od-info { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.od-info .price { font-size: 30px; margin: 0; }
+.od-info .desc { -webkit-line-clamp: unset; display: block; font-size: 14px; white-space: pre-line; }
+.od-info dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 6px 0 0; font-size: 13px; }
+.od-info dt { color: var(--muted); }
+.od-info dd { margin: 0; overflow-wrap: anywhere; }
+.od-info .add { margin-top: 6px; }
+.od-foot { justify-content: space-between; flex-wrap: wrap; }
+.od-nav { display: flex; gap: 6px; align-items: center; color: var(--muted); font-size: 13px; }
+.od-head-sub { color: var(--muted); font-size: 13px; }
+@media (max-width: 680px) {
+  .od { grid-template-columns: 1fr; }
+  .od-img > img { max-height: 42vh; }
+  .od-pagewrap { max-height: 55vh; }
+}
 .more { display: flex; justify-content: center; margin-top: 18px; }
 .empty { text-align: center; color: var(--muted); padding: 48px 16px; border: 1px dashed var(--line); border-radius: 12px; margin-top: 16px; }
 
@@ -210,7 +244,7 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
         <option value="discount">Største rabat</option>
         <option value="unit">Laveste pris pr. kg/l</option>
         <option value="price">Laveste pris</option>
-        <option value="store">Butik</option>
+        <option value="store">Butik, som i avisen</option>
       </select>
       <label class="check"><input type="checkbox" id="known-only"> Kun kendt rabat</label>
       <label class="check" title="Tilbud der kræver Lidl Plus, kædens app eller medlemskab"><input type="checkbox" id="hide-member"> Skjul medlems- og app-priser</label>
@@ -228,6 +262,24 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
   <div class="more"><button class="btn" id="btn-more" hidden>Vis flere</button></div>
   <div class="empty" id="empty" hidden></div>
 </main>
+
+<dialog id="offer-dlg" aria-labelledby="od-title">
+  <div class="dlg">
+    <div class="dlg-head">
+      <div style="min-width:0"><h2 id="od-title"></h2><div class="od-head-sub" id="od-sub"></div></div>
+      <button class="btn small" id="btn-offer-close">Luk</button>
+    </div>
+    <div class="dlg-body" id="od-body"></div>
+    <div class="dlg-foot od-foot">
+      <div class="od-nav">
+        <button class="btn small" id="btn-offer-prev" aria-label="Forrige tilbud">‹ Forrige</button>
+        <span id="od-pos"></span>
+        <button class="btn small" id="btn-offer-next" aria-label="Næste tilbud">Næste ›</button>
+      </div>
+      <a class="btn primary" id="od-paper" target="_blank" rel="noopener" style="text-decoration:none">Se i tilbudsavisen ↗</a>
+    </div>
+  </div>
+</dialog>
 
 <dialog id="settings">
   <form class="dlg" method="dialog" id="settings-form">
@@ -419,7 +471,7 @@ const PAGE = 120;
 const state = {
   offers: [], settings: null, categories: [], stores: new Set(), cats: new Set(),
   q: "", sort: "best", knownOnly: false, hideMember: false, limit: PAGE, catalogList: null, scanning: false,
-  periods: new Set(["now", "later"]), list: [],
+  periods: new Set(["now", "later"]), list: [], papers: {},
 };
 
 // "now": gælder i dag, "later": avisen starter først om nogle dage
@@ -626,7 +678,7 @@ async function staticApi(path, body) {
     return {demo: false, scan: {running: false}, settings: s, catalog_count: siteData.catalog_count,
       last_scan: siteData.last_scan, categories: siteData.categories};
   }
-  if (path === "/api/offers") return {offers: siteOffers(s)};
+  if (path === "/api/offers") return {offers: siteOffers(s), papers: siteData.papers || {}};
   if (path === "/api/catalogs") {
     return {stores: siteData.stores.map(st => ({
       name: st.name, selected: storeSelected(st.name, s), nearest_km: nearestKm(st.name, s),
@@ -659,14 +711,16 @@ function showMessage(html, kind) {
 
 // Små valg i appen, som huskes i browseren
 function savePrefs() {
-  try { localStorage.setItem("tilbudshenter.prefs", JSON.stringify({hideMember: state.hideMember})); } catch (e) {}
+  try { localStorage.setItem("tilbudshenter.prefs", JSON.stringify({hideMember: state.hideMember, sort: state.sort})); } catch (e) {}
 }
 function loadPrefs() {
   try {
     const p = JSON.parse(localStorage.getItem("tilbudshenter.prefs") || "{}");
     state.hideMember = !!p.hideMember;
+    if (p.sort && [...$("sort").options].some(o => o.value === p.sort)) state.sort = p.sort;
   } catch (e) {}
   $("hide-member").checked = state.hideMember;
+  $("sort").value = state.sort;
 }
 
 function splitList(text) { return text.split(",").map(s => s.trim()).filter(Boolean); }
@@ -739,6 +793,7 @@ async function startScan(force) {
 async function loadOffers() {
   const data = await api("/api/offers");
   state.offers = data.offers;
+  state.papers = data.papers || {};
   const stores = new Set(state.offers.map(o => o.dealer));
   state.stores = new Set([...stores].filter(s => state.stores.size === 0 || state.stores.has(s)));
   if (state.stores.size === 0) state.stores = stores;
@@ -770,10 +825,39 @@ function filtered() {
     discount: (a, b) => (b.known_discount ?? -1) - (a.known_discount ?? -1),
     unit: (a, b) => perKg(a) - perKg(b) || a.price - b.price,
     price: (a, b) => a.price - b.price,
-    store: (a, b) => a.dealer.localeCompare(b.dealer, "da") || b.score - a.score,
+    store: paperCompare,
   }[state.sort];
   if (by) list = [...list].sort(by);
   return list;
+}
+
+// Butik for butik, avis for avis, og tilbuddene som de står i avisen
+function paperCompare(a, b) {
+  const pa = state.papers[a.catalog_id] || {}, pb = state.papers[b.catalog_id] || {};
+  return a.dealer.localeCompare(b.dealer, "da")
+    || (pa.run_from || "").localeCompare(pb.run_from || "")
+    || (pa.label || a.catalog_label || "").localeCompare(pb.label || b.catalog_label || "", "da")
+    || a.catalog_id.localeCompare(b.catalog_id)
+    || (a.catalog_order ?? 1e9) - (b.catalog_order ?? 1e9)
+    || b.score - a.score;
+}
+
+// Link til avisen på eTilbudsavis, helst på tilbuddets side
+function paperUrl(catalogId, page) {
+  const url = (state.papers[catalogId] || {}).url;
+  if (!url) return "";
+  return page ? `${url}?publication_page=${encodeURIComponent(page)}` : url;
+}
+
+function paperHead(o, n) {
+  const p = state.papers[o.catalog_id] || {};
+  const label = p.label || o.catalog_label || "";
+  const url = paperUrl(o.catalog_id);
+  const only = state.stores.size > 1
+    ? `<button class="link" data-only-store="${esc(o.dealer)}">Vis kun ${esc(o.dealer)}</button>` : "";
+  return `<div class="paper-head"><h3>${esc(o.dealer)}</h3>
+    <span class="sub">${label ? esc(label) + " · " : ""}${esc(o.period_text)} · ${n} tilbud</span>
+    <span class="acts">${only}${url ? `<a href="${esc(url)}" target="_blank" rel="noopener">Åbn avisen ↗</a>` : ""}</span></div>`;
 }
 
 function chip(kind, value, label, n, on) {
@@ -806,7 +890,7 @@ function card(o) {
     o.lowest_weeks ? `<span class="tag low" title="Lavere pris end i alle tidligere aviser i ${o.lowest_weeks} uger">Laveste i ${o.lowest_weeks} uger</span>` : "",
     o.member ? `<span class="tag member" title="Prisen kræver Lidl Plus, kædens app eller medlemskab">${esc(o.member)}</span>` : "",
   ].join("");
-  return `<article class="card">${img}
+  return `<article class="card" data-offer="${esc(o.id)}" tabindex="0" aria-label="${esc(o.heading)}, ${esc(o.price_text)}">${img}
     <div class="top"><span>${esc(o.dealer)}</span>${badge}</div>
     ${tags ? `<div class="tags">${tags}</div>` : ""}
     <div class="name">${esc(o.heading)}</div>
@@ -836,8 +920,131 @@ function render() {
   $("empty").textContent = "Ingen tilbud matcher dine filtre.";
   $("count").textContent = `Viser ${Math.min(list.length, state.limit)} af ${list.length} tilbud`
     + (list.length < state.offers.length ? ` (${state.offers.length} i alt)` : "");
-  $("grid").innerHTML = list.slice(0, state.limit).map(card).join("");
+  const shown = list.slice(0, state.limit);
+  if (state.sort === "store") {
+    const counts = {};
+    for (const o of list) counts[o.catalog_id] = (counts[o.catalog_id] || 0) + 1;
+    $("grid").innerHTML = shown.map((o, i) =>
+      (i === 0 || shown[i - 1].catalog_id !== o.catalog_id ? paperHead(o, counts[o.catalog_id]) : "") + card(o)).join("");
+  } else {
+    $("grid").innerHTML = shown.map(card).join("");
+  }
   $("btn-more").hidden = list.length <= state.limit;
+}
+
+// -- Et enkelt tilbud ---------------------------------------------------
+// Rækkefølgen, der bladres i, er den samme som på siden bag vinduet
+const offerView = {id: null, list: [], mode: "offer", touch: null};
+
+function openOffer(id) {
+  offerView.list = filtered();
+  if (!offerView.list.some(o => o.id === id)) offerView.list = state.offers;
+  offerView.id = id;
+  offerView.mode = "offer";
+  renderOffer();
+  const dlg = $("offer-dlg");
+  if (!dlg.open) dlg.showModal();
+  $("btn-offer-close").focus();
+}
+
+function stepOffer(delta) {
+  const i = offerView.list.findIndex(o => o.id === offerView.id);
+  const next = offerView.list[i + delta];
+  if (!next) return;
+  offerView.id = next.id;
+  renderOffer();
+  $("od-body").scrollTop = 0;
+}
+
+// Tilbuddets placering på avissiden står i billedets adresse (x1r, y1r, x2r, y2r)
+function offerBox(o) {
+  try {
+    const q = new URL(o.image_url).searchParams;
+    const box = ["x1r", "y1r", "x2r", "y2r"].map(k => parseFloat(q.get(k)));
+    return box.every(v => isFinite(v)) && box[2] > box[0] && box[3] > box[1] ? box : null;
+  } catch (e) { return null; }
+}
+
+let pagesPromise = null;
+async function paperPages(catalogId) {
+  const p = state.papers[catalogId];
+  if (!p) return [];
+  if (p.pages) return p.pages;
+  if (!STATIC || !p.page_count) return [];
+  pagesPromise = pagesPromise || fetch("aviser.json", {cache: "no-cache"}).then(r => r.ok ? r.json() : {}).catch(() => ({}));
+  const all = await pagesPromise;
+  if (!Object.keys(all).length) pagesPromise = null;  // prøv igen næste gang
+  return all[catalogId] || [];
+}
+
+function renderOffer() {
+  const list = offerView.list;
+  const i = list.findIndex(x => x.id === offerView.id);
+  const o = list[i];
+  if (!o) { $("offer-dlg").close(); return; }
+  const paper = state.papers[o.catalog_id] || {};
+  $("od-title").textContent = o.heading;
+  $("od-sub").textContent = [o.dealer, paper.label || o.catalog_label, o.catalog_page ? `side ${o.catalog_page}` : ""].filter(Boolean).join(" · ");
+  $("od-pos").textContent = list.length > 1 ? `${i + 1} af ${list.length}` : "";
+  $("btn-offer-prev").disabled = i <= 0;
+  $("btn-offer-next").disabled = i >= list.length - 1;
+  const url = paperUrl(o.catalog_id, o.catalog_page);
+  $("od-paper").hidden = !url;
+  if (url) $("od-paper").href = url;
+
+  const box = offerBox(o);
+  const canPage = !!(o.catalog_page && box && (paper.pages || paper.page_count));
+  if (!canPage && offerView.mode === "page") offerView.mode = "offer";
+  const tabs = canPage ? `<div class="od-tabs">
+      <button class="chip${offerView.mode === "offer" ? " on" : ""}" data-view="offer">Tilbuddet</button>
+      <button class="chip${offerView.mode === "page" ? " on" : ""}" data-view="page">Hele siden i avisen</button></div>` : "";
+  const pic = offerView.mode === "page"
+    ? `<div class="od-pagewrap" id="od-pagewrap"><div class="od-img" style="min-height:300px"><span class="status">Henter siden…</span></div></div>`
+    : o.image_url ? `<div class="od-img"><img src="${esc(o.image_url)}" alt="${esc(o.heading)}" onerror="this.parentNode.innerHTML='<span class=status>Intet billede</span>'"></div>`
+    : `<div class="od-img"><span class="status">Intet billede</span></div>`;
+
+  const est = o.discount_basis && o.discount_basis !== "foerpris" ? " est" : "";
+  const tags = [
+    o.discount_text ? `<span class="badge${est}">${esc(o.discount_text)}</span>` : "",
+    period(o) === "later" ? `<span class="tag later">${esc(startText(o))}</span>` : "",
+    o.lowest_weeks ? `<span class="tag low">Laveste i ${o.lowest_weeks} uger</span>` : "",
+    o.member ? `<span class="tag member" title="Prisen kræver Lidl Plus, kædens app eller medlemskab">${esc(o.member)}</span>` : "",
+  ].join("");
+  const rows = [
+    ["Butik", o.dealer],
+    ["Avis", [paper.label || o.catalog_label, o.catalog_page ? `side ${o.catalog_page}` : ""].filter(Boolean).join(", ")],
+    ["Gælder", o.period_text],
+    ["Kategori", o.category_name],
+    ["Rabat", o.reasons.join(", ")],
+  ].filter(r => r[1]);
+  $("od-body").innerHTML = `<div class="od">
+    <div class="od-pic">${tabs}${pic}</div>
+    <div class="od-info">
+      ${tags ? `<div class="tags" style="align-items:center">${tags}</div>` : ""}
+      <div class="price">${esc(o.price_text)}${o.pre_price_text ? `<span class="pre">${esc(o.pre_price_text)}</span>` : ""}</div>
+      ${o.unit_price_text ? `<div class="unit">${esc(o.unit_price_text)}</div>` : ""}
+      ${o.description ? `<div class="desc">${esc(o.description)}</div>` : ""}
+      <dl>${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>
+      ${listButton(o.id)}
+    </div></div>`;
+
+  if (offerView.mode === "page") {
+    const id = o.id;
+    paperPages(o.catalog_id).then(pages => {
+      const wrap = $("od-pagewrap");
+      if (!wrap || offerView.id !== id || offerView.mode !== "page") return;
+      const src = pages[o.catalog_page - 1];
+      if (!src) { wrap.innerHTML = `<div class="od-img"><span class="status">Siden kunne ikke hentes</span></div>`; return; }
+      const [x1, y1, x2, y2] = box;
+      const pct = v => (v * 100).toFixed(2) + "%";
+      wrap.innerHTML = `<div class="od-page"><img src="${esc(src)}" alt="Side ${o.catalog_page} i avisen">
+        <div class="mark" style="left:${pct(x1)};top:${pct(y1)};width:${pct(x2 - x1)};height:${pct(y2 - y1)}"></div></div>`;
+      // Rul tilbuddet frem, når siden er højere end vinduet
+      wrap.querySelector("img").addEventListener("load", () => {
+        wrap.scrollTop = Math.max(0, y1 * wrap.scrollHeight - wrap.clientHeight / 4);
+      });
+    });
+  }
 }
 
 // -- Indkøbsliste -------------------------------------------------------
@@ -1862,15 +2069,55 @@ $("list-body").addEventListener("change", e => {
   if (id) changeList({action: "check", id, checked: e.target.checked});
 });
 $("grid").addEventListener("click", e => {
+  const only = e.target.closest("[data-only-store]");
+  if (only) { state.stores = new Set([only.dataset.onlyStore]); state.limit = PAGE; render(); window.scrollTo({top: $("filters").offsetTop}); return; }
+  if (e.target.closest("a")) return;
   const b = e.target.closest("[data-list]");
-  if (!b) return;
-  const id = b.dataset.list;
-  changeList(onList(id) ? {action: "remove", id} : {action: "add", id});
+  if (b) {
+    const id = b.dataset.list;
+    changeList(onList(id) ? {action: "remove", id} : {action: "add", id});
+    return;
+  }
+  const c = e.target.closest("[data-offer]");
+  if (c) openOffer(c.dataset.offer);
 });
+$("grid").addEventListener("keydown", e => {
+  const c = e.target.closest && e.target.closest("[data-offer]");
+  if (c && e.target === c && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openOffer(c.dataset.offer); }
+});
+$("btn-offer-close").addEventListener("click", () => $("offer-dlg").close());
+$("btn-offer-prev").addEventListener("click", () => stepOffer(-1));
+$("btn-offer-next").addEventListener("click", () => stepOffer(1));
+$("offer-dlg").addEventListener("click", e => {
+  if (e.target === $("offer-dlg")) { $("offer-dlg").close(); return; }  // klik uden for vinduet
+  const b = e.target.closest("[data-list]");
+  if (b) {
+    const id = b.dataset.list;
+    changeList(onList(id) ? {action: "remove", id} : {action: "add", id});
+    return;
+  }
+  const t = e.target.closest("[data-view]");
+  if (t) { offerView.mode = t.dataset.view; renderOffer(); }
+});
+$("offer-dlg").addEventListener("keydown", e => {
+  if (e.target.matches && e.target.matches("input, select, textarea")) return;
+  if (e.key === "ArrowLeft") { e.preventDefault(); stepOffer(-1); }
+  else if (e.key === "ArrowRight") { e.preventDefault(); stepOffer(1); }
+});
+// Stryg til siden for at bladre på telefonen
+$("od-body").addEventListener("touchstart", e => {
+  const t = e.touches[0]; offerView.touch = {x: t.clientX, y: t.clientY};
+}, {passive: true});
+$("od-body").addEventListener("touchend", e => {
+  const start = offerView.touch; offerView.touch = null;
+  if (!start || offerView.mode === "page") return;
+  const t = e.changedTouches[0], dx = t.clientX - start.x, dy = t.clientY - start.y;
+  if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) stepOffer(dx < 0 ? 1 : -1);
+}, {passive: true});
 $("btn-load-stores").addEventListener("click", loadStores);
 $("btn-more").addEventListener("click", () => { state.limit += PAGE; render(); });
 $("search").addEventListener("input", e => { state.q = e.target.value; state.limit = PAGE; render(); });
-$("sort").addEventListener("change", e => { state.sort = e.target.value; render(); });
+$("sort").addEventListener("change", e => { state.sort = e.target.value; savePrefs(); render(); });
 $("known-only").addEventListener("change", e => { state.knownOnly = e.target.checked; render(); });
 $("hide-member").addEventListener("change", e => { state.hideMember = e.target.checked; savePrefs(); render(); });
 $("filters").addEventListener("click", e => {

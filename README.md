@@ -67,6 +67,10 @@ I appen kan du:
 - hente nye tilbud med knappen **Hent nye tilbud** (første gang sker det
   automatisk),
 - søge og filtrere på butik og kategori, sortere efter rabat eller pris pr. kg,
+- trykke på et tilbud for at se et stort billede, hele siden i avisen med
+  tilbuddet markeret og en knap til den rigtige tilbudsavis på eTilbudsavis,
+- vise tilbuddene butik for butik i samme rækkefølge som i tilbudsavisen
+  (sortering *Butik, som i avisen*),
 - vælge mellem tilbud der gælder nu, og dem der starter senere,
 - se hvilke tilbud der kræver Lidl Plus, kædens app eller medlemskab (og skjule dem),
 - lægge tilbud og egne varer på en **indkøbsliste**, delt op efter butik og afdeling, som

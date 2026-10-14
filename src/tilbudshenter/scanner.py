@@ -71,6 +71,11 @@ def scan(
             continue
         for offer in offers:
             offer.category = categorizer.categorize(offer.heading, offer.description)
+        if hasattr(source, "list_pages"):
+            try:
+                catalog.pages = source.list_pages(catalog)
+            except SourceError as exc:  # Tilbuddene kan bruges uden sidebillederne
+                log.warning("Kunne ikke hente siderne i %s: %s", catalog.label, exc)
         storage.save_catalog(catalog, source.name, scanned=True)
         storage.save_offers(offers)
         result.new_catalogs.append(catalog)

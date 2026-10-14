@@ -27,6 +27,11 @@ def test_site_demo(tmp_path, capsys):
     assert {s["name"] for s in data["stores"]} >= {"Netto", "Lidl"}
     assert data["default_settings"]["stores"] and data["default_settings"]["categories"]
     assert (out / "tilbud.demo.db").exists()
+    # Tilbuddene kan vises i avisens rækkefølge, og aviserne kendes efter id
+    assert all(o["catalog_order"] for o in data["offers"])
+    assert {o["catalog_id"] for o in data["offers"]} <= set(data["papers"])
+    assert all("pages" not in p for p in data["papers"].values())
+    assert json.loads((out / "aviser.json").read_text("utf-8")) == {}  # demoen har ingen sidebilleder
 
     # Anden kørsel genbruger databasen og henter ikke aviserne igen
     assert main(["side", "--demo", "--ud", str(out)]) == 0

@@ -171,7 +171,9 @@ def test_list_notes_and_departments(server):
         if not request(server + "/api/state")[1]["scan"]["running"]:
             break
         time.sleep(0.05)
-    offer = request(server + "/api/offers")[1]["offers"][0]
+    data = request(server + "/api/offers")[1]
+    offer = data["offers"][0]
+    assert data["papers"][offer["catalog_id"]]["dealer"] == offer["dealer"] and offer["catalog_order"]
     request(server + "/api/list", {"action": "add", "id": offer["id"], "note": "til Lasagne"}, h)
     items = request(server + "/api/list", {"action": "add_text", "text": "Løg (3)", "category": "frugt_og_groent",
                                            "note": "til Chili"}, h)[1]["items"]

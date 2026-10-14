@@ -156,8 +156,9 @@ class Catalog:
     run_from: datetime | None
     run_till: datetime | None
     offer_count: int | None = None
-    url: str | None = None
+    url: str | None = None  # Avisen på eTilbudsavis
     dealer_id: str | None = None
+    pages: list[str] = field(default_factory=list)  # Billeder af avisens sider
 
 
 @dataclass
@@ -179,6 +180,8 @@ class Offer:
     image_url: str | None = None
     category: str | None = None
     catalog_label: str = ""
+    catalog_page: int | None = None  # Siden i avisen (fra 1)
+    catalog_order: int | None = None  # Placering i avisen: side for side, oppefra og ned
     # Udfyldes af scoringen
     score: float = 0.0
     known_discount: float | None = None  # Rabat i % fra førpris, prishistorik eller andre butikker
@@ -260,5 +263,7 @@ class Offer:
             "member": self.member,
             "lowest_weeks": self.lowest_weeks,
             "catalog_label": self.catalog_label,
+            "catalog_page": self.catalog_page,
+            "catalog_order": self.catalog_order,
             "reasons": self.reasons,
         }
