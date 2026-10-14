@@ -285,6 +285,12 @@ hakket oksekød er billigt.
   mængder, retten bruger, med tilbuddets pris pr. kg, liter eller stk, og for
   varer uden tilbud med basisvarens pris. Besparelsen regnes også i forhold
   til basisvaren. Hele pakker kan koste mere.
+- Under hver vare står, hvad du betaler for hele pakken (eller de stk, du
+  skal bruge), og hvad varen koster pr. person i retten. Tryk på et tilbud
+  for at se det hele med billede, avis og hvad det bruges til i planen; du
+  kan bladre mellem planens tilbud.
+- Et tilbud bruges kun på en dag, hvor det gælder. En ret, hvis tilbud først
+  starter senere i perioden, lægges på en dag, hvor tilbuddet er startet.
 - Øverst står den samlede pris for ugen med pris pr. dag og pr. person, og
   hvor meget tilbuddene sparer. Varer, du har derhjemme, og varer uden kendt
   pris er ikke regnet med.
