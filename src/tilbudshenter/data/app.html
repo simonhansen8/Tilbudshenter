@@ -852,18 +852,80 @@ function resetCats() {
   state.cats = new Set(chosen.length ? chosen : state.categories.map(c => c.key));
 }
 
+// <search> Søgning: et søgeord skal være et helt ord i tilbuddet, en bøjning
+// af det ("ost" finder "osten") eller en del af et sammensat ord, hvor resten
+// også er et ord ("æg" finder "skrabeæg" og "æggebakke", men ikke "pålæg").
+// Lange søgeord (5+ bogstaver) må stå hvor som helst i et ord.
+const ENDINGS = new Set(["e", "en", "er", "et", "ene", "erne", "es", "ens", "ers", "ets", "s"]);
+const VOWEL_ENDINGS = new Set(["n", "r", "t", "ne", "rne", "ns", "rs", "ts"]);  // pølse -> pølser
+function searchWords(text) { return text.normalize("NFC").toLowerCase().match(/[\p{L}\p{N}]+/gu) || []; }
+function searchVocab(offers) {
+  const v = new Set();
+  for (const o of offers) for (const w of searchWords(`${o.heading} ${o.description}`)) if (w.length >= 3) v.add(w);
+  return v;
+}
+// Er rest (det der står efter søgeordet) en bøjning eller et nyt ord?
+function isEnding(q, rest) { return ENDINGS.has(rest) || (/[aeiouyæøå]$/.test(q) && VOWEL_ENDINGS.has(rest)); }
+function okAfter(q, rest, vocab) {
+  if (!rest || isEnding(q, rest)) return true;
+  if (rest[0] === q.at(-1) && (rest.length === 1 || isEnding(q, rest.slice(1)))) return true;  // æg -> ægget
+  let r = rest[0] === q.at(-1) ? rest.slice(1) : rest;  // æg|g|episker
+  if (r[0] === "e" || r[0] === "s") r = r.slice(1);
+  return r.length >= 4 && (vocab.has(r) || vocab.has(rest));
+}
+// Er head (det der står før søgeordet) første del af et sammensat ord?
+// Med søgeord på to bogstaver skal det sammensatte ord slutte med søgeordet
+// ("hvidtøl", men ikke "booster" for "te")
+function okBefore(q, head, rest, vocab) {
+  if (head.length < 3 || (q.length <= 2 && rest)) return false;
+  return /[es]$/.test(head) || (head.length >= 4 && vocab.has(head));
+}
+function wordMatches(word, q, vocab) {
+  if (word === q) return true;
+  if (q.length >= 5) {
+    if (word.includes(q)) return true;
+    const stem = q.replace(/(erne|ene|er|en|e|r)$/, "");
+    const i = word.lastIndexOf(stem);  // "pølser" finder også "spegepølse"
+    return stem.length >= 4 && stem !== q && i >= 0 && okAfter(stem, word.slice(i + stem.length), vocab);
+  }
+  for (let i = word.indexOf(q); i >= 0; i = word.indexOf(q, i + 1)) {
+    const head = word.slice(0, i), rest = word.slice(i + q.length);
+    if ((!head || okBefore(q, head, rest, vocab)) && okAfter(q, rest, vocab)) return true;
+  }
+  return false;
+}
+// Alle søgeord skal findes. Giver 0 når de alle står i overskriften, 1 når
+// nogle kun står i beskrivelsen (de vises efter), og -1 uden træf.
+function searchMatcher(query, vocab) {
+  const qs = searchWords(query);
+  if (!qs.length) return null;
+  return (heading, text) => {
+    const words = searchWords(`${heading} ${text}`);
+    if (!qs.every(q => words.some(w => wordMatches(w, q, vocab)))) return -1;
+    const head = searchWords(heading);
+    return qs.every(q => head.some(w => wordMatches(w, q, vocab))) ? 0 : 1;
+  };
+}
+// </search>
+
 // Pris pr. kg eller liter; stykpriser kan ikke sammenlignes og kommer sidst
 function perKg(o) { return (o.unit === "kg" || o.unit === "l") && o.unit_price ? o.unit_price : Infinity; }
 
+// Ordlisten bruges til at kende sammensatte ord; den bygges når tilbuddene skifter
+function searchFor(query) {
+  if (searchFor.offers !== state.offers) { searchFor.offers = state.offers; searchFor.vocab = searchVocab(state.offers); }
+  return searchMatcher(query, searchFor.vocab);
+}
+
 function filtered() {
-  const q = state.q.toLowerCase();
+  const match = searchFor(state.q), tier = new Map();
   const minDiscount = state.settings.min_discount_pct || 0;
   let list = state.offers.filter(o =>
     state.stores.has(o.dealer) && state.cats.has(o.category) && state.periods.has(period(o)) &&
     (!state.hideMember || !o.member) &&
     (!state.knownOnly || o.known_discount !== null) &&
-    (o.known_discount === null || o.known_discount >= minDiscount || o.reasons.some(r => r.startsWith("favorit"))) &&
-    (!q || `${o.heading} ${o.description} ${o.dealer}`.toLowerCase().includes(q)));
+    (o.known_discount === null || o.known_discount >= minDiscount || o.reasons.some(r => r.startsWith("favorit"))));
+  if (match) list = list.filter(o => { tier.set(o, match(`${o.heading} ${o.dealer}`, o.description)); return tier.get(o) >= 0; });
   const by = {
     discount: (a, b) => (b.known_discount ?? -1) - (a.known_discount ?? -1),
     unit: (a, b) => perKg(a) - perKg(b) || a.price - b.price,
@@ -871,6 +933,8 @@ function filtered() {
     store: paperCompare,
   }[state.sort];
   if (by) list = [...list].sort(by);
+  // Ved søgning kommer træf i overskriften først; butiksvisningen holder aviserne samlet
+  if (match && state.sort !== "store") list = [...list].sort((a, b) => tier.get(a) - tier.get(b));
   return list;
 }
 
