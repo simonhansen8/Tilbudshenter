@@ -146,3 +146,20 @@ def test_basis_price_follows_the_offers_when_they_are_dearer():
     assert basis_price("porrer", market) == 30
     # Højst halvanden gang basisprisen
     assert basis_price("hakket_okse", {"hakket_okse": 400}) == 165
+
+
+def test_recipe_lines_in_singular_and_spice_blends():
+    from tilbudshenter.mealplan import line_keys, parse_line, recipe_from_lines
+
+    keys = lambda line: line_keys(parse_line(line)[2])  # noqa: E731
+    assert keys("1 gulerod") == ["guleroedder"]
+    assert keys("300 g kartoffel") == ["kartofler"]
+    assert keys("450 g sød kartoffel") == []
+    assert keys("2 stk Tomat") == ["tomater"]
+    assert keys("1 stk Hvidløgsfed") == ["hvidloeg"]
+    assert keys("250 g Hakket svine-/kalvekød") == ["hakket_gris_kalv"]
+    # Bouillon er ikke kød, og 4 g af en krydderiblanding er et krydderi
+    recipe, why = recipe_from_lines("", "Kylling i karry", [
+        "300 g kyllingebryst", "1 stk løg", "1 stk hønsebouillonterning", "4 g Jorden Rundt", "4 g Panamad",
+        "2 stk gulerod", "400 ml kokosmælk"], 2)
+    assert why == "" and {"Jorden Rundt", "hønsebouillonterning"} <= set(recipe.pantry)

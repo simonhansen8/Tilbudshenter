@@ -30,7 +30,8 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "hakket_okse": PRODUCT_GROUPS["hakket_okse"],
     "hakket_gris": ("hakket grisekød", [*PRODUCT_GROUPS["hakket_gris"][1], ["hakket", "svinekød"]], ["kalv", "okse"]),
     # "Hakket kød" i en opskrift er som regel grise- og kalvekød
-    "hakket_gris_kalv": ("hakket grise- og kalvekød", [*PRODUCT_GROUPS["hakket_gris_kalv"][1], ["hakket", "kød "]],
+    "hakket_gris_kalv": ("hakket grise- og kalvekød", [*PRODUCT_GROUPS["hakket_gris_kalv"][1], ["hakket", "kød "],
+                                                        ["hakket", "svine", "kalv"]],
                          PRODUCT_GROUPS["hakket_gris_kalv"][2]),
     "hakket_kylling": PRODUCT_GROUPS["hakket_kylling"],
     "kyllingebryst": ("kyllingebryst", [["kyllingebryst"], ["kyllingefilet"], ["kylling", "inderfilet"],
@@ -49,9 +50,10 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "chorizo": ("chorizo", [["chorizo"]], ["chips", "snack", "pizza", "skiver"]),
     "boef": ("bøf", [["bøf "], ["bøffer"], ["oksebøf"], ["entrecote"], ["ribeye"], ["culotte"], ["flanksteak"],
                      ["oksefilet"]], ["hakke", "burger", "kylling", "kalkun", "lam", "lammekød", "gris", "vegansk", "plantebaseret"]),
-    "okse_tern": ("oksekød i tern", [["okse", "tern"], ["gullasch"], ["oksegryde"]], ["kylling", "gris"]),
+    "okse_tern": ("oksekød i tern", [["okse", "tern"], ["gullasch"], ["oksegryde"], ["oksekødsstrimler"], ["oksestrimler"]],
+                  ["kylling", "gris"]),
     # Fisk
-    "laksefilet": ("laksefilet", [*PRODUCT_GROUPS["laksefilet"][1], ["laks "]], [*PRODUCT_GROUPS["laksefilet"][2], "skiver"]),
+    "laksefilet": ("laksefilet", [*PRODUCT_GROUPS["laksefilet"][1], ["laks "], ["lakseside"], ["laksesider"]], [*PRODUCT_GROUPS["laksefilet"][2], "skiver"]),
     "hvid_fisk": ("torsk eller anden hvid fisk", [["torsk"], ["sej "], ["sejfilet"], ["kuller"], ["rødspætte"],
                                                   ["fiskefilet"], ["pangasius"], ["hoki"]],
                   ["fars", "rogn", "lever", "frikadelle", "tørret", "røget"]),
@@ -92,13 +94,15 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "linser": ("linser", [["linser"]], ["chips", "snack", "suppe", "pasta"]),
     "majs": ("majs", [["majs "], ["majskerner"]], ["popcorn", "chips", "snack", "kolbe"]),
     # Frugt og grønt
-    "kartofler": PRODUCT_GROUPS["kartofler"],
-    "guleroedder": PRODUCT_GROUPS["guleroedder"],
+    # Opskrifter skriver også ental: "1 gulerod", "300 g kartoffel", "2 stk tomat"
+    "kartofler": ("kartofler", [*PRODUCT_GROUPS["kartofler"][1], ["kartoffel "], ["bagekartoffel"]],
+                  [*PRODUCT_GROUPS["kartofler"][2], "sød ", "søde ", "sødkartof"]),
+    "guleroedder": ("gulerødder", [*PRODUCT_GROUPS["guleroedder"][1], ["gulerod "]], PRODUCT_GROUPS["guleroedder"][2]),
     "loeg": ("løg", [["løg "], ["rødløg"], ["gule", "løg"]], ["ristede", "forårs", "purløg"]),
     "foraarsloeg": ("forårsløg", [["forårsløg"]], []),
-    "hvidloeg": ("hvidløg", [["hvidløg "]], ["dressing", "brød", "smør", "pølse", "gyros"]),
+    "hvidloeg": ("hvidløg", [["hvidløg "], ["hvidløgsfed"], ["hvidløgs ", "fed "]], ["dressing", "brød", "smør", "pølse", "gyros"]),
     "porrer": ("porrer", [["porre"]], []),
-    "tomater": PRODUCT_GROUPS["tomater"],
+    "tomater": ("tomater", [*PRODUCT_GROUPS["tomater"][1], ["tomat "]], PRODUCT_GROUPS["tomater"][2]),
     "cherrytomater": ("cherrytomater", [["cherrytomat"], ["snacktomat"], ["cherry", "tomater"]], ["soltørrede", "dåse"]),
     "agurk": PRODUCT_GROUPS["agurk"],
     "peberfrugt": PRODUCT_GROUPS["peberfrugt"],
@@ -108,16 +112,16 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "roedkaal": ("rødkål", [["rødkål"]], []),
     "champignon": ("champignon", [["champignon"]], []),
     "spinat": ("spinat", [["spinat"]], ["tærte", "pandekage", "ravioli"]),
-    "salat": ("salat", [["iceberg"], ["hjertesalat"], ["salathoved"]], ["dressing"]),
+    "salat": ("salat", [["iceberg"], ["hjertesalat"], ["salathoved"], ["hovedsalat"], ["salat "]], ["dressing"]),
     "romaine": ("romainesalat", [["romaine"]], ["dressing"]),
     "rucola": ("rucola", [["rucola"], ["ruccola"]], ["pesto", "dressing"]),
     "bladselleri": ("bladselleri", [["bladselleri"], ["stangselleri"], ["selleri"]], ["salt", "juice", "rod", "knold"]),
     "avocado": ("avocado", [["avocado"]], ["olie", "dip", "creme", "guacamole"]),
     "groenne_boenner": ("grønne bønner", [["grønne", "bønner"], ["haricots"], ["bønner", "haricot"]], []),
     "aerter": ("ærter", [["ærter "]], ["snack", "wasabi"]),
-    "squash": ("squash", [["squash"]], ["saft", "sodavand", "drik", "læske", "cl ", "tuborg", "faxe", "butternut", "spaghetti", "hokkaido", "græskar"]),
+    "squash": ("squash", [["squash"], ["zucchini"], ["courgette"], ["courgetter"]], ["saft", "sodavand", "drik", "læske", "cl ", "tuborg", "faxe", "butternut", "spaghetti", "hokkaido", "græskar"]),
     "wokgroent": ("wokgrøntsager", [["wokgrønt"], ["wokblanding"]], []),
-    "citron": ("citron", [["citroner"], ["citron "]], ["saft", "juice", "te ", "vand", "kage", "is "]),
+    "citron": ("citron", [["citroner"], ["citron "], ["citrusfrugt"]], ["saft", "juice", "te ", "vand", "kage", "is "]),
     "lime": ("lime", [["lime "], ["limefrugt"], ["limer "]], ["saft", "juice", "sodavand", "drik", "cider", "blade", "kaffir"]),
     "mango": ("mango", [["mango"]], ["juice", "chutney", "is ", "smoothie", "drik", "tørret", "lassi", "saft", "sorbet"]),
     "persille": ("persille", [["persille"]], ["pesto", "smør"]),
@@ -840,6 +844,9 @@ PANTRY_WORDS = [
     "østerssauce", "hoisin", "citrongræs", "citronsaft", "limesaft", "gastrik", "stegesky", "soltørrede",
     "jalapeño", "jalapeños", "jalapenos", "nødder", "mandler", "pinjekerner", "rosiner", "tranebær", "dadler",
     "abrikoser", "kokosmel", "appelsin", "frø ", "kerner",
+    "bouillonterning", "bouillonterninger", "mayonnaise", "mayo ", "flormelis", "hvidløgspulver", "løgpulver",
+    "sovsekulør", "madkulør", "soya", "teriyaki", "tamari", "miso", "tahin", "sirup", "farin", "panko",
+    "remoulade", "barbecuesauce", "bbq", "chutney", "citronskal", "limeskal", "isterninger", "karse",
 ]
 PORK_WORDS = ["skinke", "bacon", "pancetta", "chorizo", "salami", "svin", "gris", "flæsk", "pølse", "prosciutto",
               "serrano", "medister", "kotelet", "spegepølse"]
@@ -905,7 +912,9 @@ def recipe_from_lines(
                 return None, f"ukendt kød eller fisk: {text}"
             if flag and flag not in flags:
                 flags.append(flag)
-            (pantry if staple or not amount else unknown).append(text)
+            # Små mængder ("4 g Tex-Mex", "1 tsk røget paprika") er krydderier
+            small = unit == "g" and amount <= 10
+            (pantry if staple or small or not amount else unknown).append(text)
             continue
         amount *= scale
         if unit == "stk" and not NORMAL_PRICES[keys[0]][1]:

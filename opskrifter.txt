@@ -19,7 +19,15 @@ sitemap: https://www.valdemarsro.dk/
 sitemap: https://madensverden.dk/
 sitemap: https://www.arla.dk/ /opskrifter/
 sitemap: https://www.mummum.dk/
-sitemap: https://www.spisbedre.dk/ /opskrifter/
+sitemap: https://opskrifter.coop.dk/ /opskrifter/
+sitemap: https://www.hellofresh.dk/ /recipes/
+sitemap: https://www.femina.dk/ /mad/
+sitemap: https://www.louisesmadblog.dk/
+sitemap: https://www.danishcrown.com/ /opskrifter/
+sitemap: https://www.opskrifter.dk/ /opskrift/
+# Afprøvet, men giver ingen brugbare opskrifter: Spis Bedre og Isabellas
+# (opskriften står ikke som schema.org/Recipe), nemlig.com (ingen mængder),
+# Vores Mad, Retnemt og Madklubben
 
 # Valdemarsro
 https://www.valdemarsro.dk/kaalfad-med-hakket-oksekoed/
