@@ -77,6 +77,7 @@ select { padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; 
 .tag { font-size: 12px; border-radius: 6px; padding: 0 6px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
 .tag.member { background: var(--warn-soft); color: var(--warn); }
 .tag.later { background: var(--accent-soft); color: var(--accent); }
+.tag.low { background: var(--badge); color: #fff; }
 .meta { color: var(--muted); font-size: 12px; margin-top: auto; padding-top: 6px; }
 .more { display: flex; justify-content: center; margin-top: 18px; }
 .empty { text-align: center; color: var(--muted); padding: 48px 16px; border: 1px dashed var(--line); border-radius: 12px; margin-top: 16px; }
@@ -449,6 +450,7 @@ function card(o) {
   const badge = o.discount_text ? `<span class="badge${est}" title="${esc(o.reasons.join(", "))}">${esc(o.discount_text)}</span>` : "";
   const tags = [
     period(o) === "later" ? `<span class="tag later">${esc(startText(o))}</span>` : "",
+    o.lowest_weeks ? `<span class="tag low" title="Lavere pris end i alle tidligere aviser i ${o.lowest_weeks} uger">Laveste i ${o.lowest_weeks} uger</span>` : "",
     o.member ? `<span class="tag member" title="Prisen kræver Lidl Plus, kædens app eller medlemskab">${esc(o.member)}</span>` : "",
   ].join("");
   return `<article class="card">${img}

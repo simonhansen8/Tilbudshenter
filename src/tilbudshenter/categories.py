@@ -272,45 +272,61 @@ class Categorizer:
 
     def __init__(self, categories: dict[str, dict] | None = None) -> None:
         self.categories = categories if categories is not None else DEFAULT_CATEGORIES
-        # (kategori, nøgleord-tokens, kun_hele_ord)
-        self._keywords: list[tuple[str, tuple[str, ...], bool]] = []
+        # Enkeltord slås op i en ordbog, så hvert ord i teksten kun skal
+        # sammenlignes med de nøgleord, det kan matche. Nummeret er
+        # nøgleordets plads i rækkefølgen, som afgør uafgjorte matches.
+        self._single: dict[str, list[tuple[int, str, bool]]] = {}  # ord -> (nr, kategori, kun_hele_ord)
+        self._multi: list[tuple[int, str, tuple[str, ...]]] = []  # flere ord, fx "coca cola"
+        number = 0
         for key, spec in self.categories.items():
             for word in spec.get("noegleord", []):
                 tokens = tuple(_tokens(word))
                 if not tokens:
                     continue
-                whole_only = word.endswith(" ") or len(tokens) > 1 or len(tokens[0]) < 2
-                self._keywords.append((key, tokens, whole_only))
+                if len(tokens) > 1:
+                    self._multi.append((number, key, tokens))
+                else:
+                    whole_only = word.endswith(" ") or len(tokens[0]) < 2
+                    self._single.setdefault(tokens[0], []).append((number, key, whole_only))
+                number += 1
 
     def _best_match(self, text: str) -> str | None:
         tokens = _tokens(text)
-        best_key, best_quality = None, 0
-        for key, kw, whole_only in self._keywords:
-            quality = 0
-            if len(kw) > 1:
-                for i in range(len(tokens) - len(kw) + 1):
-                    if tuple(tokens[i : i + len(kw)]) == kw:
-                        quality = sum(map(len, kw)) + 3
-                        break
-            else:
-                word = kw[0]
-                for token in tokens:
-                    if token == word:
-                        q = len(word) + 3
-                    elif whole_only:
-                        continue
-                    elif token.endswith(word) or (
-                        len(word) >= 3 and any(token.endswith(word + e) for e in _ENDINGS)
-                    ):
-                        q = len(word) + 2
-                    elif len(word) >= 3 and token.startswith(word):
-                        q = len(word)
-                    else:
-                        continue
-                    quality = max(quality, q)
-            if quality > best_quality:
-                best_key, best_quality = key, quality
-        return best_key
+        best: tuple[int, int, str | None] = (0, 0, None)  # (kvalitet, -nr, kategori)
+
+        def consider(quality: int, number: int, key: str) -> None:
+            nonlocal best
+            if (quality, -number) > best[:2]:
+                best = (quality, -number, key)
+
+        for number, key, kw in self._multi:
+            for i in range(len(tokens) - len(kw) + 1):
+                if tuple(tokens[i : i + len(kw)]) == kw:
+                    consider(sum(map(len, kw)) + 3, number, key)
+                    break
+        for token in tokens:
+            # Helt ord
+            for number, key, _ in self._single.get(token, ()):
+                consider(len(token) + 3, number, key)
+            # Slutningen af ordet ("vandmelon" -> "melon")
+            for i in range(1, len(token)):
+                for number, key, whole_only in self._single.get(token[i:], ()):
+                    if not whole_only:
+                        consider(len(token) - i + 2, number, key)
+            # Slutningen med bøjningsendelse ("smørcroissanter" -> "croissant")
+            for ending in _ENDINGS:
+                if token.endswith(ending):
+                    base = token[: -len(ending)]
+                    for i in range(len(base) - 2):
+                        for number, key, whole_only in self._single.get(base[i:], ()):
+                            if not whole_only:
+                                consider(len(base) - i + 2, number, key)
+            # Begyndelsen af ordet ("kyllingebrystfilet" -> "kyllingebryst")
+            for j in range(3, len(token)):
+                for number, key, whole_only in self._single.get(token[:j], ()):
+                    if not whole_only:
+                        consider(j, number, key)
+        return best[2]
 
     def categorize(self, heading: str, description: str = "") -> str:
         # Overskriften vægter højest, og først det, der står før "med", "i" osv.

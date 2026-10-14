@@ -182,6 +182,7 @@ class Offer:
     score: float = 0.0
     known_discount: float | None = None  # Rabat i % fra førpris, prishistorik eller andre butikker
     discount_basis: str | None = None  # "foerpris", "historik" eller "butikker"
+    lowest_weeks: int | None = None  # Laveste pris i så mange uger
     reasons: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
@@ -256,6 +257,7 @@ class Offer:
             "known_discount": round(self.known_discount, 1) if self.known_discount is not None else None,
             "discount_basis": self.discount_basis,
             "member": self.member,
+            "lowest_weeks": self.lowest_weeks,
             "catalog_label": self.catalog_label,
             "reasons": self.reasons,
         }

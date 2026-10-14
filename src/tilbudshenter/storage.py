@@ -206,6 +206,40 @@ class Storage:
             offer.enrich_from_text()
         return offers
 
+    def price_lows(self, offers: list[Offer], min_weeks: int = 3) -> dict[str, int]:
+        """Finder tilbud med den laveste pris i mindst ``min_weeks`` uger.
+
+        Et tilbud tæller, når prisen pr. kg/liter/stk er lavere end alle
+        tidligere tilbud på samme vare (samme navn) i alle butikker, og
+        historikken går mindst ``min_weeks`` uger tilbage. Returnerer
+        {tilbuds-id: antal uger}.
+        """
+        rows = self.conn.execute(
+            "SELECT product_key, unit, unit_price, run_from, catalog_id FROM offers "
+            "WHERE unit_price IS NOT NULL AND run_from IS NOT NULL"
+        ).fetchall()
+        history: dict[tuple[str, str], list[tuple[datetime, float, str]]] = {}
+        for r in rows:
+            history.setdefault((r["product_key"], r["unit"]), []).append(
+                (_dt(r["run_from"]), r["unit_price"], r["catalog_id"])
+            )
+        result: dict[str, int] = {}
+        for offer in offers:
+            if not offer.unit_price or not offer.unit or offer.run_from is None:
+                continue
+            start = _dt(_iso(offer.run_from))
+            earlier = [
+                (when, price)
+                for when, price, catalog in history.get((product_key(offer.heading), offer.unit), [])
+                if catalog != offer.catalog_id and when < start
+            ]
+            if not earlier:
+                continue
+            weeks = (start - min(when for when, _ in earlier)).days // 7
+            if weeks >= min_weeks and offer.unit_price < min(price for _, price in earlier) - 0.005:
+                result[offer.id] = weeks
+        return result
+
     def typical_unit_prices(self, exclude_catalogs: set[str] | None = None) -> dict[tuple[str, str], float]:
         """Median-enhedspris pr. vare fra tidligere aviser.
 

@@ -50,7 +50,8 @@ def best_offers(cfg: Config, storage: Storage, categorizer: Categorizer, now: da
     current = storage.current_offers(now)
     current_catalogs = {o.catalog_id for o in current}
     typical = storage.typical_unit_prices(exclude_catalogs=current_catalogs)
-    return select_offers(current, cfg, categorizer, typical, limit=limit)
+    lows = storage.price_lows(current)
+    return select_offers(current, cfg, categorizer, typical, limit=limit, lows=lows)
 
 
 # -- Kommandoer ---------------------------------------------------------
