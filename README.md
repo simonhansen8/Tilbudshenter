@@ -19,8 +19,11 @@ GitHub henter selv de nye aviser to gange om dagen (workflowen
 hente med det samme under *Actions → Opdater siden → Run workflow*.
 Indstillinger og indkøbsliste gemmes i din browser, så de følger ikke med
 fra computeren til telefonen. Siden har de samme filtre, sammenligninger og
-den samme indkøbsliste som appen, men placeringen er fast (København), og
-butikkerne er de almindelige dagligvarekæder.
+den samme indkøbsliste som appen. Under *Indstillinger → Hvor handler du?*
+skriver du dit postnummer eller din by, eller bruger telefonens placering, og
+vælger en afstand. Så ser du kun tilbud fra de kæder, der har en butik så
+tæt på. Aviserne hentes fra hele landet, og butikkernes adresser kommer
+fra Tjek.
 
 Første gang skal GitHub Pages slås til: *Settings → Pages*, vælg
 *Deploy from a branch*, grenen `gh-pages` og mappen `/ (root)`, og tryk

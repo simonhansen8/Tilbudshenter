@@ -157,6 +157,7 @@ class Catalog:
     run_till: datetime | None
     offer_count: int | None = None
     url: str | None = None
+    dealer_id: str | None = None
 
 
 @dataclass

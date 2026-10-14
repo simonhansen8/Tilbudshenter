@@ -200,9 +200,11 @@ SITE_HISTORY_DAYS = 183
 
 
 def cmd_site(args: argparse.Namespace) -> int:
-    from .pages import build_site, site_config
+    from .pages import CountrySource, build_site, site_config
 
     cfg = site_config()
+    source = make_source(cfg, args.demo)
+    country = None if args.demo else CountrySource(source)
     cfg.database = args.database or args.out / "tilbud.db"
     if args.demo:
         cfg.database = cfg.database.with_suffix(".demo.db")
@@ -210,7 +212,7 @@ def cmd_site(args: argparse.Namespace) -> int:
     now = datetime.now(timezone.utc)
     with Storage(cfg.database) as storage:
         try:
-            result = scan(cfg, make_source(cfg, args.demo), storage, categorizer, now=now)
+            result = scan(cfg, country or source, storage, categorizer, now=now)
         except SourceError as exc:
             print(f"Fejl: {exc}", file=sys.stderr)
             return 2
@@ -220,8 +222,10 @@ def cmd_site(args: argparse.Namespace) -> int:
         print(f"Advarsel: kunne ikke hente {catalog.dealer} ({catalog.label}): {error}", file=sys.stderr)
     print(f"{len(result.new_catalogs)} nye aviser ({result.offers_fetched} tilbud), "
           f"{len(result.known_catalogs)} kendte.")
-    data = build_site(cfg, args.out, now)
-    print(f"Siden er bygget i {args.out}: {len(data['offers'])} tilbud fra {len(data['stores'])} butikker.")
+    stores = country.store_locations(cfg) if country else {}
+    data = build_site(cfg, args.out, now, stores)
+    print(f"Siden er bygget i {args.out}: {len(data['offers'])} tilbud fra {len(data['stores'])} kæder, "
+          f"{sum(len(s) for s in stores.values())} butikker og {len(data['places'])} postnumre.")
     if not data["offers"]:
         print("Fejl: ingen tilbud at vise.", file=sys.stderr)
         return 3

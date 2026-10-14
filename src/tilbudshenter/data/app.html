@@ -95,6 +95,10 @@ legend { font-weight: 700; margin-bottom: 4px; padding: 0; }
 .hint { color: var(--muted); font-size: 13px; margin: 0 0 8px; }
 .fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
 label.field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+label.field select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
+.place-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+.store .dist { color: var(--muted); font-size: 13px; font-weight: 400; }
+.store .dist.far { color: var(--warn); }
 label.field input { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
 .wide { grid-column: 1 / -1; }
 .store { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; margin-top: 6px; }
@@ -192,6 +196,27 @@ label.field input { padding: 8px 10px; border: 1px solid var(--line); border-rad
       <button class="btn small" value="cancel" formnovalidate>Luk</button>
     </div>
     <div class="dlg-body">
+      <fieldset id="s-place-box" hidden>
+        <legend>Hvor handler du?</legend>
+        <p class="hint">Skriv dit postnummer eller din by, eller brug telefonens placering. Så ser du kun tilbud fra kæder, der har en butik i nærheden.</p>
+        <div class="fields">
+          <label class="field wide">Postnummer eller by <input id="s-place" list="place-list" placeholder="fx 8000 eller Aarhus" autocomplete="off"></label>
+          <label class="field">Afstand
+            <select id="s-place-radius">
+              <option value="2">Inden for 2 km</option><option value="5">Inden for 5 km</option>
+              <option value="10">Inden for 10 km</option><option value="20">Inden for 20 km</option>
+              <option value="50">Inden for 50 km</option>
+            </select>
+          </label>
+        </div>
+        <div class="place-actions">
+          <button type="button" class="btn small" id="btn-geo">📍 Brug min placering</button>
+          <button type="button" class="link" id="btn-place-clear">Vis alle butikker</button>
+        </div>
+        <p class="hint" id="s-place-status" style="margin-top:10px"></p>
+        <datalist id="place-list"></datalist>
+      </fieldset>
+
       <fieldset id="s-location">
         <legend>Placering</legend>
         <p class="hint">Bruges til at finde aviserne i dit område. Find koordinater ved at højreklikke på et sted i Google Maps.</p>
@@ -328,10 +353,81 @@ function containsAny(text, words) {
   return words.find(w => w.trim() && t.includes(w.toLowerCase()));
 }
 
+// -- Placering (kun den statiske side) ---------------------------------
+// Afstand i km mellem to punkter (haversine)
+function distKm(lat1, lng1, lat2, lng2) {
+  const r = Math.PI / 180;
+  const a = Math.sin((lat2 - lat1) * r / 2) ** 2
+    + Math.cos(lat1 * r) * Math.cos(lat2 * r) * Math.sin((lng2 - lng1) * r / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(a));
+}
+
+// Afstand til kædens nærmeste butik, eller null hvis den ikke kendes
+function nearestKm(dealer, loc) {
+  const st = siteData.stores.find(st => st.name === dealer);
+  if (!loc || loc.latitude == null || !st || !st.locations || !st.locations.length) return null;
+  return Math.min(...st.locations.map(([lat, lng]) => distKm(loc.latitude, loc.longitude, lat, lng)));
+}
+
+function storeNearby(dealer, s) {
+  const d = nearestKm(dealer, s);
+  return d === null || d <= s.radius_km;
+}
+
+function km(d) { return d.toLocaleString("da-DK", {maximumFractionDigits: d < 10 ? 1 : 0}) + " km"; }
+
+function placeName(p) { return `${p[0]} ${p[1]}`; }
+
+// Finder et postnummer eller en by i listen fra data.json
+function findPlace(text) {
+  const t = text.trim().toLowerCase();
+  if (!t) return null;
+  const places = siteData.places;
+  const zip = t.match(/^\d{4}/);
+  if (zip) {
+    // Postnumre uden butikker mangler i listen; brug så det nærmeste nummer
+    const n = Number(zip[0]);
+    const exact = places.find(p => p[0] === zip[0]);
+    const close = exact || places.reduce((best, p) =>
+      Math.abs(Number(p[0]) - n) < Math.abs(Number(best[0]) - n) ? p : best, places[0]);
+    if (!close || Math.abs(Number(close[0]) - n) > 30) return null;
+    return {latitude: close[2], longitude: close[3], place: exact ? placeName(exact) : `${zip[0]} (nær ${placeName(close)})`};
+  }
+  const hit = places.find(p => p[1].toLowerCase() === t || placeName(p).toLowerCase() === t)
+      || places.find(p => p[1].toLowerCase().startsWith(t))
+      || places.find(p => p[1].toLowerCase().includes(t));
+  return hit ? {latitude: hit[2], longitude: hit[3], place: placeName(hit)} : null;
+}
+
+function nearestPlace(lat, lng) {
+  let best = null, bestD = Infinity;
+  for (const p of siteData.places) {
+    const d = distKm(lat, lng, p[2], p[3]);
+    if (d < bestD) { best = p; bestD = d; }
+  }
+  return best;
+}
+
+function currentPosition() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) return reject(new Error("Din browser kan ikke finde din placering"));
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const {latitude, longitude} = pos.coords;
+        const near = nearestPlace(latitude, longitude);
+        resolve({latitude, longitude, place: near ? `din placering (${placeName(near)})` : "din placering"});
+      },
+      err => reject(new Error(err.code === 1
+        ? "Du har ikke givet lov til at bruge din placering. Skriv i stedet dit postnummer."
+        : "Kunne ikke finde din placering. Skriv i stedet dit postnummer.")),
+      {enableHighAccuracy: false, timeout: 15000, maximumAge: 600000});
+  });
+}
+
 function siteOffers(s) {
   let offers = siteData.offers.filter(o => {
     const text = `${o.heading} ${o.description}`;
-    return storeSelected(o.dealer, s) && !containsAny(o.catalog_label || "", s.exclude_catalogs) &&
+    return storeSelected(o.dealer, s) && storeNearby(o.dealer, s) && !containsAny(o.catalog_label || "", s.exclude_catalogs) &&
       (s.max_price == null || o.price <= s.max_price) &&
       (!s.include_keywords.length || containsAny(text, s.include_keywords)) &&
       !containsAny(text, s.exclude_keywords);
@@ -383,7 +479,8 @@ function changeSiteList(body) {
 function saveSiteSettings(body) {
   const num = (v) => { const n = Number(v); if (!isFinite(n)) throw new Error("Ugyldigt tal"); return n; };
   const s = {...store.get("settings", {}), ...body};
-  for (const k of ["latitude", "longitude", "radius_km", "min_discount_pct"]) if (k in body) s[k] = num(body[k]);
+  for (const k of ["radius_km", "min_discount_pct"]) if (k in body) s[k] = num(body[k]);
+  for (const k of ["latitude", "longitude"]) if (k in body) s[k] = body[k] === null || body[k] === "" ? null : num(body[k]);
   if ("max_price" in body) s.max_price = body.max_price === "" || body.max_price == null ? null : num(body.max_price);
   store.set("settings", s);
 }
@@ -398,7 +495,7 @@ async function staticApi(path, body) {
   if (path === "/api/offers") return {offers: siteOffers(s)};
   if (path === "/api/catalogs") {
     return {stores: siteData.stores.map(st => ({
-      name: st.name, selected: storeSelected(st.name, s),
+      name: st.name, selected: storeSelected(st.name, s), nearest_km: nearestKm(st.name, s),
       catalogs: st.catalogs.map(c => ({...c, selected: !containsAny(c.label, s.exclude_catalogs)})),
     }))};
   }
@@ -452,7 +549,8 @@ async function refreshState() {
   state.categories = s.categories;
   $("demo-tag").hidden = !s.demo;
   $("status").textContent = `Sidst hentet: ${timeAgo(s.last_scan)} · ${s.catalog_count} aktive aviser`
-    + (STATIC ? " · opdateres automatisk hver dag" : "");
+    + (STATIC ? " · opdateres automatisk hver dag" : "")
+    + (STATIC && s.settings.latitude != null ? ` · butikker inden for ${km(s.settings.radius_km)} af ${s.settings.place}` : "");
   renderScan(s.scan);
   return s;
 }
@@ -691,6 +789,16 @@ function printList() {
 function openSettings() {
   const s = state.settings;
   $("s-lat").value = s.latitude; $("s-lng").value = s.longitude; $("s-radius").value = s.radius_km;
+  if (STATIC) {
+    state.loc = {latitude: s.latitude, longitude: s.longitude, place: s.place || ""};
+    $("s-place").value = s.place || "";
+    const radius = $("s-place-radius");
+    if (![...radius.options].some(o => Number(o.value) === s.radius_km)) {
+      radius.add(new Option(`Inden for ${km(s.radius_km)}`, s.radius_km));
+    }
+    radius.value = String(s.radius_km);
+    renderPlace();
+  }
   $("s-excl-catalogs").value = s.exclude_catalogs.join(", ");
   $("s-min-discount").value = s.min_discount_pct;
   $("s-max-price").value = s.max_price ?? "";
@@ -704,6 +812,7 @@ function openSettings() {
   $("store-list").innerHTML = s.stores.length
     ? `<p class="hint">Valgte butikker: ${esc(s.stores.join(", "))}</p>` : `<p class="hint">Alle butikker er valgt.</p>`;
   $("settings").showModal();
+  if (STATIC) loadStores();  // Butikkerne ligger allerede i data.json
 }
 
 async function loadStores() {
@@ -724,11 +833,37 @@ function catalogExcluded(label, words) {
   return words.some(w => w && l.includes(w.toLowerCase()));
 }
 
+// Afstanden til kædens nærmeste butik ud fra den placering, der er valgt i dialogen
+function distanceTag(name) {
+  if (!STATIC) return "";
+  const d = nearestKm(name, state.loc), radius = Number($("s-place-radius").value);
+  if (d === null) return "";
+  return d <= radius ? `<span class="dist">· nærmeste butik ${km(d)}</span>`
+    : `<span class="dist far">· ingen butik inden for ${km(radius)} (nærmeste ${km(d)})</span>`;
+}
+
+function renderPlace() {
+  const loc = state.loc, radius = Number($("s-place-radius").value);
+  if (!loc || loc.latitude == null) {
+    $("s-place-status").textContent = "Ingen placering valgt. Du ser tilbud fra alle de valgte kæder.";
+  } else {
+    const near = siteData.stores
+      .map(st => ({name: st.name, d: nearestKm(st.name, loc)}))
+      .filter(x => x.d !== null && x.d <= radius && storeSelected(x.name, {stores: state.catalogList
+        ? state.catalogList.filter(c => c.selected).map(c => c.name) : state.settings.stores}))
+      .sort((a, b) => a.d - b.d);
+    $("s-place-status").innerHTML = `<b>${esc(loc.place)}</b>: ` + (near.length
+      ? `${near.length} af dine kæder har en butik inden for ${km(radius)}: ` + near.map(x => `${esc(x.name)} (${km(x.d)})`).join(", ")
+      : `ingen af dine kæder har en butik inden for ${km(radius)}. Prøv en større afstand.`);
+  }
+  if (state.catalogList) renderStores();
+}
+
 function renderStores() {
   const words = splitList($("s-excl-catalogs").value);
   $("store-list").innerHTML = state.catalogList.map((s, i) => `
     <div class="store">
-      <label class="check"><input type="checkbox" data-store="${i}" ${s.selected ? "checked" : ""}> <b>${esc(s.name)}</b></label>
+      <label class="check"><input type="checkbox" data-store="${i}" ${s.selected ? "checked" : ""}> <b>${esc(s.name)}</b> ${distanceTag(s.name)}</label>
       <div class="store-catalogs" ${s.selected ? "" : "hidden"}>
         ${s.catalogs.map(c => `<label class="check"><input type="checkbox" data-catalog="${esc(c.label)}" ${catalogExcluded(c.label, words) ? "" : "checked"}>
           ${esc(c.label)} <span class="period">${esc(c.period)}</span></label>`).join("")}
@@ -749,7 +884,9 @@ async function saveSettings() {
   const cats = [...$("s-cats").querySelectorAll("input")];
   const chosenCats = cats.filter(c => c.checked).map(c => c.value);
   const body = {
-    latitude: $("s-lat").value, longitude: $("s-lng").value, radius_km: $("s-radius").value,
+    ...(STATIC
+      ? {latitude: state.loc.latitude, longitude: state.loc.longitude, place: state.loc.place, radius_km: $("s-place-radius").value}
+      : {latitude: $("s-lat").value, longitude: $("s-lng").value, radius_km: $("s-radius").value}),
     exclude_catalogs: splitList($("s-excl-catalogs").value),
     categories: chosenCats.length === cats.length ? [] : chosenCats,
     min_discount_pct: $("s-min-discount").value || 0,
@@ -835,6 +972,41 @@ $("store-list").addEventListener("change", e => {
   } else if (t.dataset.catalog !== undefined) toggleCatalog(t.dataset.catalog, t.checked);
 });
 $("s-excl-catalogs").addEventListener("change", () => { if (state.catalogList) renderStores(); });
+$("s-place").addEventListener("change", e => {
+  if (!e.target.value.trim()) { state.loc = {latitude: null, longitude: null, place: ""}; renderPlace(); return; }
+  const found = findPlace(e.target.value);
+  if (found) { state.loc = found; e.target.value = found.place; renderPlace(); }
+  else $("s-place-status").innerHTML = `<span style="color:var(--error)">Kunne ikke finde "${esc(e.target.value)}". Skriv et dansk postnummer eller en by.</span>`;
+});
+$("s-place-radius").addEventListener("change", renderPlace);
+$("btn-place-clear").addEventListener("click", () => {
+  state.loc = {latitude: null, longitude: null, place: ""}; $("s-place").value = ""; renderPlace();
+});
+$("btn-geo").addEventListener("click", async () => {
+  const btn = $("btn-geo");
+  btn.disabled = true; btn.textContent = "Finder din placering…";
+  try {
+    state.loc = await currentPosition();
+    $("s-place").value = state.loc.place;
+    renderPlace();
+  } catch (e) { $("s-place-status").innerHTML = `<span style="color:var(--error)">${esc(e.message)}</span>`; }
+  finally { btn.disabled = false; btn.textContent = "📍 Brug min placering"; }
+});
+
+// Første besøg på den statiske side: spørg hvor man handler
+async function useMyLocation() {
+  showMessage(`<div class="grow">Finder din placering…</div>`);
+  try {
+    const loc = await currentPosition();
+    await api("/api/settings", {latitude: loc.latitude, longitude: loc.longitude, place: loc.place});
+    await refreshState();
+    await loadOffers();
+    showMessage("");
+    toast(`Viser butikker inden for ${km(state.settings.radius_km)} af ${loc.place}`);
+  } catch (e) {
+    showMessage(`<div class="grow">${esc(e.message)}</div><button class="btn small" onclick="openSettings()">Skriv postnummer</button>`, "warn");
+  }
+}
 $("settings-form").addEventListener("submit", e => {
   if (e.submitter && e.submitter.value === "save") { e.preventDefault(); if ($("settings-form").reportValidity()) { $("settings").close(); saveSettings(); } }
 });
@@ -844,6 +1016,8 @@ $("settings-form").addEventListener("submit", e => {
     // Aviserne hentes af GitHub, og placeringen er fast for siden
     $("btn-scan").hidden = true;
     $("s-location").hidden = true;
+    $("s-place-box").hidden = false;
+    for (const id of ["s-lat", "s-lng", "s-radius"]) $(id).required = false;
     $("btn-load-stores").textContent = "Vælg butikker og aviser";
   }
   loadPrefs();
@@ -853,6 +1027,14 @@ $("settings-form").addEventListener("submit", e => {
     await loadOffers();
     // Første gang: hent tilbud med det samme
     if (!STATIC && !s.last_scan && !s.scan.running) startScan();
+    if (STATIC) {
+      $("place-list").innerHTML = siteData.places.map(p => `<option value="${esc(placeName(p))}">`).join("");
+      if (s.settings.latitude == null && siteData.places.length) {
+        showMessage(`<div class="grow"><b>Hvor handler du?</b> Vælg din placering, så du kun ser tilbud fra butikker i nærheden.</div>
+          <button class="btn primary small" onclick="useMyLocation()">📍 Brug min placering</button>
+          <button class="btn small" onclick="openSettings()">Skriv postnummer</button>`);
+      }
+    }
   } catch (e) {
     showMessage(`<div class="grow">Kunne ikke starte: ${esc(e.message)}</div>`, "error");
   }

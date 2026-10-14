@@ -2,7 +2,8 @@ import json
 from datetime import timedelta
 
 from tilbudshenter.cli import main
-from tilbudshenter.pages import STATIC_MARKER, site_config
+from tilbudshenter.models import Catalog
+from tilbudshenter.pages import SCAN_POINTS, STATIC_MARKER, CountrySource, places_from_stores, site_config
 from tilbudshenter.scanner import scan
 from tilbudshenter.sources.demo import DemoSource
 
@@ -40,3 +41,36 @@ def test_prune(cfg, categorizer, storage):
     assert storage.prune(NOW - timedelta(days=1)) == 0
     assert storage.prune(NOW + timedelta(days=30)) > 0
     assert not storage.current_offers(NOW) and not storage.catalogs()
+
+
+def test_places_from_stores():
+    stores = {
+        "Netto": [
+            {"latitude": 56.15, "longitude": 10.20, "zip_code": "8000", "city": "Aarhus C"},
+            {"latitude": 56.17, "longitude": 10.22, "zip_code": "8000", "city": "Aarhus C"},
+            {"latitude": 55.0, "longitude": 9.0, "zip_code": "", "city": "Ukendt"},
+        ],
+        "Lidl": [{"latitude": 55.68, "longitude": 12.57, "zip_code": "1100", "city": "København K"}],
+    }
+    assert places_from_stores(stores) == [["1100", "København K", 55.68, 12.57], ["8000", "Aarhus C", 56.16, 10.21]]
+
+
+def test_country_source_scans_all_points_and_fetches_stores():
+    class Fake:
+        name = "fake"
+        points = []
+
+        def list_catalogs(self, lat, lng, radius):
+            self.points.append((lat, lng))
+            return [Catalog(id="1", dealer="Netto", label="Uge", run_from=None, run_till=None, dealer_id="n"),
+                    Catalog(id="2", dealer="JYSK", label="Bolig", run_from=None, run_till=None, dealer_id="j")]
+
+        def list_stores(self, dealer_id):
+            return [{"latitude": 1.0, "longitude": 2.0, "zip_code": "8000", "city": "Aarhus C"}]
+
+    fake = Fake()
+    country = CountrySource(fake)
+    assert [c.id for c in country.list_catalogs(0, 0, 0)] == ["1", "2"]
+    assert len(fake.points) == len(SCAN_POINTS)
+    # Kun de kæder, siden viser
+    assert list(country.store_locations(site_config())) == ["Netto"]
