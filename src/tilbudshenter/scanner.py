@@ -50,7 +50,7 @@ def scan(
     result = ScanResult()
     to_fetch: list[Catalog] = []
     for catalog in source.list_catalogs(cfg.latitude, cfg.longitude, cfg.radius_km):
-        if not store_selected(catalog.dealer, cfg) or not catalog_selected(catalog.label, cfg):
+        if not store_selected(catalog.dealer, cfg) or not catalog_selected(catalog.label, cfg, catalog.dealer):
             continue
         if catalog.run_till and catalog.run_till < now:
             continue

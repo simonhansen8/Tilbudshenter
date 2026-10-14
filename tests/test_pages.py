@@ -53,6 +53,16 @@ def test_prune(cfg, categorizer, storage):
     assert not storage.current_offers(NOW) and not storage.catalogs()
 
 
+def test_prune_slims_expired_offers_but_keeps_price_history(cfg, categorizer, storage):
+    scan(cfg, DemoSource(now=NOW), storage, categorizer, now=NOW)
+    later = NOW + timedelta(days=30)
+    before = storage.conn.execute("SELECT COUNT(*) FROM offers WHERE unit_price IS NOT NULL").fetchone()[0]
+    assert storage.prune(NOW - timedelta(days=1), slim_before=later) == 0
+    rows = storage.conn.execute("SELECT description, image_url, unit_price FROM offers").fetchall()
+    assert rows and all(r["description"] is None and r["image_url"] is None for r in rows)
+    assert sum(r["unit_price"] is not None for r in rows) == before
+
+
 def test_places_from_stores():
     stores = {
         "Netto": [
