@@ -82,7 +82,7 @@ def test_recipes_payload_is_json():
     bolognese = next(r for r in data if r["id"] == "bolognese")
     assert bolognese["items"][0] == {
         "amount": 500, "unit": "g", "name": "hakket kød (okse eller grise- og kalv)", "keys": ["hakket_okse", "hakket_gris_kalv"],
-        "main": True, "side": False, "prices": {"hakket_okse": [80, 500], "hakket_gris_kalv": [60, 500]},
+        "main": True, "side": False, "prices": {"hakket_okse": [110, 500], "hakket_gris_kalv": [80, 500]},
     }
     assert bolognese["veg_g"] == 278
 
@@ -131,3 +131,18 @@ def test_imported_recipes_build():
     assert len(imported_recipes()) == len(load_imported())
     for r in imported_recipes():
         assert r.source.startswith("http") and any(i.main for i in r.items)
+
+
+def test_basis_price_follows_the_offers_when_they_are_dearer():
+    from tilbudshenter.mealplan import basis_price, market_prices
+
+    offers = [("Hakket oksekød 8-12%", "kg", p) for p in (120, 125, 130, 135, 140, 400)]
+    offers += [("Bacon i skiver", "kg", 90)] * 6  # billigere end basisprisen
+    offers += [("Danske porrer", "stk", 10)] * 3  # for få tilbud
+    market = market_prices(offers)
+    assert market == {"hakket_okse": 132.5, "bacon": 90}
+    assert basis_price("hakket_okse", market) == 132
+    assert basis_price("bacon", market) == 110
+    assert basis_price("porrer", market) == 30
+    # Højst halvanden gang basisprisen
+    assert basis_price("hakket_okse", {"hakket_okse": 400}) == 165

@@ -351,9 +351,10 @@ bruger Tilbudshenter til at hente opskrifter automatisk:
 1. Skriv adressen på en opskrift, et sitemap eller bare en madside (fx
    `sitemap: https://www.valdemarsro.dk/`) i `opskrifter.txt` (én pr. linje;
    se eksemplerne i filen). For en madside findes sitemappet i dens
-   robots.txt, og op til 300 opskrifter hentes.
-2. Hver gang siden bygges, henter GitHub op til 300 nye opskrifter,
-   skiftevis fra madsiderne, gemmer dem i
+   robots.txt, og op til 1000 opskrifter hentes.
+2. Hver gang siden bygges, henter GitHub op til 1500 nye sider, højst 150
+   fra hver madside. Madsiderne hentes samtidig, men hver madside kun én
+   side ad gangen med et sekunds pause. Opskrifterne gemmes i
    `src/tilbudshenter/data/opskrifter.json` og lægger dem ind i madplanen.
    Hver side hentes kun én gang.
 

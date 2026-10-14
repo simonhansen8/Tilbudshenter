@@ -80,7 +80,8 @@ def test_update_fetches_new_recipes_once(tmp_path):
     lst = tmp_path / "opskrifter.txt"
     out = tmp_path / "opskrifter.json"
     lst.write_text("# kommentar\nsitemap: https://mad.dk/sitemap.xml /opskrift/\n", encoding="utf-8")
-    assert update(lst, out, fetcher, delay=0) == {"recipes": 1, "added": 1, "failed": 0, "skipped": 1}
+    assert update(lst, out, fetcher, delay=0) == {"recipes": 1, "added": 1, "failed": 0, "skipped": 1,
+                                                     "sites": {"mad.dk": 1}}
     data = json.loads(out.read_text(encoding="utf-8"))
     assert [r["name"] for r in data["recipes"]] == ["Chili con carne & ris"]
     assert "method" not in data["recipes"][0]
@@ -179,8 +180,33 @@ def test_sitemaps_from_robots_and_index(tmp_path):
     lst.write_text("sitemap: https://mad.dk/\nhttps://andet.dk/ret\n", encoding="utf-8")
     # Højst to nye sider pr. kørsel, skiftevis fra hver linje
     assert update(lst, out, fetcher, delay=0, max_new=2) == {
-        "recipes": 2, "added": 2, "failed": 0, "skipped": 0, "pending": 2}
+        "recipes": 2, "added": 2, "failed": 0, "skipped": 0, "pending": 2,
+        "sites": {"mad.dk": 1, "andet.dk": 1}}
     assert "https://mad.dk/category-sitemap.xml" not in fetched and "https://mad.dk/page-sitemap.xml" not in fetched
     assert [r["url"] for r in json.loads(out.read_text(encoding="utf-8"))["recipes"]] == [
         "https://mad.dk/chili/", "https://andet.dk/ret"]
     assert update(lst, out, fetcher, delay=0, max_new=2)["recipes"] == 4
+
+
+def test_sites_are_fetched_side_by_side_with_a_cap_per_site(tmp_path):
+    # Sitemappet ligger på www.mad.dk, men opskrifterne på mad.dk
+    pages = {
+        "https://www.mad.dk/robots.txt": "Sitemap: https://www.mad.dk/sitemap.xml\n",
+        "https://www.mad.dk/sitemap.xml": "<urlset>" + "".join(
+            f"<url><loc>https://mad.dk/ret{i}/</loc></url>" for i in range(5)) + "</urlset>",
+        **{f"https://mad.dk/ret{i}/": PAGE for i in range(5)},
+        "https://andet.dk/ret": PAGE,
+    }
+    lst = tmp_path / "opskrifter.txt"
+    out = tmp_path / "opskrifter.json"
+    lst.write_text("sitemap: https://www.mad.dk/\nhttps://andet.dk/ret\n", encoding="utf-8")
+    result = update(lst, out, pages.__getitem__, delay=0, per_site=2)
+    assert result["sites"] == {"mad.dk": 2, "andet.dk": 1} and result["pending"] == 3
+    assert update(lst, out, pages.__getitem__, delay=0, per_site=2)["sites"] == {"mad.dk": 4, "andet.dk": 1}
+
+
+def test_addresses_with_danish_letters_can_be_fetched():
+    from tilbudshenter.opskrifter import _ascii_url
+
+    assert _ascii_url("https://www.opskrifter.dk/opskrift/447-kødsauce") == "https://www.opskrifter.dk/opskrift/447-k%C3%B8dsauce"
+    assert _ascii_url("https://mad.dk/beh%c3%b8ver/?side=2") == "https://mad.dk/beh%c3%b8ver/?side=2"

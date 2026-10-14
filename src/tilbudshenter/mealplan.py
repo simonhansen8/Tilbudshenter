@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import statistics
 from dataclasses import dataclass, field
 from functools import lru_cache
 from importlib import resources
@@ -123,31 +124,66 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "aebler": PRODUCT_GROUPS["aebler"],
 }
 
-# Basispris (kr pr. kg eller liter): den almindelige pris uden tilbud på den
-# billigste basisvare, fx kædens eget mærke i en discountbutik. Et tilbud
-# bruges kun i madplanen, når det er billigere end basisvaren, og
+# Basispris (kr pr. kg eller liter): den almindelige hyldepris uden tilbud
+# på en almindelig vare, fx kædens eget mærke eller et kendt mærke i en
+# discountbutik. Et tilbud bruges kun i madplanen, når det er billigere, og
 # besparelsen regnes i forhold til den. Priserne er anslået ud fra
-# discountbutikkernes hyldepriser i 2025-26. Tallet efter prisen er vægten
-# pr. stk, dåse, fed eller bundt i gram, til at omregne mellem stk og kg.
+# hyldepriserne i 2026; ligger varen typisk dyrere i tilbudsaviserne, bruges
+# det i stedet (se market_prices). Tallet efter prisen er vægten pr. stk,
+# dåse, fed eller bundt i gram, til at omregne mellem stk og kg.
 NORMAL_PRICES: dict[str, tuple[float, float]] = {
-    "hakket_okse": (80, 500), "hakket_gris": (55, 500), "hakket_gris_kalv": (60, 500), "hakket_kylling": (70, 500),
-    "kyllingebryst": (85, 150), "kyllingelaar": (35, 200), "hel_kylling": (40, 1400), "bacon": (60, 150), "chorizo": (150, 200),
-    "stegeflaesk": (70, 400), "medister": (50, 500), "flaeskesteg": (50, 1500), "moerbrad": (85, 500),
-    "koteletter": (60, 200), "poelser": (60, 60), "boef": (200, 150), "okse_tern": (140, 500),
-    "laksefilet": (170, 125), "hvid_fisk": (120, 125), "fiskefrikadeller": (80, 60), "tun": (90, 185),
-    "rejer": (120, 400),
-    "aeg": (45, 60), "maelk": (11, 1000), "floede": (35, 250), "creme_fraiche": (30, 200), "revet_ost": (70, 175),
-    "parmesan": (180, 150), "feta": (60, 200), "yoghurt": (20, 1000), "smoer": (80, 250),
-    "pasta": (14, 500), "lasagneplader": (30, 250), "ris": (18, 1000), "nudler": (30, 250), "tortilla": (35, 40),
-    "burgerboller": (40, 70), "poelsebroed": (30, 40), "pizzadej": (25, 400), "hakkede_tomater": (12, 400),
-    "kidneyboenner": (15, 400), "kokosmaelk": (30, 400), "majs": (25, 300), "linser": (25, 500),
-    "kartofler": (8, 100), "guleroedder": (8, 80), "loeg": (8, 150), "foraarsloeg": (60, 100), "hvidloeg": (60, 5), "porrer": (20, 250),
-    "tomater": (25, 100), "cherrytomater": (40, 250), "agurk": (20, 400), "peberfrugt": (35, 200), "broccoli": (30, 400),
-    "blomkaal": (20, 800), "spidskaal": (15, 1000), "roedkaal": (15, 500), "champignon": (45, 250),
-    "spinat": (40, 250), "salat": (30, 400), "romaine": (35, 300), "rucola": (150, 65), "bladselleri": (25, 400),
-    "avocado": (50, 200), "groenne_boenner": (25, 400), "aerter": (20, 450), "squash": (20, 300),
-    "wokgroent": (25, 600), "citron": (25, 100), "lime": (40, 70), "mango": (30, 400), "persille": (100, 30), "aebler": (15, 150),
+    "hakket_okse": (110, 500), "hakket_gris": (65, 500), "hakket_gris_kalv": (80, 500), "hakket_kylling": (90, 500),
+    "kyllingebryst": (115, 150), "kyllingelaar": (45, 200), "hel_kylling": (60, 1400), "bacon": (110, 150),
+    "chorizo": (180, 200), "stegeflaesk": (100, 400), "medister": (75, 500), "flaeskesteg": (65, 1500),
+    "moerbrad": (110, 500), "koteletter": (85, 200), "poelser": (90, 60), "boef": (280, 150), "okse_tern": (180, 500),
+    "laksefilet": (230, 125), "hvid_fisk": (200, 125), "fiskefrikadeller": (120, 60), "tun": (120, 185),
+    "rejer": (220, 400),
+    "aeg": (55, 60), "maelk": (14, 1000), "floede": (50, 250), "creme_fraiche": (45, 200), "revet_ost": (110, 175),
+    "parmesan": (300, 150), "feta": (110, 200), "yoghurt": (25, 1000), "smoer": (110, 250),
+    "pasta": (22, 500), "lasagneplader": (40, 250), "ris": (25, 1000), "nudler": (45, 250), "tortilla": (45, 40),
+    "burgerboller": (50, 70), "poelsebroed": (40, 40), "pizzadej": (40, 400), "hakkede_tomater": (18, 400),
+    "kidneyboenner": (22, 400), "kokosmaelk": (40, 400), "majs": (35, 300), "linser": (40, 500),
+    "kartofler": (14, 100), "guleroedder": (12, 80), "loeg": (12, 150), "foraarsloeg": (80, 100), "hvidloeg": (80, 5),
+    "porrer": (30, 250), "tomater": (40, 100), "cherrytomater": (70, 250), "agurk": (30, 400), "peberfrugt": (50, 200),
+    "broccoli": (35, 400), "blomkaal": (30, 800), "spidskaal": (20, 1000), "roedkaal": (18, 500),
+    "champignon": (70, 250), "spinat": (70, 250), "salat": (40, 400), "romaine": (50, 300), "rucola": (200, 65),
+    "bladselleri": (35, 400), "avocado": (50, 200), "groenne_boenner": (40, 400), "aerter": (30, 450),
+    "squash": (30, 300), "wokgroent": (35, 600), "citron": (40, 100), "lime": (60, 70), "mango": (40, 400),
+    "persille": (150, 30), "aebler": (25, 150),
 }
+
+# Basisprisen følger tilbudsaviserne: koster en vare typisk mere på tilbud end
+# basisprisen, er basisprisen for lav, og så bruges det typiske tilbud (højst
+# halvanden gang basisprisen, så fejlgenkendte varer ikke trækker op).
+MARKET_MIN_OFFERS = 6
+MARKET_MAX_FACTOR = 1.5
+
+
+def market_prices(offers) -> dict[str, float]:
+    """Typisk pris pr. kg i tilbudsaviserne for hver ingrediens.
+
+    ``offers`` er (overskrift, enhed, enhedspris) for tilbud, fx fra
+    prishistorikken. Kun tilbud på én ingrediens, og kun ingredienser set i
+    mindst MARKET_MIN_OFFERS tilbud, tæller.
+    """
+    per_key: dict[str, list[float]] = {}
+    for heading, unit, unit_price in offers:
+        keys = ingredient_keys(heading) if unit_price else []
+        if len(keys) != 1:
+            continue
+        piece = NORMAL_PRICES[keys[0]][1]
+        kg = unit_price if unit in ("kg", "l") else unit_price * 1000 / piece if unit == "stk" and piece else None
+        if kg:
+            per_key.setdefault(keys[0], []).append(kg)
+    return {k: statistics.median(v) for k, v in per_key.items() if len(v) >= MARKET_MIN_OFFERS}
+
+
+def basis_price(key: str, market: dict[str, float] | None = None) -> float:
+    """Basisprisen i kr pr. kg, hævet til det typiske tilbud, hvis det er dyrere."""
+    base = NORMAL_PRICES[key][0]
+    typical = (market or {}).get(key)
+    return float(round(max(base, min(typical, base * MARKET_MAX_FACTOR)))) if typical else float(base)
+
 
 # Den mindste pakke af basisvaren i gram (eller ml), når den er større end ét
 # stk: løg i net, æg i bakker, kartofler i poser. Ellers købes ét stk ad gangen.
@@ -932,20 +968,22 @@ def imported_recipes() -> tuple[Recipe, ...]:
     return tuple(result)
 
 
-def ingredients_payload() -> list[dict]:
+def ingredients_payload(market: dict[str, float] | None = None) -> list[dict]:
     """Ingredienserne med mønstre, så browseren kan læse egne opskrifter."""
     return [
-        {"key": k, "name": name, "patterns": patterns, "exclude": exclude, "price": list(NORMAL_PRICES[k]),
+        {"key": k, "name": name, "patterns": patterns, "exclude": exclude,
+         "price": [basis_price(k, market), NORMAL_PRICES[k][1]],
          "pack": basis_pack_g(k), "veg": k in VEGETABLES, "dept": department(k), "replaces": REPLACES.get(k, [])}
         for k, (name, patterns, exclude) in INGREDIENTS.items()
     ]
 
 
-def plan_payload() -> dict:
-    """Alt, madplanen i browseren skal bruge."""
+def plan_payload(market: dict[str, float] | None = None) -> dict:
+    """Alt, madplanen i browseren skal bruge. ``market`` er market_prices for
+    tilbuddene i prishistorikken."""
     return {
         "recipes": recipes_payload(),
-        "ingredients": ingredients_payload(),
+        "ingredients": ingredients_payload(market),
         "side": _item_payload(SIDE),
         "words": {"not_raw": _NOT_RAW, "not_raw_heading": _NOT_RAW_HEADING, "pantry": PANTRY_WORDS,
                   "pork": PORK_WORDS, "fish": FISH_WORDS, "meat": MEAT_WORDS},

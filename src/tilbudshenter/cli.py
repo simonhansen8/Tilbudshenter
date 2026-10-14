@@ -240,6 +240,8 @@ def cmd_recipes(args: argparse.Namespace) -> int:
     print(f"{result['recipes']} opskrifter i samlingen, {result['added']} nye. "
           f"{result['skipped']} sider kunne ikke bruges, {result['failed']} kunne ikke hentes."
           + (f" {result['pending']} hentes næste gang." if result.get("pending") else ""))
+    for site, n in sorted(result["sites"].items(), key=lambda kv: -kv[1]):
+        print(f"  {site}: {n}")
     return 0
 
 
