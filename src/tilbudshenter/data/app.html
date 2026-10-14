@@ -321,12 +321,20 @@ async function api(path, body) {
   return data;
 }
 
+// Brugerens valg og indkøbsliste ligger i browseren under disse nøgler
+// (tilbudshenter.settings, tilbudshenter.list, tilbudshenter.prefs). De
+// må ikke omdøbes, og gemte valg går altid forud for standardvalgene i
+// data.json, så en ny udgave af siden aldrig nulstiller dem.
 const store = {
   get(key, fallback) {
     try { const v = localStorage.getItem("tilbudshenter." + key); return v ? JSON.parse(v) : fallback; }
     catch (e) { return fallback; }
   },
-  set(key, value) { try { localStorage.setItem("tilbudshenter." + key, JSON.stringify(value)); } catch (e) {} },
+  set(key, value) {
+    try { localStorage.setItem("tilbudshenter." + key, JSON.stringify(value)); } catch (e) {}
+    // Bed browseren om ikke at rydde valgene væk, når der mangler plads
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+  },
 };
 
 let siteData = null;
