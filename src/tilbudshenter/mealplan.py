@@ -149,6 +149,21 @@ NORMAL_PRICES: dict[str, tuple[float, float]] = {
     "wokgroent": (25, 600), "citron": (25, 100), "lime": (40, 70), "mango": (30, 400), "persille": (100, 30), "aebler": (15, 150),
 }
 
+# Den mindste pakke af basisvaren i gram (eller ml), når den er større end ét
+# stk: løg i net, æg i bakker, kartofler i poser. Ellers købes ét stk ad gangen.
+# Madplanen bruger det til, hvad man betaler i butikken for varer uden tilbud.
+BASIS_PACK_G: dict[str, float] = {
+    "kyllingebryst": 500, "kyllingelaar": 1000, "poelser": 400, "koteletter": 600, "boef": 300, "laksefilet": 250,
+    "hvid_fisk": 400, "fiskefrikadeller": 300, "aeg": 600, "tortilla": 320, "burgerboller": 280, "poelsebroed": 400,
+    "lasagneplader": 500, "kartofler": 2000, "guleroedder": 1000, "loeg": 1000, "hvidloeg": 150, "tomater": 500,
+    "citron": 300, "lime": 210, "aebler": 1000,
+}
+
+
+def basis_pack_g(key: str) -> float:
+    return BASIS_PACK_G.get(key) or NORMAL_PRICES[key][1]
+
+
 # Ord der betyder, at tilbuddet ikke er en råvare
 _NOT_RAW = [
     "færdigret", "pålæg", "suppe", "sauce", "dressing", "chips", "snack", "juice", "spyd", "kebab",
@@ -917,7 +932,7 @@ def ingredients_payload() -> list[dict]:
     """Ingredienserne med mønstre, så browseren kan læse egne opskrifter."""
     return [
         {"key": k, "name": name, "patterns": patterns, "exclude": exclude, "price": list(NORMAL_PRICES[k]),
-         "veg": k in VEGETABLES, "dept": department(k), "replaces": REPLACES.get(k, [])}
+         "pack": basis_pack_g(k), "veg": k in VEGETABLES, "dept": department(k), "replaces": REPLACES.get(k, [])}
         for k, (name, patterns, exclude) in INGREDIENTS.items()
     ]
 

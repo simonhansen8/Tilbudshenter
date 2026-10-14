@@ -425,7 +425,7 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
     </div>
     <div class="dlg-body">
       <p class="hint">Billig aftensmad ud fra ugens tilbud, efter kostrådene: fisk hver uge, mindre rødt kød og masser af grønt.
-        Priserne gælder de mængder, retten bruger; under hver vare står, hvad hele pakken koster, og prisen pr. person. Tryk på et tilbud for at se det. ✓ = på tilbud og billigere end basisvaren, fx kædens eget mærke.</p>
+        Prisen på en ret er det, du betaler i butikken for hele pakker; resten af en pakke bruges i en senere ret. Under hver vare står, hvad retten bruger, og prisen pr. person. Tryk på et tilbud for at se det. ✓ = på tilbud og billigere end basisvaren, fx kædens eget mærke.</p>
       <div class="plan-controls">
         <label class="field">Fra <select id="plan-start"></select></label>
         <label class="field">Dage <select id="plan-count"></select></label>
@@ -1713,7 +1713,10 @@ function bestOffer(item, index, dealer, day = null) {
   const found = item.keys.flatMap(k => index.get(k) || []).filter(o => !day || validOn(o, day));
   const there = dealer ? found.filter(o => o.dealer === dealer) : [];
   const pool = there.length ? there : found;
-  pool.sort((a, b) => perKg(a) - perKg(b) || a.price - b.price);
+  // Billigst for de hele pakker, retten skal bruge, så en kæmpepakke til
+  // lav kilopris ikke vælges til 400 g; derefter billigst pr. kg
+  const pay = (o) => item.amount && item.keys.length ? packPay(item, o) : 0;
+  pool.sort((a, b) => pay(a) - pay(b) || perKg(a) - perKg(b) || a.price - b.price);
   return pool[0] || null;
 }
 
@@ -1753,7 +1756,10 @@ function recipeScore(entry) {
   const saving = normal ? clamp((1 - cost / normal) / 0.5) : 0;  // 50 % sparet = fuld score
   const green = clamp(entry.recipe.veg_g / 250);
   const fridge = 30 * clamp(entry.fridge / 2);  // to ting fra køleskabet = fuld bonus
-  return fridge + (plan.focus === "cheap" ? 70 * cheap + 15 * saving + 15 * green : 35 * cheap + 35 * saving + 30 * green);
+  // Point fra, når hovedtilbuddet er en pakke langt større end retten bruger
+  const waste = entry.items.filter(y => y.item.main && y.offer && y.offer === entry.main && y.item.amount)
+    .reduce((s, y) => s + packPay(y.item, y.offer) - itemCost(y.item, y.offer).cost, 0);
+  return fridge - 20 * clamp(waste / 100) + (plan.focus === "cheap" ? 70 * cheap + 15 * saving + 15 * green : 35 * cheap + 35 * saving + 30 * green);
 }
 
 // Vælger n retter efter kostrådene: fisk hver uge (to gange ved 6-7 retter),
@@ -1912,38 +1918,74 @@ function packNeed(item, offer, mult = 1) {
     const pieces = item.unit === "g" || item.unit === "dl" ? (pieceG ? kg * 1000 / pieceG : 1) : n;
     // Flere stk i en pakke (fx 8 æg til 16 kr): der købes hele pakker
     const perPack = offer.price ? Math.max(1, Math.round(offer.price / offer.unit_price)) : 1;
-    return {need: pieces, size: perPack, price: offer.price || offer.unit_price, stk: perPack === 1};
+    return {need: pieces, size: perPack, price: offer.price || offer.unit_price, stk: perPack === 1, key, pieces: true};
   }
   const size = (offer.unit === "kg" || offer.unit === "l") && offer.amount ? offer.amount : null;
-  return {need: kg, size, price: offer.price, stk: false};
+  return {need: kg, size, price: offer.price, stk: false, key};
+}
+
+// Det samme for en vare uden tilbud: hele pakker af basisvaren (ING[k].pack
+// gram eller ml) til basisprisen, fx et net løg eller en bakke æg
+function basisNeed(item, mult = 1) {
+  const key = item.keys[0];
+  const pieceG = item.prices[key][1];
+  const n = scaledAmount(item, mult);
+  const kg = item.unit === "g" ? n / 1000 : item.unit === "dl" ? n / 10 : n * pieceG / 1000;
+  const size = (ING[key].pack || pieceG) / 1000;
+  return {need: kg, size, price: item.prices[key][0] * size, stk: false, key, pieceG};
+}
+
+function basisPackText(p, count, item) {
+  const g = Math.round(count * p.size * 1000);
+  if (LITER_KEYS.has(p.key)) return g >= 1000 ? `${(g / 1000).toLocaleString("da-DK")} l` : `${g / 10} cl`;
+  if (item.unit !== "g" && p.pieceG === p.size * 1000) return `${count} stk`;
+  return amountText(g, "g");
 }
 
 // Hele pakker gennem ugen, dag for dag: er der nok tilbage i pakken fra en
-// tidligere ret, købes den ikke igen. Sætter y.buy ({count, price, stk})
-// eller y.rest (den ret, pakken blev købt til).
+// tidligere ret, købes den ikke igen. Sætter y.buy ({count, price, stk, text})
+// eller y.rest (den ret, pakken blev købt til). Varer uden tilbud købes som
+// basisvaren.
 function buyPacks(entries) {
-  const left = new Map();
+  const left = new Map(), byKey = new Map();
   for (const x of entries) {
-    for (const y of x.items) {
+    x.items.forEach((y, j) => {
       y.buy = null; y.rest = null;
-      if (!y.offer || y.have || !y.item.keys.length || !y.item.amount) continue;
-      const p = packNeed(y.item, y.offer, x.mult);
-      const l = left.get(y.offer.id);
+      if (y.have || !y.item.keys.length || !y.item.amount) return;
+      const p = y.offer ? packNeed(y.item, y.offer, x.mult) : basisNeed(y.item, x.mult);
+      const id = y.offer ? y.offer.id : `basis:${p.key}`;
+      let l = left.get(id);
+      // Er der nok tilbage af samme vare fra en anden pakke (fx et net løg),
+      // bruges den i stedet for at købe en ny
+      const other = byKey.get(p.key);
+      if ((!l || (p.size && l.amount < p.need * 0.9)) && other && !other.pieces && !p.pieces && p.size
+          && other.amount >= p.need * 0.9) {
+        l = other;
+        y = x.items[j] = {...y, offer: other.offer};
+      }
       if (l && (!p.size || l.amount >= p.need * 0.9)) {
         if (p.size) l.amount = Math.max(0, l.amount - p.need);
-        y.rest = l.from;
-        continue;
+        y.rest = l.entry === x ? "samme ret" : l.from;
+        return;
       }
       const have = l ? l.amount : 0;
       const count = p.size ? Math.max(1, Math.ceil((p.need - have) / p.size - 0.1)) : 1;
-      y.buy = {count, price: count * p.price, stk: p.stk};
-      left.set(y.offer.id, {amount: p.size ? Math.max(0, have + count * p.size - p.need) : 0,
-        from: `${x.recipe.name}, ${dayName(x.day)}`});
-    }
+      y.buy = {count, price: count * p.price, stk: p.stk, text: y.offer ? "" : basisPackText(p, count, y.item)};
+      const rest = {amount: p.size ? Math.max(0, have + count * p.size - p.need) : 0,
+        from: `${x.recipe.name}, ${dayName(x.day)}`, entry: x, offer: y.offer, pieces: !!p.pieces};
+      left.set(id, rest);
+      if (p.size) byKey.set(p.key, rest);
+    });
   }
 }
 
-function packText(buy) { return buy.stk ? `${buy.count} stk` : `${buy.count} ${buy.count === 1 ? "pakke" : "pakker"}`; }
+// Prisen for de hele pakker af tilbuddet, én ret skal bruge
+function packPay(item, offer, mult = 1) {
+  const p = packNeed(item, offer, mult);
+  return (p.size ? Math.max(1, Math.ceil(p.need / p.size - 0.1)) : 1) * p.price;
+}
+
+function packText(buy) { return buy.text ? buy.text : buy.stk ? `${buy.count} stk` : `${buy.count} ${buy.count === 1 ? "pakke" : "pakker"}`; }
 
 // Point til en ret, der kan bruge resten af en pakke, som en anden ret i
 // planen køber (fx resten af posen løg eller pakken med fløde)
@@ -1967,6 +2009,10 @@ function krSmall(n) { return n < 10 ? n.toLocaleString("da-DK", {maximumFraction
 // Det, man har derhjemme, koster ikke noget og tæller ikke med i besparelsen
 function lineCost(y, mult) { return y.have ? {cost: 0, normal: 0, estimate: false} : itemCost(y.item, y.offer, mult); }
 function dishCost(entry) { return entry.items.reduce((s, y) => s + lineCost(y, entry.mult || 1).cost, 0); }
+// Det, du betaler i butikken for en linje: hele pakker, og intet for resten
+// af en pakke fra en tidligere ret
+function linePay(y, c) { return y.have || c.unknown ? 0 : y.buy ? y.buy.price : y.rest ? 0 : c.cost; }
+function dishPay(entry) { return entry.items.reduce((s, y) => s + linePay(y, lineCost(y, entry.mult || 1)), 0); }
 function dishNormalCost(entry) { return entry.items.reduce((s, y) => s + lineCost(y, entry.mult || 1).normal, 0); }
 
 function kr(n) { return Math.round(n).toLocaleString("da-DK") + " kr"; }
@@ -2017,7 +2063,7 @@ function renderPlan() {
   $("plan-body").innerHTML = planTotal(entries) + entries.map((x, i) => {
     const r = x.recipe;
     const onOffer = x.items.filter(y => y.offer).length, have = x.items.filter(y => y.have).length;
-    const cost = dishCost(x), normal = dishNormalCost(x);
+    const cost = dishCost(x), normal = dishNormalCost(x), pay = dishPay(x);
     const days = x.mult === 2 ? `${cap(dayName(x.day))} og ${dayName(addDays(x.day, 1))}` : cap(dayName(x.day));
     const source = r.own ? "Egen opskrift" : r.source ? `Fra ${host(r.source)}` : "";
     const how = r.method ? `<details><summary>Sådan gør du</summary><p>${esc(r.method)}</p>
@@ -2026,8 +2072,8 @@ function renderPlan() {
     return `<article class="dish">
       <div class="day">${esc(days)}</div>
       <div class="dish-head"><h3>${esc(r.name)}</h3>
-        <span class="price-tag">ca. ${kr(cost)}</span></div>
-      <div class="sub">${kr(cost / plan.persons / x.mult)} pr. person · ${esc(KIND_NAMES[r.kind] || r.kind)}
+        <span class="price-tag">ca. ${kr(pay)}</span></div>
+      <div class="sub">${Math.abs(pay - cost) >= 1 ? `Retten bruger for ca. ${kr(cost)} · ` : ""}${kr(cost / plan.persons / x.mult)} pr. person · ${esc(KIND_NAMES[r.kind] || r.kind)}
         ${r.minutes ? ` · ${r.minutes} min` : ""} · ${r.veg_g} g grønt pr. person · ${onOffer} af ${x.items.length} varer på tilbud
         ${have ? ` · ${have} har du` : ""}${source ? ` · ${esc(source)}` : ""}
         ${normal - cost >= 5 ? ` · <b class="save">sparer ca. ${kr(normal - cost)}</b>` : ""}</div>
@@ -2040,7 +2086,7 @@ function renderPlan() {
         <span class="what">${esc(itemText(y.item, x.mult))}</span>
         <span class="src">${y.offer && !y.have
           ? `<button class="offer" data-plan-offer="${esc(y.offer.id)}" title="Se tilbuddet">${esc(src)} ›</button>` : esc(src)}</span>
-        <span class="cost">${c.unknown ? "" : `${c.estimate && y.offer ? "ca. " : ""}${kr(c.cost)}`}
+        <span class="cost">${c.unknown ? "" : y.rest && !y.have ? "rest" : `${c.estimate && y.offer && !y.buy ? "ca. " : ""}${kr(linePay(y, c))}`}
           ${y.item.keys.length ? `<button class="link" data-have="${i}:${j}">${y.have ? "har ikke" : "har jeg"}</button>` : ""}</span>
         ${buyLine(y, c, x.mult)}</li>`;
       }).join("")}</ul>
@@ -2055,33 +2101,32 @@ function renderPlan() {
       </div>
     </article>`;
   }).join("");
-  const total = entries.reduce((s, x) => s + dishCost(x), 0);
-  $("plan-sum").innerHTML = `Ugen i alt <b>ca. ${kr(total)}</b>`;
+  const total = entries.reduce((s, x) => s + dishPay(x), 0);
+  $("plan-sum").innerHTML = `Du betaler ca. <b>${kr(total)}</b> for ugen`;
 }
 
-// Den samlede pris for hele madplanen, øverst over retterne
+// Den samlede pris for hele madplanen, øverst over retterne: det, du betaler
+// i butikken for hele pakker, og det, retterne bruger af dem
 function planTotal(entries) {
-  const total = entries.reduce((s, x) => s + dishCost(x), 0);
-  const saved = entries.reduce((s, x) => s + dishNormalCost(x), 0) - total;
+  const pay = entries.reduce((s, x) => s + dishPay(x), 0);
+  const used = entries.reduce((s, x) => s + dishCost(x), 0);
+  const saved = entries.reduce((s, x) => s + dishNormalCost(x), 0) - used;
   const days = entries.reduce((s, x) => s + x.mult, 0);
   const lines = entries.flatMap(x => x.items.map(y => ({y, c: lineCost(y, x.mult)})));
   const have = lines.filter(l => l.y.have).length, unknown = lines.filter(l => !l.y.have && l.c.unknown).length;
   const ends = entries.flatMap(x => [x.day, addDays(x.day, x.mult - 1)]).sort((a, b) => a - b);
   const first = ends[0], last = ends[ends.length - 1];
   const details = [
-    `${esc(cap(dayName(first)))} til ${esc(dayName(last))}`,
-    `${entries.length} retter til ${days} dage · ${kr(total / days)} pr. dag`,
-    `${kr(total / days / plan.persons)} pr. person pr. dag`,
+    `${esc(cap(dayName(first)))} til ${esc(dayName(last))} · ${entries.length} retter til ${days} dage`,
+    `Retterne bruger for ca. ${kr(used)}: ${kr(used / days)} pr. dag og ${kr(used / days / plan.persons)} pr. person pr. dag`,
   ];
+  if (pay - used >= 1) details.push(`Resten af pakkerne, ca. ${kr(pay - used)}, kan bruges senere`);
   if (saved >= 5) details.push(`<span class="save">sparer ca. ${kr(saved)} med ugens tilbud</span>`);
-  // I butikken: hele pakker af tilbuddene og basisvarerne til den pris, retterne bruger
-  const shop = lines.reduce((s, l) => s + (l.y.have ? 0 : l.y.buy ? l.y.buy.price : l.y.offer ? 0 : l.c.cost), 0);
-  if (shop - total >= 1) details.push(`<b>Du betaler ca. ${kr(shop)} i butikken</b>, fordi du køber hele pakker. Resten kan bruges senere`);
   const left = [have && `${have} ${have === 1 ? "vare" : "varer"}, du har derhjemme`,
     unknown && `${unknown} ${unknown === 1 ? "vare" : "varer"} uden kendt pris`].filter(Boolean);
   if (left.length) details.push(`Ikke regnet med: ${left.join(" og ")}`);
   return `<div class="plan-total" id="plan-total">
-    <div><div class="label">Samlet pris for ugen</div><div class="sum">ca. ${kr(total)}</div></div>
+    <div><div class="label">Du betaler for ugen</div><div class="sum">ca. ${kr(pay)}</div></div>
     <div class="details">${details.join("<br>")}</div></div>`;
 }
 
@@ -2290,8 +2335,8 @@ $("plan-body").addEventListener("click", e => {
 function buyLine(y, c, mult) {
   if (y.have || c.unknown || !c.cost) return "";
   const parts = [
-    y.buy ? `Du køber ${packText(y.buy)} til ${money(y.buy.price)}` : y.rest ? `Resten af pakken fra ${y.rest}` : "",
-    `${krSmall(c.cost / plan.persons / mult)} pr. person`,
+    y.buy ? `Du køber ${packText(y.buy)} til ${money(y.buy.price)}` : y.rest === "samme ret" ? "Samme pakke som ovenfor" : y.rest ? `Resten af pakken fra ${y.rest}` : "",
+    `retten bruger for ${krSmall(c.cost)}, ${krSmall(c.cost / plan.persons / mult)} pr. person`,
   ].filter(Boolean);
   return `<span class="buy">${esc(parts.join(" · "))}</span>`;
 }
