@@ -31,6 +31,9 @@ def test_site_demo(tmp_path, capsys):
     assert all(o["catalog_order"] for o in data["offers"])
     assert {o["catalog_id"] for o in data["offers"]} <= set(data["papers"])
     assert all("pages" not in p for p in data["papers"].values())
+    # Siden holdes ude af søgemaskinerne
+    assert '<meta name="robots" content="noindex, nofollow' in html
+    assert (out / "robots.txt").read_text("utf-8") == "User-agent: *\nDisallow: /\n"
     assert json.loads((out / "aviser.json").read_text("utf-8")) == {}  # demoen har ingen sidebilleder
 
     # Anden kørsel genbruger databasen og henter ikke aviserne igen
