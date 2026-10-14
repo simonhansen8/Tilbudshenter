@@ -290,17 +290,22 @@ hakket oksekød er billigt.
   mængder, retten bruger, med tilbuddets pris pr. kg, liter eller stk, og for
   varer uden tilbud med basisvarens pris. Besparelsen regnes også i forhold
   til basisvaren.
-- Du køber hele pakker. Under hver vare står, hvor mange pakker du køber og
-  hvad de koster, og hvad varen koster pr. person i retten. Bliver der nok
-  tilbage af en pakke til en senere ret, står der "Resten af pakken fra …",
-  og retter, der kan dele en pakke, foretrækkes. Tryk på et tilbud
+- Du køber hele pakker, også af varer uden tilbud (fx et net løg eller en
+  bakke æg, `BASIS_PACK_G` i `mealplan.py`). Prisen på en ret er det, du
+  betaler i butikken; under hver vare står, hvor mange pakker du køber, hvad
+  retten bruger, og prisen pr. person. Bliver der nok tilbage af en pakke
+  til en senere ret, står der "Resten af pakken fra …" og ingen pris, også
+  når resten er af samme vare fra et andet tilbud. Et tilbud vælges efter
+  prisen for de hele pakker, retten skal bruge, så en kæmpepakke til lav
+  kilopris ikke vælges til 400 g, og retter, der kan dele en pakke,
+  foretrækkes. Tryk på et tilbud
   for at se det hele med billede, avis og hvad det bruges til i planen; du
   kan bladre mellem planens tilbud.
 - Et tilbud bruges kun på en dag, hvor det gælder. En ret, hvis tilbud først
   starter senere i perioden, lægges på en dag, hvor tilbuddet er startet.
-- Øverst står den samlede pris for ugen med pris pr. dag og pr. person, og
-  hvor meget tilbuddene sparer, og hvad du betaler i butikken for de hele
-  pakker. Varer, du har derhjemme, og varer uden kendt pris er ikke regnet
+- Øverst står, hvad du betaler i butikken for ugen, hvad retterne bruger
+  (pr. dag og pr. person), hvad resten af pakkerne er værd, og hvor meget
+  tilbuddene sparer. Varer, du har derhjemme, og varer uden kendt pris er ikke regnet
   med.
 - Vælg første dag, antal dage, antal personer (mængderne skaleres) og kost
   (alt, uden svinekød, uden fisk eller vegetar). Hver ret får en dag: retter

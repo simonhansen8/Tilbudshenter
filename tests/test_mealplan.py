@@ -2,8 +2,8 @@ import json
 
 from tilbudshenter.cli import main
 from tilbudshenter.mealplan import (
-    DEPARTMENTS, INGREDIENTS, MIN_VEG_PER_PERSON, NORMAL_PRICES, RECIPES, VEGETABLES, imported_recipes,
-    ingredient_keys, ingredient_names, load_imported, recipe_items, recipes_payload, vegetables_per_person,
+    BASIS_PACK_G, DEPARTMENTS, INGREDIENTS, MIN_VEG_PER_PERSON, NORMAL_PRICES, RECIPES, VEGETABLES, imported_recipes,
+    basis_pack_g, ingredient_keys, ingredient_names, load_imported, recipe_items, recipes_payload, vegetables_per_person,
 )
 
 
@@ -69,6 +69,12 @@ def test_recipes_are_consistent():
 
 def test_every_ingredient_has_a_normal_price():
     assert set(NORMAL_PRICES) == set(INGREDIENTS)
+
+
+def test_basis_packs():
+    assert set(BASIS_PACK_G) <= set(INGREDIENTS)
+    assert basis_pack_g("loeg") == 1000 and basis_pack_g("hakkede_tomater") == 400
+    assert all(basis_pack_g(k) >= NORMAL_PRICES[k][1] for k in INGREDIENTS)
 
 
 def test_recipes_payload_is_json():
