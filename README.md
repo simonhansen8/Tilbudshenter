@@ -264,6 +264,15 @@ Knappen **Madplan** på siden og i appen foreslår aftensmad, hvor
 hovedingrediensen er på tilbud i dine butikker, fx spaghetti bolognese når
 hakket oksekød er billigt.
 
+En ret kommer kun med, når tilbuddene bærer den: hovedingrediensen er på
+tilbud, mindst to varer er på tilbud (eller den ene, hvis retten kun har én),
+mindst halvdelen af prisen kommer fra tilbud, og retten sparer mindst 10 %
+mod basisvarerne (`OFFER_MIN_*` i `app.html`). Grønt tilbehør og det, du har
+derhjemme, tæller ikke med. En ret med noget, du har derhjemme, som
+hovedingrediens, og dine egne retter, du sætter på planen, kommer altid med.
+En ret, hvis tilbud slutter tidligt i perioden, lægges på en dag, hvor
+tilbuddet stadig gælder.
+
 - Retterne kommer fra en fast samling af omkring 40 danske hverdagsretter i
   `mealplan.py`. Hver ingrediens genkendes i aviserne ud fra nøgleord, så
   hvert tilbud ved, hvilke ingredienser det kan bruges som. En bestemt vare
