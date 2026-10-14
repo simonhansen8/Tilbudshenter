@@ -79,6 +79,29 @@ _NORMAL_PRICE_RE = re.compile(rf"\b(?:normalpris|normal pris|før)\.?\s*(op til\
 _SAVE_RE = re.compile(rf"\bspar\s*(op til\s*)?{_AMOUNT}(?![\d.,]|\s*-\s*\d)\s*(%)?", re.IGNORECASE)
 
 
+# Tilbud der kræver medlemskab eller kædens app, fx "Med Lidl Plus",
+# "Gælder kun med føtex plus appen", "+ PRIS 10.-" (Netto+) og Coops
+# "Medlemspris" / "Pris ikke-medlem 26,00".
+_MEMBER_RE = re.compile(
+    r"lidl plus|medlemspris|medlems-?\s?rabat|ikke-medlem|uden medlemskab|medlems\s*køb"
+    r"|plus[- ]?pris|(?:^|\s)\+\s?pris|plus[- ]?app|netto\+|kun med [\w\s+]{0,20}app",
+    re.IGNORECASE,
+)
+
+
+def member_requirement(text: str) -> str | None:
+    """Hvad tilbuddet kræver: "Lidl Plus", "Kræver app", "Medlemspris" eller None."""
+    match = _MEMBER_RE.search(text or "")
+    if not match:
+        return None
+    found = match[0].casefold()
+    if "lidl" in found:
+        return "Lidl Plus"
+    if "medlem" in found:
+        return "Medlemspris"
+    return "Kræver app"
+
+
 def _to_float(whole: str, fraction: str | None) -> float:
     value = float(whole.replace(".", ""))
     if fraction and fraction != "-":
@@ -206,6 +229,11 @@ class Offer:
     def text(self) -> str:
         return f"{self.heading} {self.description}".strip()
 
+    @property
+    def member(self) -> str | None:
+        """Kræver tilbuddet medlemskab eller app? Se ``member_requirement``."""
+        return member_requirement(self.text)
+
     def to_dict(self) -> dict:
         return {
             "id": self.id,
@@ -227,6 +255,7 @@ class Offer:
             "score": round(self.score, 1),
             "known_discount": round(self.known_discount, 1) if self.known_discount is not None else None,
             "discount_basis": self.discount_basis,
+            "member": self.member,
             "catalog_label": self.catalog_label,
             "reasons": self.reasons,
         }

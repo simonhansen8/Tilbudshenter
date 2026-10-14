@@ -73,6 +73,10 @@ select { padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; 
 .pre { color: var(--muted); text-decoration: line-through; font-size: 13px; margin-left: 6px; font-weight: 400; }
 .unit { font-size: 13px; }
 .why { color: var(--accent); font-size: 13px; }
+.tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.tag { font-size: 12px; border-radius: 6px; padding: 0 6px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
+.tag.member { background: var(--warn-soft); color: var(--warn); }
+.tag.later { background: var(--accent-soft); color: var(--accent); }
 .meta { color: var(--muted); font-size: 12px; margin-top: auto; padding-top: 6px; }
 .more { display: flex; justify-content: center; margin-top: 18px; }
 .empty { text-align: center; color: var(--muted); padding: 48px 16px; border: 1px dashed var(--line); border-radius: 12px; margin-top: 16px; }
@@ -139,7 +143,10 @@ label.field input { padding: 8px 10px; border: 1px solid var(--line); border-rad
         <option value="store">Butik</option>
       </select>
       <label class="check"><input type="checkbox" id="known-only"> Kun kendt rabat</label>
+      <label class="check" title="Tilbud der kræver Lidl Plus, kædens app eller medlemskab"><input type="checkbox" id="hide-member"> Skjul medlems- og app-priser</label>
     </div>
+    <div class="group-label">Periode</div>
+    <div class="chips" id="period-chips"></div>
     <div class="group-label">Butik <button class="link" data-all="stores">Vis alle</button></div>
     <div class="chips" id="store-chips"></div>
     <div class="group-label">Kategori <button class="link" data-all="cats">Vis alle</button> <button class="link" data-reset="cats">Mine kategorier</button></div>
@@ -212,8 +219,16 @@ const $ = (id) => document.getElementById(id);
 const PAGE = 120;
 const state = {
   offers: [], settings: null, categories: [], stores: new Set(), cats: new Set(),
-  q: "", sort: "best", knownOnly: false, limit: PAGE, catalogList: null, scanning: false,
+  q: "", sort: "best", knownOnly: false, hideMember: false, limit: PAGE, catalogList: null, scanning: false,
+  periods: new Set(["now", "later"]),
 };
+
+// "now": gælder i dag, "later": avisen starter først om nogle dage
+function period(o) { return o.run_from && new Date(o.run_from) > new Date() ? "later" : "now"; }
+
+function startText(o) {
+  return "Fra " + new Date(o.run_from).toLocaleDateString("da-DK", {weekday: "short", day: "numeric", month: "numeric"});
+}
 
 async function api(path, body) {
   const opts = body === undefined ? {} : {
@@ -238,6 +253,18 @@ function showMessage(html, kind) {
   const m = $("message");
   m.className = "notice" + (kind ? " " + kind : "");
   m.innerHTML = html; m.hidden = !html;
+}
+
+// Små valg i appen, som huskes i browseren
+function savePrefs() {
+  try { localStorage.setItem("tilbudshenter.prefs", JSON.stringify({hideMember: state.hideMember})); } catch (e) {}
+}
+function loadPrefs() {
+  try {
+    const p = JSON.parse(localStorage.getItem("tilbudshenter.prefs") || "{}");
+    state.hideMember = !!p.hideMember;
+  } catch (e) {}
+  $("hide-member").checked = state.hideMember;
 }
 
 function splitList(text) { return text.split(",").map(s => s.trim()).filter(Boolean); }
@@ -330,7 +357,8 @@ function filtered() {
   const q = state.q.toLowerCase();
   const minDiscount = state.settings.min_discount_pct || 0;
   let list = state.offers.filter(o =>
-    state.stores.has(o.dealer) && state.cats.has(o.category) &&
+    state.stores.has(o.dealer) && state.cats.has(o.category) && state.periods.has(period(o)) &&
+    (!state.hideMember || !o.member) &&
     (!state.knownOnly || o.known_discount !== null) &&
     (o.known_discount === null || o.known_discount >= minDiscount || o.reasons.some(r => r.startsWith("favorit"))) &&
     (!q || `${o.heading} ${o.description} ${o.dealer}`.toLowerCase().includes(q)));
@@ -356,6 +384,10 @@ function renderChips() {
   }
   $("store-chips").innerHTML = Object.keys(storeCounts).sort((a, b) => a.localeCompare(b, "da"))
     .map(s => chip("stores", s, s, storeCounts[s], state.stores.has(s))).join("");
+  const periodCounts = {now: 0, later: 0};
+  for (const o of state.offers) periodCounts[period(o)]++;
+  $("period-chips").innerHTML = [["now", "Gælder nu"], ["later", "Starter senere"]]
+    .map(([k, label]) => chip("periods", k, label, periodCounts[k], state.periods.has(k))).join("");
   $("cat-chips").innerHTML = state.categories.filter(c => catCounts[c.key])
     .map(c => chip("cats", c.key, c.name, catCounts[c.key], state.cats.has(c.key))).join("");
 }
@@ -365,8 +397,13 @@ function card(o) {
   // Anslået rabat (fra andre butikker eller prishistorik) vises med kant i stedet for fyld
   const est = o.discount_basis && o.discount_basis !== "foerpris" ? " est" : "";
   const badge = o.discount_text ? `<span class="badge${est}" title="${esc(o.reasons.join(", "))}">${esc(o.discount_text)}</span>` : "";
+  const tags = [
+    period(o) === "later" ? `<span class="tag later">${esc(startText(o))}</span>` : "",
+    o.member ? `<span class="tag member" title="Prisen kræver Lidl Plus, kædens app eller medlemskab">${esc(o.member)}</span>` : "",
+  ].join("");
   return `<article class="card">${img}
     <div class="top"><span>${esc(o.dealer)}</span>${badge}</div>
+    ${tags ? `<div class="tags">${tags}</div>` : ""}
     <div class="name">${esc(o.heading)}</div>
     ${o.description ? `<div class="desc" title="${esc(o.description)}">${esc(o.description)}</div>` : ""}
     <div class="price">${esc(o.price_text)}${o.pre_price_text ? `<span class="pre">${esc(o.pre_price_text)}</span>` : ""}</div>
@@ -494,6 +531,7 @@ $("btn-more").addEventListener("click", () => { state.limit += PAGE; render(); }
 $("search").addEventListener("input", e => { state.q = e.target.value; state.limit = PAGE; render(); });
 $("sort").addEventListener("change", e => { state.sort = e.target.value; render(); });
 $("known-only").addEventListener("change", e => { state.knownOnly = e.target.checked; render(); });
+$("hide-member").addEventListener("change", e => { state.hideMember = e.target.checked; savePrefs(); render(); });
 $("filters").addEventListener("click", e => {
   const c = e.target.closest(".chip");
   if (c) {
@@ -520,6 +558,7 @@ $("settings-form").addEventListener("submit", e => {
 });
 
 (async function init() {
+  loadPrefs();
   try {
     const s = await refreshState();
     await loadOffers();
