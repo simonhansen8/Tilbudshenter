@@ -34,6 +34,9 @@ USER_AGENT = "Tilbudshenter/0.1 (madplan; https://github.com/simonhansen8/Tilbud
 MAX_BYTES = 3_000_000
 DEFAULT_JSON = Path(__file__).parent / "data" / "opskrifter.json"
 SITEMAP_LIMIT = 100
+# Hæves, når opskrifter kan læses fra flere slags sider, så de sider, der
+# blev sprunget over før, prøves igen
+VERSION = 2
 
 
 def fetch(url: str, timeout: float = 20) -> str:
@@ -78,7 +81,7 @@ def _text(value) -> str:
         value = value[0] if value else ""
     if isinstance(value, dict):
         value = value.get("name") or value.get("text") or ""
-    text = htmllib.unescape(re.sub(r"<[^>]+>", " ", str(value)))
+    text = htmllib.unescape(re.sub(r"<[^>]+>", " ", "" if value is None else str(value)))
     return re.sub(r"\s+([.,;:!?])", r"\1", re.sub(r"\s+", " ", text)).strip()
 
 
@@ -110,22 +113,97 @@ def _steps(value) -> list[str]:
     return steps
 
 
-def extract_recipe(page: str, url: str) -> dict | None:
-    """Opskriften på en side, eller None hvis siden ikke har én.
-
-    Fremgangsmåden ("method") kommer med, men gemmes kun i brugerens egne
-    opskrifter, ikke i den fælles samling.
-    """
+def _ld_json_nodes(page: str):
     for block in _LD_JSON.findall(page):
         try:
             data = json.loads(block.strip())
         except json.JSONDecodeError:
             continue
-        node = _find_recipe(data)
-        if not node:
-            continue
-        lines = [t for t in (_text(i) for i in node.get("recipeIngredient") or node.get("ingredients") or []) if t]
-        name = _text(node.get("name"))
+        if (node := _find_recipe(data)) is not None:
+            yield node
+
+
+def _embedded_nodes(page: str):
+    """Opskrifter i JSON, der ligger andre steder på siden (fx Arla).
+
+    Nogle sider har opskriften i sidens egne data i stedet for et
+    ld+json-felt. Fra hvert "recipeIngredient" går vi baglæns til den
+    krølleparentes, hvor objektet med listen begynder.
+    """
+    texts = [page]
+    if '\\"recipeIngredient\\"' in page:  # JSON inde i en JavaScript-streng
+        texts.append(page.replace('\\"', '"'))
+    decoder = json.JSONDecoder()
+    for text in texts:
+        for m in re.finditer(r'"recipeIngredient"\s*:', text):
+            start, tries = m.start(), 0
+            while tries < 300 and (start := text.rfind("{", max(0, m.start() - 50_000), start)) >= 0:
+                tries += 1
+                try:
+                    node, _ = decoder.raw_decode(text, start)
+                except json.JSONDecodeError:
+                    continue
+                if isinstance(node, dict) and "recipeIngredient" in node:
+                    yield node
+                    break
+
+
+def _attr(tag: str, name: str) -> str | None:
+    m = re.search(rf"""\b{name}\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))""", tag, re.IGNORECASE)
+    return next((g for g in m.groups() if g is not None), "") if m else None
+
+
+def _itemprops(page: str, prop: str) -> list[str]:
+    """Værdierne af et microdata-felt: ``<li itemprop="recipeIngredient">``."""
+    values = []
+    pattern = rf'<(\w+)\b[^>]*\bitemprop\s*=\s*["\']?[^"\'>]*\b{prop}\b[^>]*>'
+    for m in re.finditer(pattern, page, re.IGNORECASE):
+        tag = m.group(0)
+        content = _attr(tag, "content")
+        if content is None and m.group(1).lower() not in ("meta", "link"):
+            end = re.search(rf"</{m.group(1)}\s*>", page[m.end():], re.IGNORECASE)
+            content = page[m.end(): m.end() + end.start()] if end else ""
+        values.append(content or "")
+    return values
+
+
+def _page_title(page: str) -> str:
+    for pattern in (r'<meta[^>]+property=["\']og:title["\'][^>]*>', r"<h1\b[^>]*>(.*?)</h1>", r"<title\b[^>]*>(.*?)</title>"):
+        if m := re.search(pattern, page, re.IGNORECASE | re.DOTALL):
+            title = _text(_attr(m.group(0), "content") if pattern.startswith("<meta") else m.group(1))
+            if title := re.split(r"\s+[-|–]\s+", title)[0].strip():
+                return title
+    return ""
+
+
+def _microdata_node(page: str) -> dict | None:
+    """Opskrifter beskrevet med microdata i selve HTML'en (fx Valdemarsro)."""
+    lines = _itemprops(page, "recipeIngredient") or _itemprops(page, "ingredients")
+    if not lines:
+        return None
+    first = lambda prop: next(iter(_itemprops(page, prop)), "")  # noqa: E731
+    return {
+        "name": _page_title(page), "recipeIngredient": lines,
+        "recipeYield": first("recipeYield"), "totalTime": first("totalTime"),
+        "prepTime": first("prepTime"), "cookTime": first("cookTime"),
+        "recipeCategory": _itemprops(page, "recipeCategory"),
+        "recipeInstructions": _itemprops(page, "recipeInstructions") or _itemprops(page, "text"),
+    }
+
+
+def extract_recipe(page: str, url: str) -> dict | None:
+    """Opskriften på en side, eller None hvis siden ikke har én.
+
+    Først schema.org/Recipe som JSON-LD, så som JSON andre steder på siden
+    og til sidst som microdata. Fremgangsmåden ("method") kommer med, men
+    gemmes kun i brugerens egne opskrifter, ikke i den fælles samling.
+    """
+    nodes = [*_ld_json_nodes(page), *_embedded_nodes(page)]
+    if (node := _microdata_node(page)) is not None:
+        nodes.append(node)
+    for node in nodes:
+        lines = [t for t in (_text(i) for i in _as_list(node.get("recipeIngredient") or node.get("ingredients"))) if t]
+        name = _text(node.get("name")) or _page_title(page)
         if not name or not lines:
             continue
         minutes = _minutes(node.get("totalTime")) or _minutes(node.get("prepTime")) + _minutes(node.get("cookTime"))
@@ -206,7 +284,7 @@ def update(list_path: Path, json_path: Path = DEFAULT_JSON, fetcher=None, delay:
     fetcher = fetcher or fetch
     old = json.loads(json_path.read_text(encoding="utf-8")) if json_path.exists() else {}
     known = {r["url"]: r for r in old.get("recipes", [])}
-    skipped: dict[str, str] = dict(old.get("skipped", {}))
+    skipped: dict[str, str] = dict(old.get("skipped", {})) if old.get("version", 1) >= VERSION else {}
     wanted: list[str] = []
     for line in read_list(list_path):
         try:
@@ -247,6 +325,7 @@ def update(list_path: Path, json_path: Path = DEFAULT_JSON, fetcher=None, delay:
         log.info("Springer %s over: %s", url, why)
     keep = set(wanted)
     data = {
+        "version": VERSION,
         "recipes": recipes,
         "skipped": {u: w for u, w in sorted(skipped.items()) if u in keep},
     }

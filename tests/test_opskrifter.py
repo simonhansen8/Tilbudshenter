@@ -108,3 +108,42 @@ def test_only_dinners():
     assert not is_dinner({"name": "Chokoladekage"})
     assert not is_dinner({"name": "Bananbrød", "category": "Bagværk"})
     assert not is_dinner({"name": "Ovnbagt rodfrugter", "category": "Tilbehør"})
+
+
+def test_extract_microdata():
+    # Som Valdemarsro: kun en artikel i JSON-LD, opskriften står som microdata
+    page = """<html><head><title>Chili con carne - Valdemarsro</title>
+    <script type="application/ld+json">{"@graph": [{"@type": "Article", "headline": "Chili"}]}</script></head>
+    <body><div itemscope itemtype="https://schema.org/Recipe"><h1>Chili con carne</h1>
+    <meta itemprop="recipeYield" content="4 personer"><meta itemprop="totalTime" content="PT45M">
+    <ul><li itemprop="recipeIngredient">500 g hakket oksekød</li>
+    <li class="ing" itemprop="recipeIngredient"><span>1</span> løg</li></ul>
+    <div itemprop="recipeInstructions"><p>Brun kødet.</p></div></div></body></html>"""
+    data = extract_recipe(page, "https://valdemarsro.dk/chili")
+    assert data["name"] == "Chili con carne" and data["persons"] == 4 and data["minutes"] == 45
+    assert data["ingredients"] == ["500 g hakket oksekød", "1 løg"]
+    assert data["method"] == "Brun kødet."
+
+
+def test_extract_embedded_json():
+    # Som Arla: opskriften ligger i sidens egne data, ikke i et ld+json-felt
+    page = """<html><head><meta property="og:title" content="Lasagne | Arla"></head><body>
+    <script>window.__DATA__ = {"page": {"type": "recipe", "recipe": {"@type": "Recipe", "id": 7,
+      "recipeCategory": "Frokost, Aftensmad", "info": {"x": 1},
+      "recipeIngredient": ["300 g hakket oksekød", "1 løg"], "recipeYield": "4"}}};</script>
+    <script>var s = "{\\"recipeIngredient\\":[\\"2 gulerødder\\"]}";</script></body></html>"""
+    data = extract_recipe(page, "https://arla.dk/lasagne")
+    assert data["name"] == "Lasagne" and data["category"] == "Frokost, Aftensmad"
+    assert data["ingredients"] == ["300 g hakket oksekød", "1 løg"]
+    escaped = page.split("<script>window")[0] + '<script>var s = "{\\"name\\":\\"Suppe\\",\\"recipeIngredient\\":[\\"2 gulerødder\\"]}";</script>'
+    assert extract_recipe(escaped, "https://arla.dk/suppe")["ingredients"] == ["2 gulerødder"]
+
+
+def test_old_collection_retries_skipped_pages(tmp_path):
+    lst = tmp_path / "opskrifter.txt"
+    out = tmp_path / "opskrifter.json"
+    lst.write_text("https://mad.dk/opskrift/chili\n", encoding="utf-8")
+    out.write_text(json.dumps({"recipes": [], "skipped": {"https://mad.dk/opskrift/chili": "ingen opskrift på siden"}}),
+                   encoding="utf-8")
+    assert update(lst, out, lambda url: PAGE, delay=0)["added"] == 1
+    assert json.loads(out.read_text(encoding="utf-8"))["version"] >= 2
