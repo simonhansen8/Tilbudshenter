@@ -61,7 +61,7 @@ def test_recipes_payload_is_json():
     bolognese = next(r for r in data if r["id"] == "bolognese")
     assert bolognese["items"][0] == {
         "amount": 500, "unit": "g", "name": "hakket kød (okse eller grise- og kalv)", "keys": ["hakket_okse", "hakket_gris_kalv"],
-        "main": True, "side": False, "prices": {"hakket_okse": [100, 500], "hakket_gris_kalv": [75, 500]},
+        "main": True, "side": False, "prices": {"hakket_okse": [80, 500], "hakket_gris_kalv": [60, 500]},
     }
     assert bolognese["veg_g"] == 278
 
@@ -96,6 +96,13 @@ def test_departments_are_categories():
 
     assert set(DEPARTMENTS) <= set(INGREDIENTS)
     assert set(DEPARTMENTS.values()) <= set(DEFAULT_CATEGORIES)
+
+
+def test_slices_are_grams():
+    from tilbudshenter.mealplan import parse_line
+
+    # "5 skiver bacon" er omkring 100 g, ikke 5 pakker
+    assert parse_line("5 skiver bacon") == (100, "g", "bacon")
 
 
 def test_imported_recipes_build():

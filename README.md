@@ -171,6 +171,17 @@ noegleord = ["havregryn", "müsli", "skyr"]
 noegleord = ["tatar"]          # ekstra nøgleord til en eksisterende kategori
 ```
 
+### Mine basisvarer
+
+Under **Filtre** kan du skrive de varer, du altid køber, fx mælk, smør, kaffe
+og bananer. Sæt flueben ved **Kun mine basisvarer**, så vises alle tilbud på
+dem samlet vare for vare, med den billigste pr. kg eller liter først. Kategorier
+og mindste rabat gælder ikke her, og varer uden tilbud nævnes over listen.
+Varen skal stå i tilbuddets overskrift som et helt ord eller sidst i et
+sammensat ord: "mælk" finder "letmælk", men ikke "mælkedrik" eller
+"smørrebrød". Et minus udelader noget: `mælk -kakao`. Listen gemmes i
+browseren.
+
 ## Sådan vurderes "bedste tilbud"
 
 1. **Rabat ift. normalpris**: `(normalpris - pris) / normalpris`. Normalprisen
@@ -266,10 +277,14 @@ hakket oksekød er billigt.
 - For hver vare vises det billigste tilbud pr. kg, helst fra den butik, hvor
   hovedingrediensen købes, så en ret kan købes ind ét sted. Du kan også
   vælge én bestemt butik.
+- Et tilbud bruges kun, når det er billigere end **basisvaren**: den
+  almindelige pris uden tilbud på den billigste udgave, fx kædens eget mærke
+  (`NORMAL_PRICES` i `mealplan.py`, anslået ud fra discountbutikkernes
+  hyldepriser). En stor rabat på et dyrt mærke er altså ikke nok.
 - Hver ret har en samlet pris og en pris pr. person. Den regnes for de
   mængder, retten bruger, med tilbuddets pris pr. kg, liter eller stk, og for
-  varer uden tilbud med en anslået normalpris (`NORMAL_PRICES` i
-  `mealplan.py`). Hele pakker kan koste mere.
+  varer uden tilbud med basisvarens pris. Besparelsen regnes også i forhold
+  til basisvaren. Hele pakker kan koste mere.
 - Øverst står den samlede pris for ugen med pris pr. dag og pr. person, og
   hvor meget tilbuddene sparer. Varer, du har derhjemme, og varer uden kendt
   pris er ikke regnet med.

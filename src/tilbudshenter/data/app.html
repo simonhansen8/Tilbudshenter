@@ -262,6 +262,7 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
       </select>
       <label class="check"><input type="checkbox" id="known-only"> Kun kendt rabat</label>
       <label class="check" title="Tilbud der kræver Lidl Plus, kædens app eller medlemskab"><input type="checkbox" id="hide-member"> Skjul medlems- og app-priser</label>
+      <label class="check" title="Vis kun tilbud på de varer, du selv har valgt under Filtre"><input type="checkbox" id="basics-only"> Kun mine basisvarer</label>
     </div>
     <details class="filter-menu" id="filter-menu">
       <summary><b>Filtre</b> <span class="sum" id="filter-sum"></span></summary>
@@ -272,6 +273,14 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
         <div class="chips" id="store-chips"></div>
         <div class="group-label">Kategori <button class="link" data-all="cats">Vis alle</button> <button class="link" data-reset="cats">Mine kategorier</button></div>
         <div class="chips" id="cat-chips"></div>
+        <div class="group-label" id="basics">Mine basisvarer <button class="link" id="btn-basics-clear" hidden>Ryd</button></div>
+        <p class="hint" style="margin:0 0 6px">Varer du altid køber. Sæt flueben ved <b>Kun mine basisvarer</b> for at se alle tilbud på dem, samlet vare for vare.
+          Et minus udelader noget: <i>mælk -kakao</i>.</p>
+        <div class="chips" id="basics-chips"></div>
+        <form class="add-own" id="basics-form" style="margin-top:8px">
+          <input id="basics-input" placeholder="fx mælk, smør, kaffe, bananer" autocomplete="off" aria-label="Tilføj basisvarer">
+          <button class="btn small">Tilføj</button>
+        </form>
       </div>
     </details>
   </section>
@@ -405,7 +414,7 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
     </div>
     <div class="dlg-body">
       <p class="hint">Billig aftensmad ud fra ugens tilbud, efter kostrådene: fisk hver uge, mindre rødt kød og masser af grønt.
-        Priserne gælder de mængder, retten bruger; hele pakker kan koste mere. ✓ = på tilbud.</p>
+        Priserne gælder de mængder, retten bruger; hele pakker kan koste mere. ✓ = på tilbud og billigere end basisvaren, fx kædens eget mærke.</p>
       <div class="plan-controls">
         <label class="field">Fra <select id="plan-start"></select></label>
         <label class="field">Dage <select id="plan-count"></select></label>
@@ -491,6 +500,7 @@ const state = {
   offers: [], settings: null, categories: [], stores: new Set(), cats: new Set(),
   q: "", sort: "best", knownOnly: false, hideMember: false, limit: PAGE, catalogList: null, scanning: false,
   periods: new Set(["now", "later"]), list: [], papers: {},
+  basics: {items: [], on: false},
 };
 
 // "now": gælder i dag, "later": avisen starter først om nogle dage
@@ -517,7 +527,7 @@ async function api(path, body) {
 
 // Brugerens valg og indkøbsliste ligger i browseren under disse nøgler
 // (tilbudshenter.settings, tilbudshenter.list, tilbudshenter.prefs,
-// tilbudshenter.filters og tilbudshenter.mealplan). De må ikke omdøbes, og gemte valg går altid
+// tilbudshenter.filters, tilbudshenter.mealplan og tilbudshenter.basics). De må ikke omdøbes, og gemte valg går altid
 // forud for standardvalgene i data.json, så en ny udgave af siden aldrig
 // nulstiller dem.
 const store = {
@@ -732,6 +742,59 @@ function showMessage(html, kind) {
 function savePrefs() {
   try { localStorage.setItem("tilbudshenter.prefs", JSON.stringify({hideMember: state.hideMember, sort: state.sort})); } catch (e) {}
 }
+// Mine basisvarer: ord som "mælk" og "kaffe" og om filteret er slået til
+function saveBasics() { store.set("basics", state.basics); }
+function loadBasics() {
+  const b = store.get("basics", {});
+  state.basics = {items: Array.isArray(b.items) ? b.items.filter(w => typeof w === "string" && w.trim()) : [], on: !!b.on};
+  $("basics-only").checked = state.basics.on;
+  renderBasics();
+}
+function renderBasics() {
+  $("basics-chips").innerHTML = state.basics.items.map(w =>
+    `<button class="chip on" type="button" data-basic="${esc(w)}" title="Fjern ${esc(w)}">${esc(w)} <span class="n">×</span></button>`).join("")
+    || `<span class="hint" style="margin:0">Ingen basisvarer endnu.</span>`;
+  $("btn-basics-clear").hidden = !state.basics.items.length;
+}
+function addBasics(text) {
+  const have = new Set(state.basics.items.map(w => w.toLowerCase()));
+  for (const w of splitList(text)) {
+    if (!have.has(w.toLowerCase())) { state.basics.items.push(w); have.add(w.toLowerCase()); }
+  }
+  saveBasics(); renderBasics(); state.limit = PAGE; render();
+}
+// En basisvare skal være hele ordet, en bøjning af det eller sidste del af et
+// sammensat ord: "mælk" finder "letmælk", men ikke "mælkedrik" eller
+// "smørrebrød", og "bananer" finder også "banan". Kun overskriften tæller,
+// så "mælk" i en kages beskrivelse ikke kommer med.
+function basicWordMatches(word, q, vocab) {
+  for (let i = word.indexOf(q); i >= 0; i = word.indexOf(q, i + 1)) {
+    const head = word.slice(0, i), rest = word.slice(i + q.length);
+    if ((!rest || isEnding(q, rest)) && (!head || okBefore(q, head, rest, vocab))) return true;
+  }
+  return false;
+}
+// Ord med minus foran udelader tilbud: "mælk -kakao" finder ikke kakaomælk
+function basicMatcher(query, vocab) {
+  const parts = query.split(/\s+/), skip = parts.filter(p => p.startsWith("-")).flatMap(p => searchWords(p));
+  const qs = searchWords(parts.filter(p => !p.startsWith("-")).join(" ")).map(q => {
+    const stem = q.replace(/(erne|ene|er|en|e|r)$/, "");
+    return stem.length >= 3 && stem !== q ? [q, stem] : [q];
+  });
+  if (!qs.length) return null;
+  return heading => {
+    // "Mælke- og hasselnøddesnitte": et ord med bindestreg er forled i et sammensat ord
+    const words = searchWords(heading.replace(/[\p{L}]+-(?=\s)/gu, " "));
+    return qs.every(forms => words.some(w => forms.some(q => basicWordMatches(w, q, vocab))))
+      && !skip.some(x => words.some(w => w.includes(x)));
+  };
+}
+function basicsMatchers() {
+  if (!state.basics.on || !state.basics.items.length) return null;
+  searchFor("");  // bygger ordlisten
+  return state.basics.items.map(word => ({word, match: basicMatcher(word, searchFor.vocab)})).filter(b => b.match);
+}
+
 function loadPrefs() {
   try {
     const p = JSON.parse(localStorage.getItem("tilbudshenter.prefs") || "{}");
@@ -923,14 +986,26 @@ function searchFor(query) {
   return searchMatcher(query, searchFor.vocab);
 }
 
+// Med "Kun mine basisvarer" vises alle tilbud på varerne uanset kategori og
+// mindste rabat, grupperet vare for vare; filtered.basicOf siger hvilken.
 function filtered() {
   const match = searchFor(state.q), tier = new Map();
   const minDiscount = state.settings.min_discount_pct || 0;
+  const basics = basicsMatchers(), basicOf = new Map();
   let list = state.offers.filter(o =>
-    state.stores.has(o.dealer) && state.cats.has(o.category) && state.periods.has(period(o)) &&
+    state.stores.has(o.dealer) && (basics || state.cats.has(o.category)) && state.periods.has(period(o)) &&
     (!state.hideMember || !o.member) &&
     (!state.knownOnly || o.known_discount !== null) &&
-    (o.known_discount === null || o.known_discount >= minDiscount || o.reasons.some(r => r.startsWith("favorit"))));
+    (basics || o.known_discount === null || o.known_discount >= minDiscount || o.reasons.some(r => r.startsWith("favorit"))));
+  if (basics) {
+    list = list.filter(o => {
+      const i = basics.findIndex(b => b.match(o.heading));
+      if (i >= 0) basicOf.set(o, i);
+      return i >= 0;
+    });
+  }
+  filtered.basics = basics;
+  filtered.basicOf = basicOf;
   if (match) list = list.filter(o => { tier.set(o, match(`${o.heading} ${o.dealer}`, o.description)); return tier.get(o) >= 0; });
   const by = {
     discount: (a, b) => (b.known_discount ?? -1) - (a.known_discount ?? -1),
@@ -941,7 +1016,17 @@ function filtered() {
   if (by) list = [...list].sort(by);
   // Ved søgning kommer træf i overskriften først; butiksvisningen holder aviserne samlet
   if (match && state.sort !== "store") list = [...list].sort((a, b) => tier.get(a) - tier.get(b));
+  // Under hver basisvare kommer den billigste pr. kg eller liter først, medmindre andet er valgt
+  if (basics && state.sort === "best") list = [...list].sort((a, b) => perKg(a) - perKg(b) || a.price - b.price);
+  if (basics) list = [...list].sort((a, b) => basicOf.get(a) - basicOf.get(b));
   return list;
+}
+
+function basicHead(word, group) {
+  const cheapest = group.filter(o => o.unit_price_text && perKg(o) < Infinity).sort((a, b) => perKg(a) - perKg(b))[0];
+  const label = word.split(/\s+/).filter(p => !p.startsWith("-")).join(" ");
+  return `<div class="paper-head"><h3>${esc(cap(label))}</h3>
+    <span class="sub">${group.length} tilbud${cheapest ? ` · billigst ${esc(cheapest.unit_price_text)} i ${esc(cheapest.dealer)}` : ""}</span></div>`;
 }
 
 // Butik for butik, avis for avis, og tilbuddene som de står i avisen
@@ -1004,7 +1089,8 @@ function renderChips() {
   const catText = onCats.length === allCats.length ? "alle kategorier"
     : onCats.length <= 2 ? onCats.map(c => c.name).join(", ") || "ingen kategorier"
     : `${onCats.length} af ${allCats.length} kategorier`;
-  $("filter-sum").textContent = [periodText, storeText, catText].join(" · ");
+  $("filter-sum").textContent = [periodText, storeText, state.basics.on && state.basics.items.length
+    ? `mine ${state.basics.items.length} basisvarer` : catText].join(" · ");
 }
 
 function card(o) {
@@ -1048,7 +1134,17 @@ function render() {
   $("count").textContent = `Viser ${Math.min(list.length, state.limit)} af ${list.length} tilbud`
     + (list.length < state.offers.length ? ` (${state.offers.length} i alt)` : "");
   const shown = list.slice(0, state.limit);
-  if (state.sort === "store") {
+  const basics = filtered.basics;
+  if (basics) {
+    const bo = filtered.basicOf, groups = basics.map(() => []);
+    for (const o of list) groups[bo.get(o)].push(o);
+    const missing = basics.filter((b, i) => !groups[i].length).map(b => b.word);
+    $("count").textContent = `${list.length} tilbud på ${basics.length - missing.length} af dine ${basics.length} basisvarer`
+      + (missing.length ? `. Ingen tilbud på: ${missing.join(", ")}` : "");
+    $("empty").textContent = "Ingen tilbud på dine basisvarer lige nu.";
+    $("grid").innerHTML = shown.map((o, i) =>
+      (i === 0 || bo.get(shown[i - 1]) !== bo.get(o) ? basicHead(basics[bo.get(o)].word, groups[bo.get(o)]) : "") + card(o)).join("");
+  } else if (state.sort === "store") {
     const counts = {};
     for (const o of list) counts[o.catalog_id] = (counts[o.catalog_id] || 0) + 1;
     $("grid").innerHTML = shown.map((o, i) =>
@@ -1460,11 +1556,27 @@ function planUsable(o) {
   return o.ingredients && state.stores.has(o.dealer) && !(state.hideMember && o.member);
 }
 
+// Tilbuddets pris pr. kg som ingrediensen k, eller null hvis den ikke kendes
+function offerKg(o, k) {
+  if (!o.unit_price) return null;
+  if (o.unit === "kg" || o.unit === "l") return o.unit_price;
+  const pieceG = ING[k] && ING[k].price[1];
+  return o.unit === "stk" && pieceG ? o.unit_price * 1000 / pieceG : null;
+}
+
+// Et tilbud bruges kun, når det er billigere end basisvaren uden tilbud. En
+// stor rabat på et dyrt mærke er ikke nok.
+function beatsBasis(o, k) {
+  const kg = offerKg(o, k);
+  return kg !== null && !!ING[k] && kg < ING[k].price[0];
+}
+
 function ingredientIndex() {
   const index = new Map();
   for (const o of state.offers) {
     if (!planUsable(o) || (plan.store && o.dealer !== plan.store)) continue;
     for (const k of o.ingredients) {
+      if (!beatsBasis(o, k)) continue;
       if (!index.has(k)) index.set(k, []);
       index.get(k).push(o);
     }
@@ -1508,7 +1620,7 @@ function rankRecipes() {
 }
 
 // Point for en ret: billig pr. person, stor besparelse i forhold til
-// normalpris, meget grønt, og at den bruger det, man har derhjemme.
+// basisvaren, meget grønt, og at den bruger det, man har derhjemme.
 // "Billigst" lægger mest vægt på prisen.
 function recipeScore(entry) {
   const clamp = (x) => Math.max(0, Math.min(1, x));
@@ -1613,10 +1725,10 @@ function amountText(n, unit) {
 function scaled(item, mult = 1) { return item.amount ? amountText(scaledAmount(item, mult), item.unit) : ""; }
 
 // Hvad den mængde, retten bruger, koster: med tilbuddets pris pr. kg, liter
-// eller stk, ellers med en anslået normalpris. Pakken kan koste mere.
+// eller stk, ellers med basisvarens pris. Pakken kan koste mere.
 function itemCost(item, offer, mult = 1) {
   if (!item.keys.length || !item.amount) return {cost: 0, normal: 0, estimate: true, unknown: !item.keys.length};
-  // Normalpris og vægt pr. stk for den ingrediens, tilbuddet er
+  // Basispris og vægt pr. stk for den ingrediens, tilbuddet er
   const key = (offer && item.keys.find(k => offer.ingredients.includes(k))) || item.keys[0];
   const [priceKg, pieceG] = item.prices[key];
   const n = scaledAmount(item, mult);
@@ -1695,7 +1807,7 @@ function renderPlan() {
       <ul>${x.items.map((y, j) => {
         const c = lineCost(y, x.mult);
         const src = y.have ? "har du derhjemme" : y.offer ? offerLine(y.offer)
-          : y.item.keys.length ? "ikke på tilbud, anslået normalpris" : "pris ukendt";
+          : y.item.keys.length ? "basisvare uden tilbud, anslået pris" : "pris ukendt";
         return `<li class="${y.offer ? "on" : ""}${y.have ? " have" : ""}">
         <span class="what">${esc(itemText(y.item, x.mult))}</span>
         <span class="src">${esc(src)}</span>
@@ -2271,8 +2383,31 @@ $("sort").addEventListener("change", e => { state.sort = e.target.value; savePre
 $("known-only").addEventListener("change", e => { state.knownOnly = e.target.checked; saveFilters(); render(); });
 $("filter-menu").addEventListener("toggle", saveFilters);
 $("hide-member").addEventListener("change", e => { state.hideMember = e.target.checked; savePrefs(); render(); });
+$("basics-only").addEventListener("change", e => {
+  state.basics.on = e.target.checked; saveBasics(); state.limit = PAGE; render();
+  if (state.basics.on && !state.basics.items.length) {
+    $("filter-menu").open = true;
+    $("basics").scrollIntoView({block: "center"});
+    $("basics-input").focus();
+    toast("Skriv dine basisvarer, fx mælk, smør og kaffe");
+  }
+});
+$("basics-form").addEventListener("submit", e => {
+  e.preventDefault();
+  addBasics($("basics-input").value);
+  $("basics-input").value = "";
+});
+$("basics-chips").addEventListener("click", e => {
+  const b = e.target.closest("[data-basic]");
+  if (!b) return;
+  state.basics.items = state.basics.items.filter(w => w !== b.dataset.basic);
+  saveBasics(); renderBasics(); render();
+});
+$("btn-basics-clear").addEventListener("click", () => {
+  state.basics.items = []; saveBasics(); renderBasics(); render();
+});
 $("filters").addEventListener("click", e => {
-  const c = e.target.closest(".chip");
+  const c = e.target.closest(".chip[data-kind]");
   if (c) {
     const set = state[c.dataset.kind];
     set.has(c.dataset.value) ? set.delete(c.dataset.value) : set.add(c.dataset.value);
@@ -2341,6 +2476,7 @@ $("settings-form").addEventListener("submit", e => {
     $("btn-load-stores").textContent = "Vælg butikker og aviser";
   }
   loadPrefs();
+  loadBasics();
   try {
     const s = await refreshState();
     await loadList();
