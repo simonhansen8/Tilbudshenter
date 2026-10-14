@@ -37,7 +37,7 @@ DEFAULT_JSON = Path(__file__).parent / "data" / "opskrifter.json"
 SITEMAP_LIMIT = 300
 # Højst så mange nye sider pr. kørsel, så siden stadig bygges hurtigt;
 # resten hentes de næste gange
-NEW_PER_RUN = 150
+NEW_PER_RUN = 300
 # Sitemaps og sider, der ikke er opskrifter
 SKIP_SITEMAPS = ("category", "categories", "kategori", "tag", "author", "forfatter", "page-sitemap", "attachment",
                  "product", "produkt", "video", "image", "news", "nyhed")
