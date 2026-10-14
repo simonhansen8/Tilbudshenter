@@ -250,9 +250,13 @@ hakket oksekød er billigt.
 - Retterne kommer fra en fast samling af omkring 40 danske hverdagsretter i
   `mealplan.py`. Hver ingrediens genkendes i aviserne ud fra nøgleord, så
   hvert tilbud ved, hvilke ingredienser det kan bruges som.
-- Retterne rangeres efter, hvor godt tilbuddet på hovedingrediensen er, og
-  hvor mange af de øvrige varer der også er på tilbud. Planen har højst to
-  retter af samme slags (okse, gris, kylling, fisk, vegetar).
+- Retterne får point for tre ting: lav pris pr. person, stor besparelse i
+  forhold til normalprisen og meget grønt. Vælg **Lavest mulig pris** for at
+  lægge mest vægt på prisen.
+- Planen følger kostrådene: fisk hver uge (to gange ved 6-7 retter), en
+  grøntsagsret ved 4 eller flere retter, højst halvdelen med rødt kød og højst
+  to retter af samme slags. Retter med under 125 g grønt pr. person får grønt
+  tilbehør, fx råkost, af det billigste grønt på tilbud.
 - For hver vare vises det billigste tilbud pr. kg, helst fra den butik, hvor
   hovedingrediensen købes, så en ret kan købes ind ét sted. Du kan også
   vælge én bestemt butik.

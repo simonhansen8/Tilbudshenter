@@ -93,7 +93,7 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "salat": ("salat", [["iceberg"], ["hjertesalat"], ["romaine"], ["salathoved"], ["rucola"]], ["dressing"]),
     "groenne_boenner": ("grønne bønner", [["grønne", "bønner"], ["haricots"], ["bønner", "haricot"]], []),
     "aerter": ("ærter", [["ærter "]], ["snack", "wasabi"]),
-    "squash": ("squash", [["squash"]], ["saft", "sodavand", "drik", "læske", "cl ", "tuborg", "faxe"]),
+    "squash": ("squash", [["squash"]], ["saft", "sodavand", "drik", "læske", "cl ", "tuborg", "faxe", "butternut", "spaghetti", "hokkaido", "græskar"]),
     "wokgroent": ("wokgrøntsager", [["wokgrønt"], ["wokblanding"]], []),
     "citron": ("citron", [["citroner"], ["citron "]], ["saft", "juice", "te ", "vand", "kage", "is "]),
     "persille": ("persille", [["persille"]], ["pesto", "smør"]),
@@ -574,24 +574,65 @@ def _amount(value: float) -> float | int:
     return int(value) if float(value).is_integer() else value
 
 
+# Grøntsager og bælgfrugter, der tæller med i "grønt pr. person".
+# Kartofler tæller ikke med, ligesom i Fødevarestyrelsens kostråd.
+VEGETABLES = {
+    "guleroedder", "loeg", "porrer", "tomater", "hakkede_tomater", "agurk", "peberfrugt", "broccoli",
+    "blomkaal", "spidskaal", "roedkaal", "champignon", "spinat", "salat", "groenne_boenner", "aerter",
+    "squash", "wokgroent", "majs", "kidneyboenner",
+}
+
+# Kostrådene anbefaler omkring 600 g frugt og grønt om dagen. En ret med
+# mindre end dette pr. person får en portion grønt tilbehør.
+MIN_VEG_PER_PERSON = 125
+
+# Tilbehøret: det billigste af disse, der er på tilbud
+SIDE = Item(500, "g", "grønt tilbehør, fx råkost, salat eller dampet broccoli",
+            ["guleroedder", "spidskaal", "broccoli", "agurk", "tomater", "salat", "groenne_boenner", "aerter"])
+
+
+def _grams(item: Item) -> float:
+    if item.unit == "g":
+        return item.amount
+    if item.unit == "dl":
+        return item.amount * 100
+    return item.amount * NORMAL_PRICES[item.keys[0]][1]
+
+
+def vegetables_per_person(items: list[Item]) -> float:
+    """Gram grøntsager pr. person i en ret til 4."""
+    return sum(_grams(i) for i in items if i.keys and i.keys[0] in VEGETABLES) / 4
+
+
+def recipe_items(recipe: Recipe) -> list[Item]:
+    """Rettens varer, med grønt tilbehør hvis den har for lidt grønt."""
+    if vegetables_per_person(recipe.items) >= MIN_VEG_PER_PERSON:
+        return recipe.items
+    return [*recipe.items, SIDE]
+
+
+def _item_payload(i: Item) -> dict:
+    return {
+        "amount": _amount(i.amount), "unit": i.unit, "name": i.name, "keys": i.keys, "main": i.main,
+        "side": i is SIDE,
+        # Normalpris pr. kg og vægt pr. stk for hver ingrediens
+        "prices": {k: list(NORMAL_PRICES[k]) for k in i.keys},
+    }
+
+
 def recipes_payload() -> list[dict]:
     """Retterne som siden og appen bruger dem."""
-    return [
-        {
+    result = []
+    for r in RECIPES:
+        items = recipe_items(r)
+        result.append({
             "id": r.id,
             "name": r.name,
             "kind": r.kind,
             "minutes": r.minutes,
-            "items": [
-                {
-                    "amount": _amount(i.amount), "unit": i.unit, "name": i.name, "keys": i.keys, "main": i.main,
-                    # Normalpris pr. kg og vægt pr. stk for den første ingrediens
-                    "price_kg": NORMAL_PRICES[i.keys[0]][0], "piece_g": NORMAL_PRICES[i.keys[0]][1],
-                }
-                for i in r.items
-            ],
+            "items": [_item_payload(i) for i in items],
+            "veg_g": round(vegetables_per_person(items)),
             "pantry": r.pantry,
             "method": r.method,
-        }
-        for r in RECIPES
-    ]
+        })
+    return result

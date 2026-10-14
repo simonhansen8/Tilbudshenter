@@ -76,3 +76,9 @@ def test_price_text_is_not_rice():
 ])
 def test_more_keywords(categorizer, heading, expected):
     assert categorizer.categorize(heading) == expected
+
+
+def test_squash_is_a_vegetable_unless_tuborg():
+    c = Categorizer(merge_categories({}))
+    assert c.categorize("Squash") == "frugt_og_groent"
+    assert c.categorize("Tuborg Squash") == "drikkevarer"

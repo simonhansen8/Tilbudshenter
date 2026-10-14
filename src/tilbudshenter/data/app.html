@@ -133,6 +133,7 @@ label.field input { padding: 8px 10px; border: 1px solid var(--line); border-rad
 .dish li .what { flex: 1 1 180px; }
 .dish li .src { flex: 2 1 220px; color: var(--muted); font-size: 13px; }
 .dish li .cost { margin-left: auto; white-space: nowrap; font-weight: 600; font-size: 13px; }
+.dish .save { color: var(--accent); font-weight: 600; }
 .dish .price-tag { font-weight: 700; font-size: 17px; white-space: nowrap; }
 .dish li.on .what::before { content: "✓ "; color: var(--accent); font-weight: 700; }
 .dish li.on .src { color: var(--fg); }
@@ -313,11 +314,15 @@ label.field input { padding: 8px 10px; border: 1px solid var(--line); border-rad
       <button class="btn small" id="btn-plan-close">Luk</button>
     </div>
     <div class="dlg-body">
-      <p class="hint">Aftensmad, hvor hovedingrediensen er på tilbud i dine butikker. ✓ betyder, at varen er på tilbud.
-        Prisen er for de mængder, retten bruger, med tilbudspris eller en anslået normalpris; hele pakker kan koste mere.</p>
+      <p class="hint">Billig aftensmad ud fra ugens tilbud, efter kostrådene: fisk hver uge, mindre rødt kød og masser af grønt.
+        Priserne gælder de mængder, retten bruger; hele pakker kan koste mere. ✓ = på tilbud.</p>
       <div class="plan-controls">
         <label class="field">Retter <select id="plan-count"></select></label>
         <label class="field">Personer <select id="plan-persons"></select></label>
+        <label class="field">Vægt på <select id="plan-focus">
+          <option value="">Pris, sundhed og variation</option>
+          <option value="cheap">Lavest mulig pris</option>
+        </select></label>
         <label class="field">Kost <select id="plan-diet">
           <option value="">Alt</option>
           <option value="nopork">Uden svinekød</option>
@@ -849,7 +854,7 @@ function printList() {
 // Retterne (til 4 personer) kommer fra serveren eller data.json. Hvert
 // tilbud har en liste "ingredients" med de ingredienser, det kan bruges
 // som. Valgene huskes i browseren under tilbudshenter.mealplan.
-const plan = {recipes: null, ids: [], count: 5, persons: 4, diet: "", store: "", skipped: new Set()};
+const plan = {recipes: null, ids: [], count: 5, persons: 4, diet: "", focus: "", store: "", skipped: new Set()};
 const KIND_NAMES = {okse: "Okse", gris: "Gris", kylling: "Kylling", fisk: "Fisk", vegetar: "Vegetar"};
 const PORK = new Set(["hakket_gris", "hakket_gris_kalv", "bacon", "stegeflaesk", "medister", "flaeskesteg",
   "moerbrad", "koteletter", "poelser"]);
@@ -859,7 +864,7 @@ const MEAT = new Set([...PORK, ...FISH, "hakket_okse", "hakket_kylling", "kyllin
 const PLAN_MAX_PER_KIND = 2;
 
 function savePlan() {
-  store.set("mealplan", {ids: plan.ids, count: plan.count, persons: plan.persons, diet: plan.diet, store: plan.store});
+  store.set("mealplan", {ids: plan.ids, count: plan.count, persons: plan.persons, diet: plan.diet, focus: plan.focus, store: plan.store});
 }
 
 // Retten tilpasset kosten: ingredienser, kosten udelukker, fjernes (fx
@@ -917,30 +922,54 @@ function rankRecipes() {
     const items = r.items.map(item => ({
       item, offer: item.main && item.keys.some(k => main.ingredients.includes(k)) ? main : bestOffer(item, index, main.dealer),
     }));
-    const coverage = items.filter(x => x.offer).length / items.length;
-    ranked.push({recipe: r, items, main, score: main.score + 20 * coverage});
+    const entry = {recipe: r, items, main};
+    ranked.push({...entry, score: recipeScore(entry)});
   }
   return ranked.sort((a, b) => b.score - a.score);
 }
 
-// Vælger retter med variation: højst to af samme slags, og ikke det
-// samme hovedtilbud to gange. Er der for få, fyldes op uden de krav og
-// til sidst med retter, der er byttet væk.
+// Point for en ret: billig pr. person, stor besparelse i forhold til
+// normalpris, og meget grønt. "Billigst" lægger mest vægt på prisen.
+function recipeScore(entry) {
+  const clamp = (x) => Math.max(0, Math.min(1, x));
+  const cost = dishCost(entry), normal = dishNormalCost(entry);
+  const perPerson = cost / plan.persons;
+  const cheap = clamp((32 - perPerson) / 24);  // 8 kr pr. person = fuld score, 32 kr = ingen
+  const saving = clamp((1 - cost / normal) / 0.5);  // 50 % sparet = fuld score
+  const green = clamp(entry.recipe.veg_g / 250);
+  return plan.focus === "cheap" ? 70 * cheap + 15 * saving + 15 * green : 35 * cheap + 35 * saving + 30 * green;
+}
+
+// Vælger retter efter kostrådene: fisk hver uge (to gange ved 6-7 retter),
+// en grøntsagsret ved 4 eller flere retter, højst halvdelen med rødt kød,
+// højst to af samme slags og ikke det samme hovedtilbud to gange. Er der
+// for få, fyldes op uden de krav og til sidst med retter, der er byttet væk.
 function choosePlan(ranked, keep) {
   const chosen = keep.map(id => ranked.find(x => x.recipe.id === id)).filter(Boolean);
-  const kinds = {}, mains = new Set();
-  for (const x of chosen) { kinds[x.recipe.kind] = (kinds[x.recipe.kind] || 0) + 1; mains.add(x.main.id); }
   const pool = ranked.filter(x => !chosen.includes(x) && !plan.skipped.has(x.recipe.id));
+  const count = (pred) => chosen.filter(pred).length;
+  const red = (x) => x.recipe.kind === "okse" || x.recipe.kind === "gris";
+  const fits = (x) => count(c => c.recipe.kind === x.recipe.kind) < PLAN_MAX_PER_KIND &&
+    !chosen.some(c => c.main.id === x.main.id) &&
+    (!red(x) || count(red) < Math.max(1, Math.floor(plan.count / 2)));
+  const wanted = [["fisk", plan.count >= 6 ? 2 : 1], ["vegetar", plan.count >= 4 ? 1 : 0]];
+  for (const [kind, n] of wanted) {
+    for (const x of pool) {
+      if (chosen.length >= plan.count || count(c => c.recipe.kind === kind) >= n) break;
+      if (x.recipe.kind === kind && !chosen.includes(x) && fits(x)) chosen.push(x);
+    }
+  }
   for (const x of pool) {
     if (chosen.length >= plan.count) break;
-    if ((kinds[x.recipe.kind] || 0) >= PLAN_MAX_PER_KIND || mains.has(x.main.id)) continue;
-    chosen.push(x); kinds[x.recipe.kind] = (kinds[x.recipe.kind] || 0) + 1; mains.add(x.main.id);
+    if (!chosen.includes(x) && fits(x)) chosen.push(x);
   }
   for (const x of [...pool, ...ranked]) {
     if (chosen.length >= plan.count) break;
     if (!chosen.includes(x)) chosen.push(x);
   }
-  return chosen.slice(0, plan.count);
+  // Beholdte retter står, hvor de stod; nye kommer efter i pointorden
+  const kept = chosen.slice(0, keep.length), added = chosen.slice(keep.length).sort((a, b) => b.score - a.score);
+  return [...kept, ...added].slice(0, plan.count);
 }
 
 // Mængder er til 4 personer. Gram rundes til 50 g, resten til hele eller halve.
@@ -964,22 +993,29 @@ function scaled(item) {
 // Hvad den mængde, retten bruger, koster: med tilbuddets pris pr. kg, liter
 // eller stk, ellers med en anslået normalpris. Pakken kan koste mere.
 function itemCost(item, offer) {
+  // Normalpris og vægt pr. stk for den ingrediens, tilbuddet er
+  const key = (offer && item.keys.find(k => offer.ingredients.includes(k))) || item.keys[0];
+  const [priceKg, pieceG] = item.prices[key];
   const n = scaledAmount(item);
-  const kg = item.unit === "g" ? n / 1000 : item.unit === "dl" ? n / 10 : n * item.piece_g / 1000;
-  const pieces = item.unit === "g" || item.unit === "dl" ? (item.piece_g ? kg * 1000 / item.piece_g : null) : n;
-  const normal = kg * item.price_kg;
+  const kg = item.unit === "g" ? n / 1000 : item.unit === "dl" ? n / 10 : n * pieceG / 1000;
+  const pieces = item.unit === "g" || item.unit === "dl" ? (pieceG ? kg * 1000 / pieceG : null) : n;
+  const normal = kg * priceKg;
   let cost = null;
   if (offer && offer.unit_price) {
     if (offer.unit === "kg" || offer.unit === "l") cost = kg * offer.unit_price;
     else if (offer.unit === "stk" && pieces !== null) cost = pieces * offer.unit_price;
   }
   // En pris langt fra det normale skyldes som regel en fejl i mængden
-  if (cost === null || cost > normal * 3 || cost < normal / 5) return {cost: normal, estimate: true};
-  return {cost, estimate: false};
+  if (cost === null || cost > normal * 3 || cost < normal / 5) return {cost: normal, normal, estimate: true};
+  return {cost, normal, estimate: false};
 }
 
 function dishCost(entry) {
   return entry.items.reduce((s, {item, offer}) => s + itemCost(item, offer).cost, 0);
+}
+
+function dishNormalCost(entry) {
+  return entry.items.reduce((s, {item, offer}) => s + itemCost(item, offer).normal, 0);
 }
 
 function kr(n) { return Math.round(n).toLocaleString("da-DK") + " kr"; }
@@ -1021,12 +1057,13 @@ function renderPlan() {
   $("plan-body").innerHTML = entries.map((x, i) => {
     const r = x.recipe;
     const onOffer = x.items.filter(y => y.offer);
-    const cost = dishCost(x);
+    const cost = dishCost(x), normal = dishNormalCost(x);
     return `<article class="dish">
       <div class="dish-head"><h3>${esc(r.name)}</h3>
         <span class="price-tag">ca. ${kr(cost)}</span></div>
       <div class="sub">${kr(cost / plan.persons)} pr. person · ${esc(KIND_NAMES[r.kind] || r.kind)} · ${r.minutes} min
-        · ${onOffer.length} af ${x.items.length} varer på tilbud</div>
+        · ${r.veg_g} g grønt pr. person · ${onOffer.length} af ${x.items.length} varer på tilbud
+        ${normal - cost >= 5 ? ` · <b class="save">sparer ca. ${kr(normal - cost)}</b>` : ""}</div>
       <ul>${x.items.map(({item, offer}) => {
         const c = itemCost(item, offer);
         return `<li class="${offer ? "on" : ""}">
@@ -1043,7 +1080,9 @@ function renderPlan() {
     </article>`;
   }).join("");
   const total = entries.reduce((s, x) => s + dishCost(x), 0);
-  $("plan-sum").textContent = `${entries.length} retter · ca. ${kr(total)} i alt (${kr(total / entries.length / plan.persons)} pr. person pr. ret)`;
+  const saved = entries.reduce((s, x) => s + dishNormalCost(x), 0) - total;
+  $("plan-sum").textContent = `${entries.length} retter · ca. ${kr(total)} i alt (${kr(total / entries.length / plan.persons)} pr. person pr. ret)`
+    + (saved >= 5 ? ` · sparer ca. ${kr(saved)}` : "");
 }
 
 async function openPlan() {
@@ -1052,6 +1091,7 @@ async function openPlan() {
   plan.count = saved.count || 5;
   plan.persons = saved.persons || 4;
   plan.diet = saved.diet || "";
+  plan.focus = saved.focus || "";
   plan.skipped = new Set();
   const stores = [...new Set(state.offers.filter(planUsable).map(o => o.dealer))].sort((a, b) => a.localeCompare(b, "da"));
   plan.store = stores.includes(saved.store) ? saved.store : "";
@@ -1060,6 +1100,7 @@ async function openPlan() {
   $("plan-count").innerHTML = [1, 2, 3, 4, 5, 6, 7].map(n => `<option ${n === plan.count ? "selected" : ""}>${n}</option>`).join("");
   $("plan-persons").innerHTML = [1, 2, 3, 4, 5, 6, 8].map(n => `<option ${n === plan.persons ? "selected" : ""}>${n}</option>`).join("");
   $("plan-diet").value = plan.diet;
+  $("plan-focus").value = plan.focus;
   $("plan-body").innerHTML = `<p class="hint" style="margin-top:14px">Finder retter…</p>`;
   $("plan-dlg").showModal();
   try {
@@ -1114,6 +1155,7 @@ $("btn-plan-list").addEventListener("click", planToList);
 $("plan-count").addEventListener("change", e => { plan.count = Number(e.target.value); renderPlan(); });
 $("plan-persons").addEventListener("change", e => { plan.persons = Number(e.target.value); renderPlan(); });
 // Ny kost eller butik giver en ny madplan
+$("plan-focus").addEventListener("change", e => { plan.focus = e.target.value; plan.ids = []; plan.skipped = new Set(); renderPlan(); });
 $("plan-diet").addEventListener("change", e => { plan.diet = e.target.value; plan.ids = []; plan.skipped = new Set(); renderPlan(); });
 $("plan-store").addEventListener("change", e => { plan.store = e.target.value; plan.ids = []; plan.skipped = new Set(); renderPlan(); });
 $("plan-body").addEventListener("click", e => {
