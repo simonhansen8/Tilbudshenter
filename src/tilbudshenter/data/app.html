@@ -29,6 +29,7 @@ main { max-width: 1180px; margin: 0 auto; padding: 20px 16px 64px; }
 header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; justify-content: space-between; }
 h1 { margin: 0; font-size: 24px; letter-spacing: -.01em; }
 .status { color: var(--muted); font-size: 14px; margin-top: 2px; }
+.status.stale { color: var(--error); }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 9px 14px; cursor: pointer; font-weight: 600; }
 .btn:hover { background: var(--surface-2); }
@@ -365,7 +366,7 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
         <button type="button" class="btn small" id="btn-load-stores">Vis butikker i mit område</button>
         <div id="store-list"></div>
         <div class="fields" style="margin-top:10px">
-          <label class="field wide">Fravælg aviser, hvis navnet indeholder (adskil med komma)
+          <label class="field wide">Fravælg aviser, hvis navnet indeholder (adskil med komma; "føtex: uge" gælder kun føtex)
             <input id="s-excl-catalogs" placeholder="fx legetøj, nonfood, halloween">
           </label>
         </div>
@@ -598,6 +599,15 @@ function containsAny(text, words) {
   const t = text.toLowerCase();
   return words.find(w => w.trim() && t.includes(w.toLowerCase()));
 }
+// Fravalgte aviser: "legetøj" gælder alle kæder, "føtex: Uge 42" kun føtex
+function catalogExcluded(dealer, label, words) {
+  const l = label.toLowerCase(), d = normStore(dealer);
+  return words.some(w => {
+    const i = w.indexOf(":"), chain = i < 0 ? "" : normStore(w.slice(0, i)), part = i < 0 ? "" : w.slice(i + 1).trim();
+    if (chain && part) return d.startsWith(chain) && l.includes(part.toLowerCase());
+    return w.trim() && l.includes(w.toLowerCase());
+  });
+}
 
 // -- Placering (kun den statiske side) ---------------------------------
 // Afstand i km mellem to punkter (haversine)
@@ -673,7 +683,7 @@ function currentPosition() {
 function siteOffers(s) {
   let offers = siteData.offers.filter(o => {
     const text = `${o.heading} ${o.description}`;
-    return storeSelected(o.dealer, s) && storeNearby(o.dealer, s) && !containsAny(o.catalog_label || "", s.exclude_catalogs) &&
+    return storeSelected(o.dealer, s) && storeNearby(o.dealer, s) && !catalogExcluded(o.dealer, o.catalog_label || "", s.exclude_catalogs) &&
       (s.max_price == null || o.price <= s.max_price) &&
       (!s.include_keywords.length || containsAny(text, s.include_keywords)) &&
       !containsAny(text, s.exclude_keywords);
@@ -743,13 +753,13 @@ async function staticApi(path, body) {
   const s = siteSettings();
   if (path === "/api/state") {
     return {demo: false, scan: {running: false}, settings: s, catalog_count: siteData.catalog_count,
-      last_scan: siteData.last_scan, categories: siteData.categories};
+      last_scan: siteData.last_scan, generated: siteData.generated, categories: siteData.categories};
   }
   if (path === "/api/offers") return {offers: siteOffers(s), papers: siteData.papers || {}};
   if (path === "/api/catalogs") {
     return {stores: siteData.stores.map(st => ({
       name: st.name, selected: storeSelected(st.name, s), nearest_km: nearestKm(st.name, s),
-      catalogs: st.catalogs.map(c => ({...c, selected: !containsAny(c.label, s.exclude_catalogs)})),
+      catalogs: st.catalogs.map(c => ({...c, selected: !catalogExcluded(st.name, c.label, s.exclude_catalogs)})),
     }))};
   }
   if (path === "/api/list") {
@@ -841,13 +851,19 @@ function timeAgo(iso) {
 }
 
 // -- Status og hentning ----------------------------------------------
+const STALE_HOURS = 36;
 async function refreshState() {
   const s = await api("/api/state");
   state.settings = s.settings;
   state.categories = s.categories;
   $("demo-tag").hidden = !s.demo;
-  $("status").textContent = `Sidst hentet: ${timeAgo(s.last_scan)} · ${s.catalog_count} aktive aviser`
-    + (STATIC ? " · opdateres automatisk hver dag" : "")
+  // Siden bygges to gange om dagen; er den ikke blevet bygget i over et døgn,
+  // er noget gået galt, og tilbuddene kan være forældede
+  const stale = STATIC && s.generated && Date.now() - new Date(s.generated) > STALE_HOURS * 3600e3;
+  $("status").classList.toggle("stale", !!stale);
+  $("status").textContent = (STATIC ? `Opdateret ${timeAgo(s.generated)}` : `Sidst hentet: ${timeAgo(s.last_scan)}`)
+    + ` · ${s.catalog_count} aktive aviser`
+    + (stale ? " · ikke opdateret som planlagt, så nogle tilbud kan mangle" : STATIC ? " · opdateres automatisk hver dag" : "")
     + (STATIC && s.settings.latitude != null ? ` · butikker inden for ${km(s.settings.radius_km)} af ${s.settings.place}` : "");
   renderScan(s.scan);
   return s;
@@ -901,7 +917,9 @@ async function startScan(force) {
 // -- Tilbud -------------------------------------------------------------
 async function loadOffers() {
   const data = await api("/api/offers");
-  state.offers = data.offers;
+  // Udløbne tilbud vises ikke, også selvom siden ikke er hentet igen siden
+  const now = new Date();
+  state.offers = data.offers.filter(o => !o.run_till || new Date(o.run_till) >= now);
   state.papers = data.papers || {};
   const stores = new Set(state.offers.map(o => o.dealer));
   if (!loadOffers.didInit) {
@@ -2610,11 +2628,6 @@ async function loadStores() {
   } finally { btn.disabled = false; btn.textContent = STATIC ? "Vælg butikker og aviser" : "Vis butikker i mit område"; }
 }
 
-function catalogExcluded(label, words) {
-  const l = label.toLowerCase();
-  return words.some(w => w && l.includes(w.toLowerCase()));
-}
-
 // Afstanden til kædens nærmeste butik ud fra den placering, der er valgt i dialogen
 function distanceTag(name) {
   if (!STATIC) return "";
@@ -2647,16 +2660,16 @@ function renderStores() {
     <div class="store">
       <label class="check"><input type="checkbox" data-store="${i}" ${s.selected ? "checked" : ""}> <b>${esc(s.name)}</b> ${distanceTag(s.name)}</label>
       <div class="store-catalogs" ${s.selected ? "" : "hidden"}>
-        ${s.catalogs.map(c => `<label class="check"><input type="checkbox" data-catalog="${esc(c.label)}" ${catalogExcluded(c.label, words) ? "" : "checked"}>
+        ${s.catalogs.map(c => `<label class="check"><input type="checkbox" data-catalog="${esc(c.label)}" data-dealer="${esc(s.name)}" ${catalogExcluded(s.name, c.label, words) ? "" : "checked"}>
           ${esc(c.label)} <span class="period">${esc(c.period)}</span></label>`).join("")}
       </div>
     </div>`).join("");
 }
 
-function toggleCatalog(label, on) {
+function toggleCatalog(dealer, label, on) {
   let words = splitList($("s-excl-catalogs").value);
-  if (on) words = words.filter(w => !label.toLowerCase().includes(w.toLowerCase()));
-  else if (!catalogExcluded(label, words)) words.push(label);
+  if (on) words = words.filter(w => !catalogExcluded(dealer, label, [w]));
+  else if (!catalogExcluded(dealer, label, words)) words.push(`${dealer}: ${label}`);
   $("s-excl-catalogs").value = words.join(", ");
   renderStores();
 }
@@ -2818,7 +2831,7 @@ $("store-list").addEventListener("change", e => {
   if (t.dataset.store !== undefined) {
     state.catalogList[Number(t.dataset.store)].selected = t.checked;
     renderStores();
-  } else if (t.dataset.catalog !== undefined) toggleCatalog(t.dataset.catalog, t.checked);
+  } else if (t.dataset.catalog !== undefined) toggleCatalog(t.dataset.dealer, t.dataset.catalog, t.checked);
 });
 $("s-excl-catalogs").addEventListener("change", () => { if (state.catalogList) renderStores(); });
 $("s-place").addEventListener("change", e => {

@@ -171,7 +171,7 @@ def cmd_stores(args: argparse.Namespace) -> int:
         store_on = store_selected(name, cfg)
         print(f"\n  [{'x' if store_on else ' '}] {name}")
         for c in sorted(by_store[name], key=lambda c: c.label.casefold()):
-            mark = "x" if store_on and catalog_selected(c.label, cfg) else " "
+            mark = "x" if store_on and catalog_selected(c.label, cfg, name) else " "
             period = f" ({c.run_from:%d/%m}-{c.run_till:%d/%m})" if c.run_from and c.run_till else ""
             print(f"        [{mark}] {c.label.strip() or '(uden navn)'}{period}")
     return 0
@@ -216,8 +216,9 @@ def cmd_site(args: argparse.Namespace) -> int:
         except SourceError as exc:
             print(f"Fejl: {exc}", file=sys.stderr)
             return 2
-        # Siden gemmer databasen i git, så den holdes på et halvt års historik
-        storage.prune(now - timedelta(days=SITE_HISTORY_DAYS))
+        # Siden gemmer databasen i git, så den holdes på et halvt års historik,
+        # og udløbne tilbud gemmes kun med det, prishistorikken bruger
+        storage.prune(now - timedelta(days=SITE_HISTORY_DAYS), slim_before=now)
     for catalog, error in result.failed:
         print(f"Advarsel: kunne ikke hente {catalog.dealer} ({catalog.label}): {error}", file=sys.stderr)
     print(f"{len(result.new_catalogs)} nye aviser ({result.offers_fetched} tilbud), "

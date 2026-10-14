@@ -295,16 +295,28 @@ class Storage:
             if len(catalogs_seen[key]) >= 2
         }
 
-    def prune(self, before: datetime) -> int:
+    def prune(self, before: datetime, slim_before: datetime | None = None) -> int:
         """Sletter aviser og tilbud, der udløb før ``before``, så databasen
-        ikke vokser uden grænse. Returnerer antallet af slettede tilbud."""
+        ikke vokser uden grænse. Tilbud og aviser, der udløb før
+        ``slim_before``, beholder kun det, prishistorikken bruger (beskrivelse,
+        billeder og sidebilleder fjernes). Returnerer antallet af slettede tilbud."""
         cutoff = _iso(before)
         deleted = self.conn.execute("DELETE FROM offers WHERE run_till < ?", (cutoff,)).rowcount
         self.conn.execute(
             "DELETE FROM catalogs WHERE run_till < ? AND id NOT IN (SELECT catalog_id FROM offers)", (cutoff,)
         )
+        slimmed = 0
+        if slim_before is not None:
+            slim = _iso(slim_before)
+            slimmed = self.conn.execute(
+                "UPDATE offers SET description = NULL, image_url = NULL "
+                "WHERE run_till < ? AND (description IS NOT NULL OR image_url IS NOT NULL)", (slim,)
+            ).rowcount
+            slimmed += self.conn.execute(
+                "UPDATE catalogs SET pages = NULL WHERE run_till < ? AND pages IS NOT NULL", (slim,)
+            ).rowcount
         self.conn.commit()
-        if deleted:
+        if deleted or slimmed:
             self.conn.execute("VACUUM")
         return deleted
 

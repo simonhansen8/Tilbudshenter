@@ -1,7 +1,8 @@
 from dataclasses import replace
 
 from tilbudshenter.models import Offer
-from tilbudshenter.selection import select_offers, store_selected
+from tilbudshenter.config import Config
+from tilbudshenter.selection import catalog_selected, select_offers, store_selected
 
 
 def offer(heading, price, pre_price=None, dealer="Netto", description="", id=None):
@@ -58,6 +59,14 @@ def test_catalog_selection(cfg, categorizer):
     assert [o.heading for o in select_offers(offers, cfg, categorizer)] == ["Kaffe"]
     cfg = replace(cfg, exclude_catalogs=[], catalogs=["legetøj"])
     assert [o.heading for o in select_offers(offers, cfg, categorizer)] == ["LEGO"]
+
+
+def test_catalog_exclusion_for_one_chain():
+    cfg = Config(exclude_catalogs=["føtex: Uge 42"])
+    assert not catalog_selected("Uge 42", cfg, "føtex")
+    assert catalog_selected("Uge 42", cfg, "REMA 1000")
+    assert catalog_selected("Uge 43", cfg, "føtex")
+    assert not catalog_selected("Legetøj", Config(exclude_catalogs=["legetøj"]), "Bilka")
 
 
 def test_keywords_and_favorites(cfg, categorizer):

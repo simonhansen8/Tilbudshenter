@@ -117,7 +117,7 @@ class App:
                         {
                             "label": c.label.strip() or "(uden navn)",
                             "period": f"{c.run_from:%d/%m}-{c.run_till:%d/%m}" if c.run_from and c.run_till else "",
-                            "selected": catalog_selected(c.label, cfg),
+                            "selected": catalog_selected(c.label, cfg, name),
                         }
                         for c in sorted(items, key=lambda c: c.label.casefold())
                     ],
