@@ -1069,6 +1069,20 @@ function okBefore(q, head, rest, vocab) {
 const NOT_FOOD_WORDS = new Set(["piskeris", "piskeriset", "piskerisene", "kødnål", "kødnåle", "kødnåler"]);
 // Ord, der betyder noget andet i en kategori: "bønner" under kaffe er kaffebønner
 const OTHER_SENSE = {"bønne": ["kaffe_og_te"], "bønner": ["kaffe_og_te"]};
+// Varer, der sjældent kalder sig selv ved navn: "Thisted Bryghus" og "Grøn
+// Tuborg" er øl. "sikker" tæller overalt, "maerker" kun i varens kategori
+// (Tuborg Squash er sodavand, ikke øl).
+const RELATED = {
+  øl: {sikker: ["bryghus", "bryggeri", "bryggeriet", "bryg", "pilsner", "ipa", "porter", "stout", "hvedeøl"],
+       maerker: ["tuborg", "carlsberg", "heineken", "royal", "harboe", "ceres", "albani", "grimbergen", "jacobsen", "leffe",
+                 "kronenbourg", "brooklyn", "brewmasters", "blanche", "lager", "pils", "classic", "export", "1664"]},
+  vin: {sikker: ["rødvin", "hvidvin", "rosévin", "mousserende", "prosecco", "cava", "champagne", "crémant", "cremant"],
+        maerker: ["chardonnay", "riesling", "merlot", "cabernet", "sauvignon", "pinot", "primitivo", "chianti", "rioja",
+                  "zinfandel", "malbec", "ripasso", "amarone", "shiraz", "tempranillo", "syrah", "grenache", "montepulciano",
+                  "barolo", "valpolicella", "bordeaux", "appassimento", "nebbiolo", "negroamaro", "albarino", "godello"]},
+  sodavand: {sikker: [],
+             maerker: ["cola", "fanta", "sprite", "pepsi", "kondi", "squash", "faxe", "cocacola", "fuze", "schweppes", "nikoline"]},
+};
 // 2: sikkert træf. 1: løst træf, et sammensat ord med et ukendt forled eller
 // efterled ("rødløg", "blåskimmelost", "smørbar"); det tæller kun i
 // overskriften og kun når tilbuddet ligger i varens kategori, så "dybfrost"
@@ -1116,7 +1130,12 @@ function searchIndex(offers) {
 function hits(q, idx) {
   if (!idx.hits.has(q)) idx.hits.set(q, new Map());
   const memo = idx.hits.get(q);
-  return w => { let m = memo.get(w); if (m === undefined) memo.set(w, m = wordMatches(w, q, idx.vocab)); return m; };
+  const rel = RELATED[q] || RELATED[q.replace(/(e|er)$/, "")] || {sikker: [], maerker: []};
+  // Beslægtede ord skal stå som ord eller sidst i et sammensat ord ("julebryg", ikke "transporterer")
+  const isRel = (w, r) => w === r || (w.startsWith(r) && isEnding(r, w.slice(r.length))) || (w.endsWith(r) && w.length - r.length >= 3);
+  const match = w => Math.max(wordMatches(w, q, idx.vocab), rel.sikker.some(r => isRel(w, r)) ? 3 : 0,
+                              rel.maerker.some(r => isRel(w, r)) ? 1 : 0);
+  return w => { let m = memo.get(w); if (m === undefined) memo.set(w, m = match(w)); return m; };
 }
 const NON_FOOD = new Set(["nonfood", "personlig_pleje", "husholdning"]);
 // Kategorierne hvor søgeordet oftest står i overskriften (ikke som smag)
@@ -1154,9 +1173,11 @@ function searchMatcher(query, idx) {
     let tier = 0;
     for (const q of qs) {
       if ((OTHER_SENSE[q] || []).includes(o.category)) return -1;
-      const hit = hits(q, idx), home = homeCategories(q, idx), atHome = !home.size || home.has(o.category);
-      const found = head.map(w => hit(w) === 2 || (hit(w) === 1 && atHome));
-      if (!found.some(Boolean) && !desc.some(w => hit(w) === 2)) return -1;
+      const hit = hits(q, idx), home = homeCategories(q, idx);
+      // 3: et beslægtet ord, der altid betyder varen ("Thisted Bryghus" er øl i alle kategorier)
+      const atHome = !home.size || home.has(o.category) || head.some(w => hit(w) === 3);
+      const found = head.map(w => hit(w) >= 2 || (hit(w) === 1 && atHome));
+      if (!found.some(Boolean) && !desc.some(w => hit(w) >= 2)) return -1;
       if (!atHome || (found.some(Boolean) && found.every((f, i) => !f || isFlavour(head, i)))) tier = 2;
       else if (!found.some(Boolean)) tier = Math.max(tier, 1);
     }

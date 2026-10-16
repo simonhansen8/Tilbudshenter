@@ -108,3 +108,12 @@ def test_beans_are_not_coffee():
     got = run(offers, ("bønner", "kaffe"))
     assert [h for h, _ in got["bønner"]] == ["Kidneybønner", "Hvide bønner i tomatsauce", "Edamame eller grønne bønner"]
     assert [h for h, _ in got["kaffe"]] == ["Lavazza kaffebønner", "Peter Larsen Kaffe"]
+
+
+def test_beer_without_the_word():
+    offers = [("Thisted eller Skanderborg Bryghus", "50 cl. Ex. pant", "andet"), ("Grøn Tuborg eller Carlsberg Pilsner", "", "oel_og_vin"),
+              ("Harboe julebryg", "33 cl.", "oel_og_vin"), ("Tuborg øl", "15 x 33 cl.", "oel_og_vin"),
+              ("Tuborg Squash", "33 cl.", "drikkevarer"), ("CRIVIT Skiundertrøje", "Transporterer fugt", "nonfood")]
+    got = run(offers, ("øl",))
+    assert [h for h, _ in got["øl"]] == ["Thisted eller Skanderborg Bryghus", "Grøn Tuborg eller Carlsberg Pilsner",
+                                         "Harboe julebryg", "Tuborg øl"]
