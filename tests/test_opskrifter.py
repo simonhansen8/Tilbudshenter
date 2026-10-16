@@ -41,7 +41,7 @@ def test_recipe_from_lines():
     assert [i.keys[0] for i in recipe.items] == ["hakket_okse", "loeg", "kidneyboenner", "tortilla"]
     assert recipe.pantry == ["olie"]
     # Kød der ikke kan genkendes, kan ikke prissættes og passer ikke til en vegetar
-    assert recipe_from_lines("y", "Lam", ["800 g lammekølle", "1 kg kartofler", "2 løg"])[0] is None
+    assert recipe_from_lines("y", "Rådyr", ["800 g rådyrkølle", "1 kg kartofler", "2 løg"])[0] is None
     # Bouillon er en basisvare, men retten passer så ikke til en vegetar
     soup, _ = recipe_from_lines("s", "Suppe", ["1 kg kartofler", "3 porrer", "1 l hønsebouillon"])
     assert soup.kind == "vegetar" and soup.flags == ["meat"] and soup.pantry == ["hønsebouillon"]

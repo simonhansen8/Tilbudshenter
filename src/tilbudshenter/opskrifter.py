@@ -35,7 +35,7 @@ log = logging.getLogger(__name__)
 USER_AGENT = "Tilbudshenter/0.1 (madplan; https://github.com/simonhansen8/Tilbudshenter)"
 MAX_BYTES = 3_000_000
 DEFAULT_JSON = Path(__file__).parent / "data" / "opskrifter.json"
-SITEMAP_LIMIT = 1000
+SITEMAP_LIMIT = 2500
 # Højst så mange nye sider pr. kørsel, så siden stadig bygges hurtigt;
 # resten hentes de næste gange. Madsiderne hentes samtidig, men hver
 # madside kun én side ad gangen.
@@ -48,7 +48,7 @@ GOOD_SITEMAPS = ("opskrift", "recipe", "post")
 NOT_RECIPES = ("/kategori/", "/category/", "/tag/", "/author/", "/forfatter/", "/page/", "/side/", "/soeg", "/search")
 # Hæves, når opskrifter kan læses fra flere slags sider, så de sider, der
 # blev sprunget over før, prøves igen
-VERSION = 4
+VERSION = 5
 
 
 def _ascii_url(url: str) -> str:

@@ -31,13 +31,13 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "hakket_gris": ("hakket grisekød", [*PRODUCT_GROUPS["hakket_gris"][1], ["hakket", "svinekød"]], ["kalv", "okse"]),
     # "Hakket kød" i en opskrift er som regel grise- og kalvekød
     "hakket_gris_kalv": ("hakket grise- og kalvekød", [*PRODUCT_GROUPS["hakket_gris_kalv"][1], ["hakket", "kød "],
-                                                        ["hakket", "svine", "kalv"]],
+                                                        ["hakket", "svin", "kalv"], ["hakket", "kalv", "flæsk"]],
                          PRODUCT_GROUPS["hakket_gris_kalv"][2]),
     "hakket_kylling": PRODUCT_GROUPS["hakket_kylling"],
     "kyllingebryst": ("kyllingebryst", [["kyllingebryst"], ["kyllingefilet"], ["kylling", "inderfilet"],
                                         ["kyllingeinderfilet"], ["kyllingestrimler"]], ["lage", "kalkun"]),
     "kyllingelaar": ("kyllingelår", [["kylling", "lår"], ["overlår"], ["underlår"]], ["and", "kalkun"]),
-    "hel_kylling": ("hel kylling", [["hel", "kylling"], ["helkylling"], ["kylling", "hel "], ["kylling "]],
+    "hel_kylling": ("hel kylling", [["hel", "kylling"], ["helkylling"], ["kylling", "hel "], ["kylling "], ["kyllinger "]],
                     ["grill", "stegt", "lår", "bryst", "filet", "hakket", "pålæg", "kogt", "wings", "tern", "pose", "posen"]),
     "bacon": ("bacon", [["bacon"]], ["leverpostej", "kalkun", "pølse", "ost", "chips"]),
     "stegeflaesk": ("stegeflæsk", [["stegeflæsk"], ["brystflæsk"], ["flæsk", "skiver"]], ["svær", "steg"]),
@@ -45,16 +45,51 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "flaeskesteg": PRODUCT_GROUPS["flaeskesteg"],
     "moerbrad": ("mørbrad af gris", [*PRODUCT_GROUPS["moerbrad"][1], ["svinemørbrad"], ["mørbrader"]],
                  PRODUCT_GROUPS["moerbrad"][2]),
-    "koteletter": ("koteletter", [["kotelet"]], ["lam", "kalv", "okse"]),
+    # "kotelet" alene finder ikke nakke- og svinekoteletter, der slutter på "koteletter"
+    "koteletter": ("koteletter", [["kotelet"], ["koteletter"]], ["lam", "kalv", "okse"]),
+    "svinekam": ("svinekam eller nakkefilet", [["svinekam"], ["grisekam"], ["kamfilet"], ["kamsteg"], ["nakkefilet"],
+                                               ["kam", "gris"]], ["kotelet", "koteletter", "pålæg", "røget", "hamburgerryg"]),
+    "skinkekoed": ("skinkeschnitzler, -strimler eller -tern",
+                   [["skinkeschnitzel"], ["skinkeschnitzler"], ["skinkestrimler"], ["skinketern"], ["skinkekød"],
+                    ["skinke", "strimler"], ["skinke", "tern"], ["skinke", "schnitzel"]],
+                   ["paneret", "panerede", "pandeklar", "ost", "pålæg"]),
+    "lufttoerret_skinke": ("parma- eller serranoskinke", [["parmaskinke"], ["serranoskinke"], ["serrano "], ["prosciutto"],
+                                                           ["lufttørret", "skinke"], ["spegeskinke"]],
+                           ["ost", "pizza", "chips"]),
     "poelser": ("pølser", [["pølser"]], ["cocktail", "salami", "spege", "rulle", "leverpostej", "vegansk"]),
     "chorizo": ("chorizo", [["chorizo"]], ["chips", "snack", "pizza", "skiver"]),
     "boef": ("bøf", [["bøf "], ["bøffer"], ["oksebøf"], ["entrecote"], ["ribeye"], ["culotte"], ["flanksteak"], ["flatsteak"],
-                     ["oksefilet"]], ["hakke", "burger", "kylling", "kalkun", "lam", "lammekød", "gris", "vegansk", "plantebaseret",
+                     ["oksefilet"], ["tykstegsbøf"]], ["hakke", "burger", "kylling", "kalkun", "lam", "lammekød", "gris", "vegansk", "plantebaseret",
                                    "laks", "fisk", "veggie", "vegetar", "grønt", "grønsag"]),
-    "okse_tern": ("oksekød i tern", [["okse", "tern"], ["gullasch"], ["oksegryde"], ["oksekødsstrimler"], ["oksestrimler"]],
+    "okse_tern": ("oksekød i tern", [["okse", "tern"], ["gullasch"], ["oksegryde"], ["oksekødsstrimler"], ["oksestrimler"],
+                                     ["okse", "strimler"]],
                   ["kylling", "gris"]),
+    "oksesteg": ("oksesteg (tyndsteg, inderlår, klump, tykkam eller bov)",
+                 [["oksesteg"], ["tyndsteg"], ["roastbeef"], ["okseinderlår"], ["okse", "inderlår"], ["okseklump"],
+                  ["oksetykkam"], ["tykkam", "okse"], ["oksebov"], ["bov", "okse"], ["oksehøjreb"], ["højreb"],
+                  ["oksespidsbryst"], ["okseyderlår"]],
+                 ["pålæg", "hakket", "kalv", "gris", "bouillon", "fond"]),
+    "oksemoerbrad": ("oksemørbrad", [["oksemørbrad"], ["mørbrad", "okse"]], ["pålæg", "kalv", "gris"]),
+    "kalvekoed": ("kalvekød", [["kalvekød"], ["kalveculotte"], ["kalvemørbrad"], ["kalveschnitzel"], ["kalveschnitzler"],
+                               ["kalvestrimler"], ["kalvetykkam"], ["kalvebov"], ["kalvesteg"], ["kalvegrydesteg"],
+                               ["kalvefilet"], ["kalvecuvette"], ["kalveinderlår"], ["kalvesmåkød"], ["kalv", "tern"]],
+                  ["hakket", "gris", "grise", "svin", "svine", "sticks", "spareribs", "lever", "pølse", "fond", "bouillon", "paneret",
+                   "pålæg"]),
+    "lam": ("lammekød", [["lammekølle"], ["lammekød"], ["lammeculotte"], ["lammefilet"], ["lammekotelet"],
+                         ["lammekoteletter"], ["lammebov"], ["lammesteak"], ["lammekam"], ["lammekrone"],
+                         ["lammemørbrad"], ["lam "]],
+            ["skind", "fjord", "fjordens", "uld", "pølse"]),
+    "kalkun": ("kalkun", [["kalkunbryst"], ["kalkunfilet"], ["kalkunstrimler"], ["kalkun", "strimler"],
+                          ["kalkunschnitzel"], ["kalkunschnitzler"], ["kalkun", "schnitzel"], ["kalkunoverlår"],
+                          ["kalkununderlår"], ["kalkunkød"], ["hakket", "kalkun"]],
+               ["paneret", "nuggets", "bacon", "pålæg", "cordon", "hakkebøf", "hakkebøffer", "røget", "middagskalkun"]),
+    "and": ("and", [["andebryst"], ["andebryster"], ["andelår"], ["and ", "hel "], ["landand"]],
+            ["confiteret", "confiterede", "menu", "andemenu", "sauce", "dyne", "stegt"]),
     # Fisk
     "laksefilet": ("laksefilet", [*PRODUCT_GROUPS["laksefilet"][1], ["laks "], ["lakseside"], ["laksesider"]], [*PRODUCT_GROUPS["laksefilet"][2], "skiver"]),
+    # Kold- og varmrøget laks og gravad laks; laksefilet udelukker dem
+    "roeget_laks": ("røget laks", [["røget", "laks"], ["gravad", "laks"], ["røgede", "laks"]],
+                    ["paté", "pate", "salat", "topping", "mousse", "sandwich", "røræg", "smørrebrød"]),
     "hvid_fisk": ("torsk eller anden hvid fisk", [["torsk"], ["sej "], ["sejfilet"], ["kuller"], ["rødspætte"],
                                                   ["fiskefilet"], ["pangasius"], ["hoki"]],
                   ["fars", "rogn", "lever", "frikadelle", "tørret", "røget"]),
@@ -114,7 +149,7 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "foraarsloeg": ("forårsløg", [["forårsløg"]], []),
     "hvidloeg": ("hvidløg", [["hvidløg "], ["hvidløgsfed"], ["hvidløgs ", "fed "]], ["dressing", "brød", "smør", "pølse", "gyros"]),
     "porrer": ("porrer", [["porre"]], []),
-    "tomater": ("tomater", [*PRODUCT_GROUPS["tomater"][1], ["tomat "]], PRODUCT_GROUPS["tomater"][2]),
+    "tomater": ("tomater", [*PRODUCT_GROUPS["tomater"][1], ["tomat "], ["bøftomat"]], PRODUCT_GROUPS["tomater"][2]),
     "cherrytomater": ("cherrytomater", [["cherrytomat"], ["snacktomat"], ["cherry", "tomater"]], ["soltørrede", "dåse"]),
     "agurk": PRODUCT_GROUPS["agurk"],
     "peberfrugt": PRODUCT_GROUPS["peberfrugt"],
@@ -152,7 +187,9 @@ NORMAL_PRICES: dict[str, tuple[float, float]] = {
     "kyllingebryst": (115, 150), "kyllingelaar": (45, 200), "hel_kylling": (60, 1400), "bacon": (110, 150),
     "chorizo": (180, 200), "stegeflaesk": (100, 400), "medister": (75, 500), "flaeskesteg": (65, 1500),
     "moerbrad": (110, 500), "koteletter": (85, 200), "poelser": (90, 60), "boef": (280, 150), "okse_tern": (180, 500),
-    "laksefilet": (230, 125), "hvid_fisk": (200, 125), "fiskefrikadeller": (120, 60), "tun": (120, 185),
+    "svinekam": (90, 1000), "skinkekoed": (100, 400), "lufttoerret_skinke": (350, 80), "oksesteg": (200, 1000),
+    "oksemoerbrad": (450, 600), "kalvekoed": (220, 500), "lam": (180, 1000), "kalkun": (120, 500), "and": (180, 350),
+    "laksefilet": (230, 125), "roeget_laks": (300, 150), "hvid_fisk": (200, 125), "fiskefrikadeller": (120, 60), "tun": (120, 185),
     "rejer": (220, 400),
     "aeg": (55, 60), "maelk": (14, 1000), "floede": (50, 250), "creme_fraiche": (45, 200), "revet_ost": (110, 175),
     "frisk_mozzarella": (110, 125),
@@ -273,6 +310,12 @@ VARIETIES = {
     "yoghurt": ["græsk", "skyr", "drikke"],
     "salat": ["iceberg", "hjertesalat", "feldsalat", "frisée", "endivie"],
     "pasta": ["frisk", "glutenfri"],
+    # Hakket lammekød, lammekølle og lammefilet kan ikke bytte plads
+    "lam": ["hakket", "kølle", "culotte", "filet", "kotelet", "koteletter", "bov", "kam", "steak", "krone", "mørbrad"],
+    "kalvekoed": ["mørbrad", "schnitzel", "schnitzler", "strimler", "tern", "culotte", "bov", "tykkam", "steg", "filet",
+                  "cuvette", "inderlår", "småkød"],
+    "and": ["andebryst", "andelår"],
+    "roeget_laks": ["gravad", "varm", "varmrøget", "kold", "koldrøget"],
 }
 
 
@@ -685,7 +728,7 @@ def _matches(tokens: list[str], spec: tuple[str, list[list[str]], list[str]]) ->
 
 # Mere præcise ingredienser, der vinder over en bredere: står der
 # "revet parmesan", er det parmesan og ikke en hvilken som helst revet ost
-REPLACES = {"parmesan": ["revet_ost"], "frisk_mozzarella": ["revet_ost"], "romaine": ["salat"], "rucola": ["salat"], "cherrytomater": ["tomater"],
+REPLACES = {"okse_tern": ["oksesteg"], "oksemoerbrad": ["moerbrad"], "parmesan": ["revet_ost"], "frisk_mozzarella": ["revet_ost"], "romaine": ["salat"], "rucola": ["salat"], "cherrytomater": ["tomater"],
             "foraarsloeg": ["loeg"]}
 
 
@@ -854,8 +897,9 @@ def recipes_payload() -> list[dict]:
 _DEPARTMENT_KEYS = {
     "koed": ["hakket_okse", "hakket_gris", "hakket_gris_kalv", "hakket_kylling", "kyllingebryst", "kyllingelaar",
              "hel_kylling", "bacon", "stegeflaesk", "medister", "flaeskesteg", "moerbrad", "koteletter", "poelser",
-             "boef", "okse_tern", "chorizo"],
-    "fisk": ["laksefilet", "hvid_fisk", "fiskefrikadeller", "rejer"],
+             "boef", "okse_tern", "chorizo", "svinekam", "skinkekoed", "lufttoerret_skinke", "oksesteg", "oksemoerbrad",
+             "kalvekoed", "lam", "kalkun", "and"],
+    "fisk": ["laksefilet", "roeget_laks", "hvid_fisk", "fiskefrikadeller", "rejer"],
     "mejeri": ["aeg", "maelk", "floede", "creme_fraiche", "revet_ost", "frisk_mozzarella", "parmesan", "feta", "yoghurt", "smoer",
                "pizzadej"],
     "broed_og_bager": ["tortilla", "burgerboller", "poelsebroed"],
@@ -949,6 +993,8 @@ PANTRY_WORDS = [
     "bouillonterning", "bouillonterninger", "mayonnaise", "mayo ", "flormelis", "hvidløgspulver", "løgpulver",
     "sovsekulør", "madkulør", "soya", "teriyaki", "tamari", "miso", "tahin", "sirup", "farin", "panko",
     "remoulade", "barbecuesauce", "bbq", "chutney", "citronskal", "limeskal", "isterninger", "karse",
+    # Ikke kød eller fisk at købe, selv om ordet ligner: "risvin" er ikke svin, "kødsnor" er snor
+    "risvin", "mirin", "kødsnor", "fiskesause", "nori", "tang ", "ansjos", "ansjoser",
 ]
 PORK_WORDS = ["skinke", "bacon", "pancetta", "chorizo", "salami", "svin", "gris", "flæsk", "pølse", "prosciutto",
               "serrano", "medister", "kotelet", "spegepølse"]
@@ -957,11 +1003,12 @@ FISH_WORDS = ["fisk", "laks", "torsk", "tun ", "rejer", "makrel", "sild", "ansjo
 MEAT_WORDS = ["kød", "okse", "kalv", "lam", "kylling", "kalkun", "and ", "andebryst", "gås", "vildt", "hjort",
               "rådyr", "kanin", "bøf", "frikadelle", "høne", "hønse", "lever", "kebab", "gyros"]
 _KIND_KEYS = [
-    ("fisk", ["laksefilet", "hvid_fisk", "fiskefrikadeller", "tun", "rejer"]),
-    ("kylling", ["hakket_kylling", "kyllingebryst", "kyllingelaar", "hel_kylling"]),
-    ("okse", ["hakket_okse", "boef", "okse_tern"]),
+    ("fisk", ["laksefilet", "roeget_laks", "hvid_fisk", "fiskefrikadeller", "tun", "rejer"]),
+    # And og kalkun er fjerkræ ligesom kylling; kalv og lam er rødt kød ligesom okse
+    ("kylling", ["hakket_kylling", "kyllingebryst", "kyllingelaar", "hel_kylling", "kalkun", "and"]),
+    ("okse", ["hakket_okse", "boef", "okse_tern", "oksesteg", "oksemoerbrad", "kalvekoed", "lam"]),
     ("gris", ["hakket_gris", "hakket_gris_kalv", "bacon", "stegeflaesk", "medister", "flaeskesteg", "moerbrad",
-              "koteletter", "poelser", "chorizo"]),
+              "koteletter", "poelser", "chorizo", "svinekam", "skinkekoed", "lufttoerret_skinke"]),
 ]
 _MEAT_KEYS = {k for _, keys in _KIND_KEYS for k in keys}
 
