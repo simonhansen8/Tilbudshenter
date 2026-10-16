@@ -3046,6 +3046,9 @@ $("settings-form").addEventListener("submit", e => {
   loadPrefs();
   loadBasics();
   loadFolded();
+  // En notifikation om et tilbud åbner siden med søgningen, fx ?q=kaffe
+  const q = new URLSearchParams(location.search).get("q");
+  if (q) { state.q = q; $("search").value = q; }
   try {
     const s = await refreshState();
     await loadList();

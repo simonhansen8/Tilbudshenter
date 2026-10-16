@@ -233,6 +233,12 @@ def cmd_site(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_notify(args: argparse.Namespace) -> int:
+    from .notifikation import run as run_notify
+
+    return run_notify(args.data, args.list)
+
+
 def cmd_recipes(args: argparse.Namespace) -> int:
     from .opskrifter import DEFAULT_JSON, update
 
@@ -302,6 +308,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--ud", dest="out", type=Path, default=Path("side"), help="mappe til siden (standard: side)")
     p.add_argument("--database", type=Path, help="database med tilbud og prishistorik (standard: <mappe>/tilbud.db)")
     p.set_defaults(func=cmd_site)
+
+    p = sub.add_parser("notifikation", parents=[common],
+                       help="send besked til telefonen om nye tilbud på varerne i notifikationer.txt")
+    p.add_argument("--data", type=Path, default=Path("side/data.json"), help="sidens data (standard: side/data.json)")
+    p.add_argument("--liste", dest="list", type=Path, default=Path("notifikationer.txt"),
+                   help="varerne der holdes øje med (standard: notifikationer.txt)")
+    p.set_defaults(func=cmd_notify)
 
     p = sub.add_parser("opskrifter", parents=[common], help="hent opskrifterne i opskrifter.txt fra madsiderne")
     p.add_argument("--liste", dest="list", type=Path, default=Path("opskrifter.txt"),
