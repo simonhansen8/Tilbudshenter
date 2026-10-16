@@ -50,10 +50,19 @@ jobs:
           mkdir -p side
           if git fetch --depth 1 origin gh-pages; then
             git show origin/gh-pages:tilbud.db > side/tilbud.db || rm -f side/tilbud.db
+            git show origin/gh-pages:notifikationer.json > side/notifikationer.json || rm -f side/notifikationer.json
           fi
 
       - name: Hent tilbud og byg siden
         run: tilbudshenter side --ud side
+
+      # Besked til telefonen om nye tilbud på varerne i notifikationer.txt.
+      # Emnet i ntfy-appen står i hemmeligheden NTFY_EMNE. En fejl her må
+      # ikke stoppe siden.
+      - name: Send notifikationer
+        run: tilbudshenter notifikation --data side/data.json --liste notifikationer.txt || echo "Notifikationerne fejlede"
+        env:
+          NTFY_EMNE: ${{ secrets.NTFY_EMNE }}
 
       - name: Udgiv på gh-pages
         run: |

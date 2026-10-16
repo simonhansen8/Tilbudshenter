@@ -37,6 +37,22 @@ skriver `index.html` og `data.json` i mappen `side`.
 
 Kræver Python 3.11 eller nyere. Der er ingen andre afhængigheder.
 
+### Notifikationer på telefonen
+
+Skriv de varer, du vil have besked om, i `notifikationer.txt` (ét søgeord pr.
+linje, som i søgefeltet). Når siden opdateres, søges der efter dem med samme
+regler som *Mine basisvarer*, og hvert nyt tilbud giver én push-besked
+gennem den gratis app **ntfy**. Et tryk på beskeden åbner siden med søgningen.
+
+1. Installér appen *ntfy* (App Store eller Google Play).
+2. Tryk *+* og abonnér på et emne, som kun du kender, fx `tilbud-` efterfulgt
+   af nogle tilfældige bogstaver og tal.
+3. På GitHub: *Settings → Secrets and variables → Actions → New repository
+   secret*, navn `NTFY_EMNE`, værdi det samme emne.
+
+Uden `NTFY_EMNE` viser workflowen bare træffene i loggen. Hvilke tilbud der
+er sendt besked om, huskes i `notifikationer.json` på `gh-pages`.
+
 ### Appen (anbefalet)
 
 **Windows (anbefalet):** hent zip-filen og pak den ud én gang, og dobbeltklik
@@ -246,6 +262,7 @@ src/tilbudshenter/
   cli.py          kommandolinjen
   webapp.py       appen (lokal webserver); brugerfladen ligger i data/app.html
   pages.py        den statiske udgave af appen til GitHub Pages
+  notifikation.py besked til telefonen (ntfy) om tilbud på varerne i notifikationer.txt
   config.py       indlæsning af tilbudshenter.toml
   scanner.py      finder nye aviser og henter tilbud
   sources/        datakilder (tjek.py = eTilbudsavis, demo.py = demodata)

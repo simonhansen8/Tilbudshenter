@@ -1,0 +1,13 @@
+# Varer du vil have besked om på telefonen, når de kommer på tilbud
+#
+# Ét søgeord pr. linje, præcis som i søgefeltet på siden: "kaffe" finder også
+# "instantkaffe", og et ord med minus foran udelader tilbud, fx
+# "kaffe -instantkaffe". Der gives besked én gang pr. tilbud, når siden
+# opdateres (kl. ca. 6 og 17).
+#
+# Vil du kun have besked om bestemte kæder, så skriv dem på en linje som
+#   butikker: Netto, REMA 1000, Lidl
+# Uden den linje gives der besked om alle kæder på siden.
+#
+# Beskederne sendes med appen ntfy; se "Notifikationer" i README.md.
+
