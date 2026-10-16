@@ -22,6 +22,8 @@ LINES = [
     "2 tortillas", "1 knivspids muskat", "500 g hakket kød", "8 æg", "1 pose spinat", "1 broccoli",
     "50 g revet parmesan", "2 romainesalat", "1 bakke cherrytomater", "200 g chorizo, i tern", "1 lime, saften herfra",
     "1 bundt forårsløg", "2 dl græsk yoghurt", "1 tsk fiskesauce", "5 skiver bacon",
+    "1 tsk revet ingefær", "1 frisk mozzarella", "2 kugler mozzarella", "100 g fintrevet ost", "50 g revet comté",
+    "salt til ris", "2 spsk smør til stegning", "4 laksebøffer", "2 dl sojayoghurt", "Cheddar twist",
 ]
 RECIPES = [
     (["500 g hakket oksekød", "1 løg", "2 fed hvidløg", "1 dåse hakkede tomater", "400 g spaghetti", "salt"], 4),
@@ -66,3 +68,47 @@ def test_recipes_are_read_like_python():
         assert simple(got["items"]) == simple(want["items"]), lines
         assert (got["kind"], got["veg_g"], got["pantry"], got["flags"]) == (
             want["kind"], want["veg_g"], want["pantry"], want.get("flags", [])), lines
+
+
+FITS = [
+    ("fintrevet lagret cheddarost", "Revet mexi-topping", "revet_ost"),
+    ("fintrevet lagret cheddarost", "Planet Dairy Revet tex mex eller cheddar", "revet_ost"),
+    ("50 g lagret cheddar", "MILBONA Revet pizzatopping", "revet_ost"),
+    ("100 g revet ost", "MILBONA Revet pizzatopping", "revet_ost"),
+    ("150 g bacon", "Gestus Røget Bacon", "bacon"),
+    ("800 g koteletter", "Coop marineret lammeculotte, bbq koteletter eller Rose kylling hele lår", "koteletter"),
+    ("4 kyllingelår", "Coop marineret lammeculotte, bbq koteletter eller Rose kylling hele lår", "kyllingelaar"),
+    ("2 dl græsk yoghurt", "MADVÆRKET Skyr naturel eller vanilje", "yoghurt"),
+    ("300 g jasminris", "Basmati ris", "ris"),
+    ("1 citrusfrugt", "Citroner", "citron"),
+    ("2 tomater", "Skinkeculotte med tomat & ramsløg", "tomater"),
+    ("600 g torsk", "GESTUS PANEREDE OG OVNKLARE FISKEFILETER", "hvid_fisk"),
+    ("300 g brune ris", "Jasminris", "ris"),
+    ("300 g brune ris", "Ris", "ris"),
+    ("500 g hakket oksekød", "Veggie hakket", "hakket_okse"),
+    ("2 skiver veggie bacon", "REMA 1000 Bacon i skiver", "bacon"),
+]
+
+
+def test_offer_fits_like_python():
+    from tilbudshenter.mealplan import offer_fits
+
+    js = run_js(f"{json.dumps(FITS, ensure_ascii=False)}.map(([l, h, k]) => offerFits(l, h, k))")
+    assert js == [offer_fits(*f) for f in FITS]
+    assert js == [False, True, False, True, True, False, True, False, False, True, False, False, False, True, False, False]
+
+
+def test_parts_after_med_are_ignored_like_python():
+    heads = ["Grillpølser med tomat & ramsløg", "Kyllingebryst med hud", "Pepsi Max Lime", "Rucola", "Coca-Cola Zero"]
+    js = run_js(f"{json.dumps(heads, ensure_ascii=False)}.map(h => lineKeys(h))")
+    assert js == [line_keys(h) for h in heads]
+    assert "tomater" not in js[0] and js[1:] == [["kyllingebryst"], [], ["rucola"], []]
+
+
+def test_wrong_kinds_are_not_matched():
+    expect = {"1 tsk revet ingefær": [], "1 frisk mozzarella": ["frisk_mozzarella"],
+              "100 g fintrevet ost": ["revet_ost"], "50 g revet comté": ["revet_ost"], "salt til ris": [],
+              "2 spsk smør til stegning": ["smoer"], "4 laksebøffer": [], "2 dl sojayoghurt": [],
+              "Cheddar twist": []}
+    for line, keys in expect.items():
+        assert line_keys(parse_line(line)[2]) == keys, line

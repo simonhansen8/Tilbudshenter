@@ -230,3 +230,16 @@ def test_recipes_and_new_pages_are_fetched_first(tmp_path):
     update(lst, tmp_path / "opskrifter.json", fetcher, delay=0)
     assert fetched[1:] == ["https://mad.dk/kylling-i-fad-med-groent/", "https://mad.dk/gammelt-blogindlaeg-fra-2012/",
                            "https://mad.dk/fisk/"]
+
+
+def test_recipes_that_no_longer_build_are_skipped(tmp_path):
+    # Skærpes varegenkendelsen, flyttes hentede opskrifter, der ikke længere kan bruges, til de oversprungne
+    lst = tmp_path / "opskrifter.txt"
+    out = tmp_path / "opskrifter.json"
+    url = "https://mad.dk/opskrift/ingefaer"
+    lst.write_text(url + "\n", encoding="utf-8")
+    old = {"name": "Ingefærsuppe", "category": "Aftensmad", "persons": 4,
+           "ingredients": ["1 tsk revet ingefær", "salt til ris"]}
+    out.write_text(json.dumps({"version": 4, "recipes": [{"url": url, **old}], "skipped": {}}), encoding="utf-8")
+    assert update(lst, out, lambda u: "", delay=0)["recipes"] == 0
+    assert json.loads(out.read_text(encoding="utf-8"))["skipped"] == {url: "for få kendte ingredienser"}
