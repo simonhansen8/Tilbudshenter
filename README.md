@@ -347,6 +347,18 @@ plan giver nye retter.
 
 Madplanen huskes i browseren, ligesom indkøbslisten.
 
+### Ugeplan
+
+Knappen **Ugeplan** viser alle opskrifterne, så du selv kan vælge retter
+til en uge. Ugerne har ugenummeret fra kalenderen (ISO-uger, som i
+Danmark), og du bladrer fra denne uge og op til 12 uger frem. Søg efter en
+ret eller ingrediens, vælg slags, og tryk **+ uge 42** for at gemme retten
+i ugen. Retterne i ugen sættes i den rækkefølge, du har lyst til at spise
+dem, med ↑ og ↓. **Læg på indkøbslisten** lægger ugens ingredienser på
+listen, lagt sammen pr. vare til det valgte antal personer. I madplanen
+kan en ret gemmes i sin uge med **Gem i uge 42**. Ugeplanen huskes i
+browseren; uger, der er mere end fire uger gamle, ryddes væk.
+
 ### Flere opskrifter fra madsider
 
 Næsten alle madsider beskriver deres opskrifter med
