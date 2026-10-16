@@ -110,3 +110,26 @@ def test_filters_are_saved():
     html = static_html()
     assert 'id="filter-menu"' in html
     assert 'store.set("filters"' in html and 'store.get("filters", {})' in html
+
+
+def test_foetex_food_gets_its_own_stores():
+    from tilbudshenter.pages import chain_stores
+
+    stores = [{"name": "føtex Food Odense", "latitude": 1.0}, {"name": "føtex City Odense", "latitude": 2.0}]
+    assert [s["name"] for s in chain_stores("føtex food", stores)] == ["føtex Food Odense"]
+    assert [s["name"] for s in chain_stores("føtex", stores)] == ["føtex City Odense"]
+    assert chain_stores("Netto", stores) == stores
+    assert "føtex food" in site_config().stores
+
+
+def test_foetex_food_is_added_to_saved_choices():
+    from tilbudshenter.config import Config, upgrade_config
+
+    cfg = Config(stores=["Netto", "føtex"], upgrades=["nye-butikker-2026-10"])
+    assert upgrade_config(cfg) and cfg.stores == ["Netto", "føtex", "føtex food"]
+    # Fravælges den bagefter, kommer den ikke igen
+    cfg.stores = ["Netto", "føtex"]
+    assert not upgrade_config(cfg) and cfg.stores == ["Netto", "føtex"]
+    for stores in ([], ["Netto"]):  # Alle butikker, eller føtex ikke valgt
+        other = Config(stores=list(stores), upgrades=["nye-butikker-2026-10"])
+        assert upgrade_config(other) and other.stores == stores

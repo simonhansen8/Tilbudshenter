@@ -7,6 +7,9 @@ bedste tilbud ud fra **dine** valg af butikker og typer af varer.
 Data hentes fra [Tjek/eTilbudsavis](https://etilbudsavis.dk), der samler
 kædernes aviser.
 
+føtex food vises som sin egen kæde med sine egne butikker, men har ingen egen
+avis hos Tjek. Den får føtex' ugeavis, som også gælder i føtex food.
+
 ## Kom i gang
 
 ### Som hjemmeside (nemmest)
