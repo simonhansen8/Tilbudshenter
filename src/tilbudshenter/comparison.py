@@ -18,7 +18,7 @@ import statistics
 import unicodedata
 from dataclasses import dataclass
 
-from .models import Offer
+from .models import PAPER_TWINS, Offer
 
 # Varetype -> (navn, mønstre, ekstra udelukkelser). Et mønster er en liste
 # af ord, der alle skal stå i varenavnet. Et ord matcher også sammensatte
@@ -126,6 +126,9 @@ def product_group(heading: str) -> str | None:
 
 
 def _store_key(dealer: str) -> str:
+    # En kæde uden egen avis har samme priser som kæden, hvis avis den
+    # bruger, og må ikke tælle som en anden butik
+    dealer = PAPER_TWINS.get(dealer, dealer)
     return re.sub(r"[^\w]+", "", dealer.casefold())
 
 

@@ -9,13 +9,14 @@ from __future__ import annotations
 
 import json
 import time
+from dataclasses import replace
 import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime
 from typing import Any, Iterator
 
-from ..models import Catalog, Offer, normalize_unit
+from ..models import PAPER_TWINS, Catalog, Offer, normalize_unit
 from .base import SourceError
 
 API_BASE = "https://squid-api.tjek.com/v2"
@@ -76,6 +77,34 @@ def catalog_url(data: dict) -> str | None:
     if not slug or not data.get("id"):
         return None
     return f"{WEB_BASE}/{urllib.parse.quote(slug)}?{urllib.parse.urlencode({'publication': data['id']})}"
+
+
+TWIN_SEPARATOR = "~"
+
+
+def twin_id(original_id: str, twin: str) -> str:
+    return f"{original_id}{TWIN_SEPARATOR}{twin}"
+
+
+def original_id(catalog_id: str) -> str:
+    return catalog_id.split(TWIN_SEPARATOR, 1)[0]
+
+
+def twin_catalogs(catalogs: list[Catalog]) -> list[Catalog]:
+    """Ugeaviserne igen for de kæder, der bruger en anden kædes avis (se
+    ``PAPER_TWINS``), så fx føtex food vises som sin egen kæde."""
+    twins = []
+    for twin, base in PAPER_TWINS.items():
+        for c in catalogs:
+            if c.dealer == base and c.label.strip().casefold().startswith("uge"):
+                twins.append(replace(c, id=twin_id(c.id, twin), dealer=twin, pages=[]))
+    return twins
+
+
+def is_twin_store(store_name: str, twin: str) -> bool:
+    """Hører butikken til kæden uden egen avis? "føtex Food Odense" hører
+    til føtex food."""
+    return store_name.casefold().startswith(twin.casefold())
 
 
 def catalog_from_api(data: dict) -> Catalog:
@@ -222,12 +251,14 @@ class TjekSource:
             "r_radius": int(radius_km * 1000),
             "order_by": "-publication_date",
         }
-        return [catalog_from_api(item) for item in self._paginate("catalogs", params)]
+        catalogs = [catalog_from_api(item) for item in self._paginate("catalogs", params)]
+        return catalogs + twin_catalogs(catalogs)
 
     def list_stores(self, dealer_id: str) -> list[dict]:
-        """Kædens butikker i hele landet med adresse og koordinater."""
+        """Kædens butikker i hele landet med navn, adresse og koordinater."""
         return [
             {
+                "name": str(item.get("name") or "").strip(),
                 "latitude": float(item["latitude"]),
                 "longitude": float(item["longitude"]),
                 "zip_code": str(item.get("zip_code") or "").strip(),
@@ -238,11 +269,17 @@ class TjekSource:
         ]
 
     def list_offers(self, catalog: Catalog) -> list[Offer]:
-        return offers_in_paper_order(self._paginate("offers", {"catalog_id": catalog.id}), catalog)
+        source_id = original_id(catalog.id)
+        offers = offers_in_paper_order(self._paginate("offers", {"catalog_id": source_id}), catalog)
+        if source_id != catalog.id:  # En kæde uden egen avis: tilbuddene fra den avis, den bruger
+            for offer in offers:
+                offer.id = twin_id(offer.id, catalog.dealer)
+                offer.dealer = catalog.dealer
+        return offers
 
     def list_pages(self, catalog: Catalog) -> list[str]:
         """Billeder af avisens sider i rækkefølge."""
-        pages = self._get(f"catalogs/{urllib.parse.quote(catalog.id)}/pages", {})
+        pages = self._get(f"catalogs/{urllib.parse.quote(original_id(catalog.id))}/pages", {})
         if not isinstance(pages, list):
             raise SourceError(f"Uventet svar fra Tjek API (sider): {str(pages)[:200]}")
         return [_first(p.get("view"), p.get("zoom"), p.get("thumb")) or "" for p in pages if isinstance(p, dict)]

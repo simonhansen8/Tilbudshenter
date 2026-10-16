@@ -20,9 +20,10 @@ from .categories import UNCATEGORIZED, Categorizer, merge_categories
 from .cli import best_offers
 from .config import NEW_STORES, Config, example_config
 from .mealplan import market_prices, plan_payload
-from .models import Catalog, Offer
+from .models import PAPER_TWINS, Catalog, Offer
 from .selection import store_selected
 from .sources.base import SourceError
+from .sources.tjek import is_twin_store
 from .storage import Storage
 from .webapp import offer_payload, papers_payload, settings_from_config
 
@@ -31,7 +32,7 @@ log = logging.getLogger(__name__)
 # Butikker der hentes til siden. Brugeren vælger blandt dem i browseren;
 # standardvalget er det samme som i en ny konfiguration.
 SITE_STORES = [
-    "Netto", "REMA 1000", "Lidl", "føtex", "Bilka", "365discount", *NEW_STORES,
+    "Netto", "REMA 1000", "Lidl", "føtex", "føtex food", "Bilka", "365discount", *NEW_STORES,
     "Coop", "Min Købmand", "LET-KØB", "ABC Lavpris", "Købmandsgården",
 ]
 
@@ -84,14 +85,27 @@ class CountrySource:
         """Butikkerne for de kæder, siden viser. En kæde, hvis butikker
         ikke kan hentes, udelades (siden viser den så uanset placering)."""
         result = {}
+        fetched: dict[str, list[dict]] = {}
         for dealer, dealer_id in sorted(self.dealer_ids.items()):
             if dealer in NATIONWIDE or not store_selected(dealer, cfg):
                 continue
             try:
-                result[dealer] = self.source.list_stores(dealer_id)
+                if dealer_id not in fetched:  # føtex og føtex food har samme id
+                    fetched[dealer_id] = self.source.list_stores(dealer_id)
             except SourceError as exc:
                 log.warning("Kunne ikke hente butikker for %s: %s", dealer, exc)
+                continue
+            result[dealer] = chain_stores(dealer, fetched[dealer_id])
         return result
+
+
+def chain_stores(dealer: str, stores: list[dict]) -> list[dict]:
+    """Kædens egne butikker, når to kæder deler butiksliste hos Tjek:
+    føtex food får butikkerne "føtex Food ...", og føtex resten."""
+    if dealer in PAPER_TWINS:
+        return [s for s in stores if is_twin_store(s.get("name", ""), dealer)]
+    twins = [t for t, base in PAPER_TWINS.items() if base == dealer]
+    return [s for s in stores if not any(is_twin_store(s.get("name", ""), t) for t in twins)]
 
 
 def places_from_stores(stores: dict[str, list[dict]]) -> list[list]:

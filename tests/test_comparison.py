@@ -82,3 +82,12 @@ def test_comparison_only_among_selected_stores(cfg, categorizer):
               offer("Hakket oksekød", 50, "Lidl", "500 g")]
     result = select_offers(offers, replace(cfg, stores=["Netto"]), categorizer)
     assert result[0].known_discount is None
+
+
+def test_foetex_food_does_not_count_as_another_store():
+    # føtex food har føtex' priser, så de to må ikke sammenlignes med hinanden
+    offers = [offer("Hakket oksekød", 40, "føtex", "500 g"), offer("Hakket oksekød", 40, "føtex food", "500 g"),
+              offer("Hakket oksekød", 50, "Netto", "500 g")]
+    result = compare_across_stores(offers)
+    assert {o.dealer for o in offers if o.id in result} == {"føtex", "føtex food"}
+    assert all(c.other_stores == 1 and c.reference == 100 for c in result.values())

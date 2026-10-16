@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -240,9 +241,23 @@ def _add_new_stores(cfg: Config) -> bool:
     return bool(missing)
 
 
+def _add_foetex_food(cfg: Config) -> bool:
+    """føtex food blev en kæde for sig. Før kom tilbuddene med under føtex,
+    så den tilføjes, hvis føtex er valgt."""
+    def norm(name: str) -> str:
+        return re.sub(r"[^\w]+", "", name.casefold())
+
+    if not any(norm(n) and "føtex".startswith(norm(n)) for n in cfg.stores):
+        return False
+    if any(norm(n) == "føtexfood" for n in cfg.stores + cfg.exclude_stores):
+        return False
+    cfg.stores = cfg.stores + ["føtex food"]
+    return True
+
+
 # Navn -> ændring. Hver opgradering udføres én gang pr. konfiguration, så
 # brugeren kan fravælge fx en butik bagefter, uden at den kommer igen.
-UPGRADES = {"nye-butikker-2026-10": _add_new_stores}
+UPGRADES = {"nye-butikker-2026-10": _add_new_stores, "foetex-food-2026-10": _add_foetex_food}
 
 
 def upgrade_config(cfg: Config) -> bool:
@@ -259,7 +274,7 @@ def upgrade_config(cfg: Config) -> bool:
 
 def example_config() -> Config:
     return Config(
-        stores=["Netto", "REMA 1000", "Lidl", "føtex", "Bilka", "365discount", *NEW_STORES],
+        stores=["Netto", "REMA 1000", "Lidl", "føtex", "føtex food", "Bilka", "365discount", *NEW_STORES],
         upgrades=list(UPGRADES),
         exclude_catalogs=["legetøj", "nonfood", "prosonic", "halloween", "ud af huset", "julekatalog", "skønhed"],
         categories=["koed", "fisk", "mejeri", "frugt_og_groent", "broed_og_bager", "kolonial", "frost", "kaffe_og_te"],
