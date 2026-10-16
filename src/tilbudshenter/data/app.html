@@ -2654,11 +2654,15 @@ function renderPlace() {
   if (state.catalogList) renderStores();
 }
 
+// Kæder hvis avis også gælder i en anden butikstype med andet navn. Tjek har
+// ingen egen avis til føtex food; butikkerne bruger føtex' avis.
+const STORE_NOTES = {"føtex": "også føtex food"};
+
 function renderStores() {
   const words = splitList($("s-excl-catalogs").value);
   $("store-list").innerHTML = state.catalogList.map((s, i) => `
     <div class="store">
-      <label class="check"><input type="checkbox" data-store="${i}" ${s.selected ? "checked" : ""}> <b>${esc(s.name)}</b> ${distanceTag(s.name)}</label>
+      <label class="check"><input type="checkbox" data-store="${i}" ${s.selected ? "checked" : ""}> <b>${esc(s.name)}</b>${STORE_NOTES[s.name] ? ` <span class="period">(${esc(STORE_NOTES[s.name])})</span>` : ""} ${distanceTag(s.name)}</label>
       <div class="store-catalogs" ${s.selected ? "" : "hidden"}>
         ${s.catalogs.map(c => `<label class="check"><input type="checkbox" data-catalog="${esc(c.label)}" data-dealer="${esc(s.name)}" ${catalogExcluded(s.name, c.label, words) ? "" : "checked"}>
           ${esc(c.label)} <span class="period">${esc(c.period)}</span></label>`).join("")}
