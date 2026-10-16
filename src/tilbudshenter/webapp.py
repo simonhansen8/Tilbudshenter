@@ -20,7 +20,7 @@ from urllib.parse import urlparse
 from .categories import UNCATEGORIZED, Categorizer, merge_categories
 from .cli import best_offers, load_app_config, make_source
 from .config import Config, example_config, save_config
-from .mealplan import ingredient_keys, ingredient_names, market_prices, plan_payload
+from .mealplan import ingredient_keys, ingredient_names, market_prices, offer_basis_key, plan_payload
 from .opskrifter import extract_recipe, fetch
 from .models import Catalog, Offer
 from .report import discount_text, kr, period_text, unit_price_text, write_reports
@@ -233,6 +233,8 @@ def offer_payload(o: Offer, categorizer: Categorizer) -> dict:
         **({"ingredients": ingredients} if ingredients else {}),
         # Nævner tilbuddet flere varer, hvilken del der er hvilken ingrediens
         **({"ingredient_names": names} if (names := ingredient_names(o.heading)) else {}),
+        # Basisvaren, tilbuddet holdes op mod, når avisen ikke oplyser en normalpris
+        **({"basis_key": key} if not o.pre_price and (key := offer_basis_key(o.heading, o.unit)) else {}),
         "category_name": categorizer.display_name(o.category),
         "price_text": kr(o.price),
         "pre_price_text": kr(o.pre_price) if o.pre_price else "",

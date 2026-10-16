@@ -92,6 +92,11 @@ I appen kan du:
   (sortering *Butik, som i avisen*),
 - vælge mellem tilbud der gælder nu, og dem der starter senere,
 - se hvilke tilbud der kræver Lidl Plus, kædens app eller medlemskab (og skjule dem),
+- se normalprisen ved hvert tilbud, og om tilbuddet faktisk er billigere: butikkens
+  egen normalpris, når avisen oplyser den, ellers basisprisen (den anslåede hyldepris
+  fra madplanen) for almindelige basisvarer som hakket oksekød, mælk og kartofler.
+  For de fleste andre varer oplyser aviserne ingen normalpris, og så står der
+  *Normalpris ukendt*,
 - lægge tilbud og egne varer på en **indkøbsliste**, delt op efter butik og afdeling, som
   kan kopieres, sendes som mail eller udskrives,
 - lave en **madplan** ud fra ugens tilbud (se nedenfor),
