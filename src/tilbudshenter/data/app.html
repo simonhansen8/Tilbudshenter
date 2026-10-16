@@ -1764,10 +1764,10 @@ async function openBasis() {
 // recipe_from_lines), så egne opskrifter og indkøbslisten læses som
 // tilbuddene. tests/test_matcher_js.py tjekker, at de giver det samme.
 const PORK = new Set(["hakket_gris", "hakket_gris_kalv", "bacon", "stegeflaesk", "medister", "flaeskesteg",
-  "moerbrad", "koteletter", "poelser", "chorizo"]);
-const FISH = new Set(["laksefilet", "hvid_fisk", "fiskefrikadeller", "tun", "rejer"]);
-const CHICKEN = new Set(["hakket_kylling", "kyllingebryst", "kyllingelaar", "hel_kylling"]);
-const BEEF = new Set(["hakket_okse", "boef", "okse_tern"]);
+  "moerbrad", "koteletter", "poelser", "chorizo", "svinekam", "skinkekoed", "lufttoerret_skinke"]);
+const FISH = new Set(["laksefilet", "roeget_laks", "hvid_fisk", "fiskefrikadeller", "tun", "rejer"]);
+const CHICKEN = new Set(["hakket_kylling", "kyllingebryst", "kyllingelaar", "hel_kylling", "kalkun", "and"]);
+const BEEF = new Set(["hakket_okse", "boef", "okse_tern", "oksesteg", "oksemoerbrad", "kalvekoed", "lam"]);
 const MEAT = new Set([...PORK, ...FISH, ...CHICKEN, ...BEEF]);
 
 function tokens(text) { return text.normalize("NFC").toLowerCase().match(/[\p{L}\p{N}_]+/gu) || []; }

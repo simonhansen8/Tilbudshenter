@@ -3,7 +3,8 @@ import json
 from tilbudshenter.cli import main
 from tilbudshenter.mealplan import (
     BASIS_PACK_G, DEPARTMENTS, INGREDIENTS, MIN_VEG_PER_PERSON, NORMAL_PRICES, RECIPES, VEGETABLES, imported_recipes,
-    basis_pack_g, ingredient_keys, ingredient_names, load_imported, recipe_items, recipes_payload, vegetables_per_person,
+    basis_pack_g, ingredient_keys, ingredient_names, line_keys, load_imported, offer_fits, recipe_from_lines, recipe_items,
+    recipes_payload, vegetables_per_person,
 )
 
 
@@ -163,3 +164,36 @@ def test_recipe_lines_in_singular_and_spice_blends():
         "300 g kyllingebryst", "1 stk løg", "1 stk hønsebouillonterning", "4 g Jorden Rundt", "4 g Panamad",
         "2 stk gulerod", "400 ml kokosmælk"], 2)
     assert why == "" and {"Jorden Rundt", "hønsebouillonterning"} <= set(recipe.pantry)
+
+
+def test_more_meat_and_fish_in_offers():
+    # Tilbud fra rigtige aviser (oktober 2026), som opskrifterne nu kan bruge
+    cases = {
+        "Berberieandebryst": ["and"], "Kalkunstrimler af brystfilet": ["kalkun"], "LAMMEKOTELETTER": ["lam"],
+        "REMA 1000 Dansk kalveculotte": ["boef", "kalvekoed"], "PremiuM okseculotte eller tyndsteg": ["boef", "oksesteg"],
+        "BUTCHER’S Nakkefilet": ["svinekam"], "Næmt skinkestrimler": ["skinkekoed"], "DELUXE Parmaskinke": ["lufttoerret_skinke"],
+        "Salling Princip varmrøget laks": ["roeget_laks"], "Netto nakkekoteletter": ["koteletter"],
+        # Ikke kalvekød, selv om ordet står der
+        "Røget bacon, hakket okse eller grise/kalvekød": ["bacon", "hakket_okse"],
+        "Coop gulerødder fra Lammefjordspakkeriet": ["guleroedder"],
+    }
+    for heading, keys in cases.items():
+        assert ingredient_keys(heading) == keys, heading
+    assert ingredient_keys("Oscar confiteret andebryst") == []
+    assert ingredient_keys("PÅLÆGSSLAGTEREN Kalkunbryst") == []
+
+
+def test_recipe_lines_with_more_meat():
+    assert line_keys("hakket lammekød") == ["lam"] and line_keys("svinekamfilet") == ["svinekam"]
+    assert line_keys("oksemørbrad") == ["oksemoerbrad"] and line_keys("wokstrimler af okseklump") == ["okse_tern"]
+    assert line_keys("hakket kalv og flæsk, 8-12%") == ["hakket_gris_kalv"] and line_keys("bøftomat") == ["tomater"]
+    # Hakket lammekød kan ikke laves af lammekoteletter, andebryst ikke af andelår
+    assert not offer_fits("hakket lammekød", "LAMMEKOTELETTER", "lam")
+    assert offer_fits("andebryster", "Andebryst eller andelår", "and")
+    assert not offer_fits("andebryster", "Salling Princip berberi andelår", "and")
+    assert not offer_fits("koldrøget laks", "Salling Princip varmrøget laks", "roeget_laks")
+    # "Risvin" og "kødsnor" er ikke kød
+    recipe, why = recipe_from_lines("x", "Wok", ["400 g kyllingebryst", "2 spsk risvin", "1 stk kødsnor", "200 g ris"])
+    assert recipe and not why
+    lam, _ = recipe_from_lines("l", "Lam", ["800 g lammekølle", "1 kg kartofler", "2 løg"])
+    assert lam.kind == "okse"

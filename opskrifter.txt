@@ -1,7 +1,7 @@
 # Opskrifter til madplanen
 #
 # Én adresse pr. linje: en opskrift på en madside, eller et sitemap, hvorfra
-# op til 1000 opskrifter hentes. Står der kun madsidens adresse efter
+# op til 2500 opskrifter hentes. Står der kun madsidens adresse efter
 # "sitemap:", findes sitemappet i madsidens robots.txt. Efter adressen kan der
 # stå et ord, som adresserne skal indeholde, fx /opskrifter/.
 #
