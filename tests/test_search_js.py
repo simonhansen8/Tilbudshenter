@@ -12,12 +12,14 @@ from importlib import resources
 import pytest
 
 OFFERS = [
-    ("Skrabeæg", "10 stk."), ("Frilandsæg", "Økologiske"), ("Æg", "Str. M/L"), ("Æggebakke", "Til 6 æg"),
-    ("Pålæg", "Hamburgerryg"), ("Trusseindlæg", "Normal"), ("Køkkenvægt", "Digital"), ("Isbæger", "Vanilje"),
-    ("Ægte honning", "Dansk"), ("Skiveost", "45+"), ("Osten", "Lagret"), ("Dybfrost pizza", "Frost"),
-    ("Juleøl", "Fra Thisted"), ("Pølser", "Grill"), ("Spegepølse", "Pålæg"), ("Grillrist", "Rustfri"),
-    ("Kaffe", "Formalet"), ("Instantkaffe", "Glas"), ("Hakket oksekød", "8-12 %"), ("Te", "Grøn te"),
-    ("Booster", "Bilsæde"), ("Pris", "Hvede"), ("Bakke", "Plast"), ("Pålægschokolade", "Mørk"),
+    ("Skrabeæg", "10 stk.", "mejeri"), ("Frilandsæg", "Økologiske", "mejeri"), ("Æg", "Str. M/L", "mejeri"),
+    ("Æggebakke", "Til 6 æg", "mejeri"), ("Pålæg", "Hamburgerryg", "koed"), ("Trusseindlæg", "Normal", "personlig_pleje"),
+    ("Køkkenvægt", "Digital", "nonfood"), ("Isbæger", "Vanilje", "frost"), ("Ægte honning", "Dansk", "kolonial"),
+    ("Skiveost", "45+", "mejeri"), ("Osten", "Lagret", "mejeri"), ("Dybfrost pizza", "Frost", "frost"),
+    ("Juleøl", "Fra Thisted", "oel_og_vin"), ("Pølser", "Grill", "koed"), ("Spegepølse", "Pålæg", "koed"),
+    ("Grillrist", "Rustfri", "nonfood"), ("Kaffe", "Formalet", "kaffe_og_te"), ("Instantkaffe", "Glas", "kaffe_og_te"),
+    ("Hakket oksekød", "8-12 %", "koed"), ("Te", "Grøn te", "kaffe_og_te"), ("Booster", "Bilsæde", "nonfood"),
+    ("Pris", "Hvede", "kolonial"), ("Bakke", "Plast", "nonfood"), ("Pålægschokolade", "Mørk", "slik_og_snacks"),
 ]
 
 
@@ -40,7 +42,7 @@ def run(offers: list[tuple[str, str, str]], queries: tuple[str, ...]) -> dict[st
 
 
 def search(*queries: str) -> dict[str, list[str]]:
-    got = run([(h, d, "x") for h, d in OFFERS], queries)
+    got = run(OFFERS, queries)
     return {q: [h for h, _ in hits] for q, hits in got.items()}
 
 
@@ -60,7 +62,7 @@ def test_inflections_and_compounds():
     assert got["kaffe"] == ["Kaffe", "Instantkaffe"]
     assert got["Hakket oksekød"] == ["Hakket oksekød"]
     assert got["hakket kylling"] == []
-    assert got["PÅLÆG"] == ["Pålæg", "Spegepølse", "Pålægschokolade"]
+    assert got["PÅLÆG"] == ["Pålæg", "Spegepølse"]
 
 
 
@@ -87,3 +89,22 @@ def test_minus_leaves_out():
 def test_basics_use_the_search():
     html = resources.files("tilbudshenter.data").joinpath("app.html").read_text(encoding="utf-8")
     assert "match: searchFor(word)" in html
+
+
+def test_kitchen_tools_are_not_food():
+    offers = [("Änglamark økologiske ris", "1000 g", "kolonial"),
+              ("Decilitermål, dejskraber, piskeris, minisigte 8 cm", "20-pak sprøjteposer", "nonfood"),
+              ("Sobczyk håndmixer eller røremaskine", "Inkl. piskeris og dejkroge", "nonfood"),
+              ("Mælkeskummer", "Kold mælkeskum", "nonfood"), ("Letmælk", "Let eller sød", "mejeri")]
+    got = run(offers, ("ris", "mælk"))
+    assert got["ris"] == [["Änglamark økologiske ris", 0]]
+    assert got["mælk"] == [["Letmælk", 0]]
+
+
+def test_beans_are_not_coffee():
+    offers = [("Kidneybønner", "400 g", "kolonial"), ("Hvide bønner i tomatsauce", "", "kolonial"),
+              ("Edamame eller grønne bønner", "Dybfrost", "kolonial"), ("Merrild hele bønner", "1 kg", "kaffe_og_te"),
+              ("Lavazza kaffebønner", "1 kg", "kaffe_og_te"), ("Peter Larsen Kaffe", "Formalet", "kaffe_og_te")]
+    got = run(offers, ("bønner", "kaffe"))
+    assert [h for h, _ in got["bønner"]] == ["Kidneybønner", "Hvide bønner i tomatsauce", "Edamame eller grønne bønner"]
+    assert [h for h, _ in got["kaffe"]] == ["Lavazza kaffebønner", "Peter Larsen Kaffe"]

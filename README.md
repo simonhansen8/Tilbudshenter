@@ -371,3 +371,9 @@ de ikke kan prissættes.
 pip install -e ".[dev]"
 pytest
 ```
+
+Søgningen og "Mine basisvarer" testes mod et øjebliksbillede af rigtige
+aviser (`tests/data/`). `tests/test_search_cases.py` fejler, hvis et søgeord
+mister et træf eller får nye. Nye træf godkendes med
+`python tests/update_search_cases.py` (`--nyt ord` tilføjer et søgeord), og
+træf kan kun fjernes med `--fjern-traef`, når Simon har sagt god for det.
