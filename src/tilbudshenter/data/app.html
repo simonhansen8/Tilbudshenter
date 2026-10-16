@@ -162,6 +162,9 @@ label.field input { padding: 8px 10px; border: 1px solid var(--line); border-rad
 .item.done .what { text-decoration: line-through; color: var(--muted); }
 .item .x { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; line-height: 1; padding: 0 4px; }
 .item .p { white-space: nowrap; font-weight: 600; }
+.item .open { background: none; border: none; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+.item .open:hover { text-decoration-color: currentColor; }
+.item .open::after { content: " ›"; color: var(--muted); }
 .expired { color: var(--error); }
 .add-own { display: flex; gap: 8px; margin-top: 12px; }
 .add-own input { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
@@ -1425,18 +1428,26 @@ function renderList() {
     return;
   }
   const total = state.list.reduce((s, i) => s + itemTotal(i), 0);
+  const offerIds = new Set(listOffers().map(o => o.id));
   $("list-body").innerHTML = listGroups().map(([store, items]) => {
     const sum = items.reduce((s, i) => s + itemTotal(i), 0);
     return `<div class="list-store"><h3>${esc(store)}${sum ? `<span class="sum">${money(sum)}</span>` : ""}</h3>
       ${withDepts(items, name => `<div class="dept">${esc(name)}</div>`, i => `<div class="item${i.checked ? " done" : ""}">
         <input type="checkbox" data-check="${esc(i.id)}" ${i.checked ? "checked" : ""}>
-        <div class="what">${listCount(i.count) > 1 ? `<b>${listCount(i.count)} ×</b> ` : ""}${esc(i.heading)}
+        <div class="what">${listCount(i.count) > 1 ? `<b>${listCount(i.count)} ×</b> ` : ""}${offerIds.has(i.id)
+          ? `<button class="open" data-open="${esc(i.id)}" title="Se tilbuddet">${esc(i.heading)}</button>` : esc(i.heading)}
           <div class="sub">${[i.note, i.unit_price_text, i.period_text, i.member].filter(Boolean).map(esc).join(" · ")}
           ${i.expired ? ` · <span class="expired">Tilbuddet er udløbet</span>` : ""}</div></div>
         ${i.price_text ? `<span class="p">${listCount(i.count) > 1 ? money(itemTotal(i)) : esc(i.price_text)}</span>` : ""}
         <button class="x" data-remove="${esc(i.id)}" title="Fjern">×</button>
       </div>`)}</div>`;
   }).join("") + (total ? `<p style="text-align:right;font-weight:700;margin:12px 0 0">I alt ${money(total)}</p>` : "");
+}
+
+// Tilbuddene på listen i samme rækkefølge som listen, så man kan bladre i dem
+function listOffers() {
+  const byId = new Map(state.offers.map(o => [o.id, o]));
+  return listGroups().flatMap(([, items]) => items).map(i => byId.get(i.id)).filter(Boolean);
 }
 
 function listText() {
@@ -2736,6 +2747,8 @@ $("add-own").addEventListener("submit", e => {
 $("list-body").addEventListener("click", e => {
   const id = e.target.dataset.remove;
   if (id) changeList({action: "remove", id});
+  const open = e.target.closest("[data-open]");
+  if (open) openOffer(open.dataset.open, listOffers());
 });
 $("list-body").addEventListener("change", e => {
   const id = e.target.dataset.check;
