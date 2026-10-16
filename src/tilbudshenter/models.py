@@ -146,6 +146,12 @@ def parse_reference_price(text: str, price: float) -> float | None:
     return None
 
 
+# Kæder uden egen avis, der vises som selvstændige kæder: kæde -> kæden,
+# hvis ugeavis den bruger. Tjek har ingen avis til føtex food; butikkerne
+# står under føtex med navne som "føtex Food Odense".
+PAPER_TWINS = {"føtex food": "føtex"}
+
+
 @dataclass
 class Catalog:
     """En tilbudsavis fra en butikskæde."""

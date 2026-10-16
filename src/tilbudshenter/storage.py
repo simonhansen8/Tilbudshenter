@@ -14,7 +14,7 @@ import statistics
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .models import Catalog, Offer
+from .models import PAPER_TWINS, Catalog, Offer
 
 # Hæves, når der hentes mere om hver avis end før, så allerede scannede
 # aviser hentes igen én gang. 2: sidetal, rækkefølge og sidebilleder.
@@ -75,6 +75,11 @@ CREATE TABLE IF NOT EXISTS shopping_list (
 CREATE INDEX IF NOT EXISTS offers_run_till ON offers(run_till);
 CREATE INDEX IF NOT EXISTS offers_product ON offers(product_key, unit);
 """
+
+
+# Kæder uden egen avis har de samme tilbud som en anden kæde og må ikke tælle
+# dobbelt i prishistorikken
+_NOT_TWIN = f" AND dealer NOT IN ({', '.join('?' * len(PAPER_TWINS))})"
 
 
 def product_key(heading: str) -> str:
@@ -280,6 +285,7 @@ class Storage:
         exclude_catalogs = exclude_catalogs or set()
         rows = self.conn.execute(
             "SELECT product_key, unit, unit_price, catalog_id FROM offers WHERE unit_price IS NOT NULL"
+            + _NOT_TWIN, list(PAPER_TWINS)
         ).fetchall()
         prices: dict[tuple[str, str], list[float]] = {}
         catalogs_seen: dict[tuple[str, str], set[str]] = {}
@@ -296,9 +302,11 @@ class Storage:
         }
 
     def unit_prices(self) -> list[tuple[str, str | None, float]]:
-        """(overskrift, enhed, enhedspris) for alle tilbud i prishistorikken."""
+        """(overskrift, enhed, enhedspris) for alle tilbud i prishistorikken.
+        Kæder uden egen avis udelades, da deres tilbud står i en anden kædes."""
         return [tuple(r) for r in self.conn.execute(
-            "SELECT heading, unit, unit_price FROM offers WHERE unit_price IS NOT NULL")]
+            "SELECT heading, unit, unit_price FROM offers WHERE unit_price IS NOT NULL" + _NOT_TWIN,
+            list(PAPER_TWINS))]
 
     def prune(self, before: datetime, slim_before: datetime | None = None) -> int:
         """Sletter aviser og tilbud, der udløb før ``before``, så databasen

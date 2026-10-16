@@ -8,7 +8,7 @@ from collections import Counter
 from .categories import Categorizer
 from .comparison import Comparison, compare_across_stores
 from .config import Config
-from .models import Offer
+from .models import PAPER_TWINS, Offer
 from .storage import product_key
 
 
@@ -16,14 +16,24 @@ def _norm_store(name: str) -> str:
     return re.sub(r"[^\w]+", "", name.casefold())
 
 
-def store_selected(dealer: str, cfg: Config) -> bool:
-    """Er butikken valgt? Navne matches uden hensyn til store/små bogstaver
-    og mellemrum, og et navn matcher også længere navne ("365" matcher
-    "365discount")."""
-    dealer_n = _norm_store(dealer)
+_SEPARATE = [_norm_store(name) for name in PAPER_TWINS]
 
+
+def chain_matches(dealer: str, name: str) -> bool:
+    """Matcher et valgt navn kæden? Uden hensyn til store/små bogstaver og
+    mellemrum, og et navn matcher også længere navne ("365" matcher
+    "365discount"), men ikke en selvstændig kæde: "føtex" matcher ikke
+    "føtex food"."""
+    d, n = _norm_store(dealer), _norm_store(name)
+    if not n or not d.startswith(n):
+        return False
+    return not any(d.startswith(s) and not n.startswith(s) for s in _SEPARATE)
+
+
+def store_selected(dealer: str, cfg: Config) -> bool:
+    """Er butikken valgt? Se ``chain_matches``."""
     def matches(names: list[str]) -> bool:
-        return any(dealer_n.startswith(_norm_store(n)) for n in names if _norm_store(n))
+        return any(chain_matches(dealer, n) for n in names)
 
     if cfg.exclude_stores and matches(cfg.exclude_stores):
         return False
@@ -43,7 +53,7 @@ def _catalog_matches(dealer: str, label: str, words: list[str]) -> bool:
     for word in words:
         chain, sep, part = word.partition(":")
         if sep and _norm_store(chain) and part.strip():
-            if _norm_store(dealer).startswith(_norm_store(chain)) and part.strip().casefold() in lowered:
+            if chain_matches(dealer, chain) and part.strip().casefold() in lowered:
                 return True
         elif word.strip() and word.casefold() in lowered:
             return True

@@ -108,3 +108,35 @@ def test_catalog_url_and_pages(monkeypatch):
 
     monkeypatch.setattr(TjekSource, "_get", lambda self, path, params: [{"view": "p1.webp"}, {"zoom": "p2.webp"}])
     assert TjekSource().list_pages(catalog_from_api(CATALOG)) == ["p1.webp", "p2.webp"]
+
+
+FOETEX = {**CATALOG, "id": "f1", "label": "Uge 43", "branding": {"name": "føtex"}, "dealer_id": "bdf5A"}
+
+
+def test_foetex_food_gets_foetex_weekly_paper(monkeypatch):
+    toys = {**FOETEX, "id": "f2", "label": "Legetøjskatalog"}
+    calls = []
+
+    def fake_get(self, path, params):
+        calls.append((path, params.get("catalog_id")))
+        if path == "catalogs":
+            return [CATALOG, FOETEX, toys]
+        if path == "offers":
+            return [{**OFFER, "branding": {"name": "føtex"}}]
+        return [{"view": "side1.jpg"}]
+
+    monkeypatch.setattr(TjekSource, "_get", fake_get)
+    source = TjekSource(pause=0)
+    catalogs = source.list_catalogs(55.0, 12.0, 10)
+    # Kun ugeavisen kommer igen som føtex food; Netto og legetøjet ikke
+    assert [(c.id, c.dealer) for c in catalogs] == [
+        ("abc123", "Netto"), ("f1", "føtex"), ("f2", "føtex"), ("f1~føtex food", "føtex food"),
+    ]
+    food = catalogs[-1]
+    assert food.label == "Uge 43" and food.dealer_id == "bdf5A"
+
+    offers = source.list_offers(food)
+    assert calls[-1] == ("offers", "f1")  # Tilbuddene hentes fra føtex' avis
+    assert [(o.id, o.dealer, o.catalog_id) for o in offers] == [("o1~føtex food", "føtex food", "f1~føtex food")]
+    assert source.list_pages(food) == ["side1.jpg"]
+    assert calls[-1][0] == "catalogs/f1/pages"

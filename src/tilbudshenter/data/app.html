@@ -590,8 +590,26 @@ async function loadSiteData() {
     const res = await fetch("data.json", {cache: "no-cache"});
     if (!res.ok) throw new Error(`Kunne ikke hente tilbuddene (fejl ${res.status})`);
     siteData = await res.json();
+    upgradeSiteSettings();
   }
   return siteData;
+}
+
+// Kæder der er kommet til, efter brugeren gemte sit butiksvalg: opgradering
+// -> [ny kæde, kæden den før hørte under]. Hver tilføjes én gang (som
+// opgraderingerne i config.py), så den kan fravælges bagefter.
+const ADDED_STORES = {"foetex-food-2026-10": ["føtex food", "føtex"]};
+function upgradeSiteSettings() {
+  const saved = store.get("settings", null);
+  if (!saved) return;
+  const done = saved.upgrades || [], todo = Object.keys(ADDED_STORES).filter(k => !done.includes(k));
+  if (!todo.length) return;
+  const stores = saved.stores || [];
+  for (const k of todo) {
+    const [name, before] = ADDED_STORES[k];
+    if (stores.some(n => chainMatches(before, n)) && !stores.some(n => normStore(n) === normStore(name))) stores.push(name);
+  }
+  store.set("settings", {...saved, ...(saved.stores ? {stores} : {}), upgrades: [...done, ...todo]});
 }
 
 function siteSettings() { return {...siteData.default_settings, ...store.get("settings", {})}; }
@@ -599,9 +617,14 @@ function siteSettings() { return {...siteData.default_settings, ...store.get("se
 // Samme regler som selection.py: butiksnavne matcher begyndelsen af
 // længere navne ("365" matcher "365discount"), aviser en del af navnet
 function normStore(name) { return name.toLowerCase().replace(/[^\p{L}\p{N}_]+/gu, ""); }
+// Kæder uden egen avis, der vises for sig: "føtex" matcher ikke "føtex food"
+const SEPARATE_STORES = ["føtex food"].map(normStore);
+function chainMatches(dealer, name) {
+  const d = normStore(dealer), n = normStore(name);
+  return !!n && d.startsWith(n) && !SEPARATE_STORES.some(x => d.startsWith(x) && !n.startsWith(x));
+}
 function storeSelected(dealer, s) {
-  const d = normStore(dealer);
-  return !s.stores.length || s.stores.some(n => normStore(n) && d.startsWith(normStore(n)));
+  return !s.stores.length || s.stores.some(n => chainMatches(dealer, n));
 }
 function containsAny(text, words) {
   const t = text.toLowerCase();
@@ -609,10 +632,10 @@ function containsAny(text, words) {
 }
 // Fravalgte aviser: "legetøj" gælder alle kæder, "føtex: Uge 42" kun føtex
 function catalogExcluded(dealer, label, words) {
-  const l = label.toLowerCase(), d = normStore(dealer);
+  const l = label.toLowerCase();
   return words.some(w => {
-    const i = w.indexOf(":"), chain = i < 0 ? "" : normStore(w.slice(0, i)), part = i < 0 ? "" : w.slice(i + 1).trim();
-    if (chain && part) return d.startsWith(chain) && l.includes(part.toLowerCase());
+    const i = w.indexOf(":"), chain = i < 0 ? "" : w.slice(0, i), part = i < 0 ? "" : w.slice(i + 1).trim();
+    if (normStore(chain) && part) return chainMatches(dealer, chain) && l.includes(part.toLowerCase());
     return w.trim() && l.includes(w.toLowerCase());
   });
 }
@@ -2758,15 +2781,11 @@ function renderPlace() {
   if (state.catalogList) renderStores();
 }
 
-// Kæder hvis avis også gælder i en anden butikstype med andet navn. Tjek har
-// ingen egen avis til føtex food; butikkerne bruger føtex' avis.
-const STORE_NOTES = {"føtex": "også føtex food"};
-
 function renderStores() {
   const words = splitList($("s-excl-catalogs").value);
   $("store-list").innerHTML = state.catalogList.map((s, i) => `
     <div class="store">
-      <label class="check"><input type="checkbox" data-store="${i}" ${s.selected ? "checked" : ""}> <b>${esc(s.name)}</b>${STORE_NOTES[s.name] ? ` <span class="period">(${esc(STORE_NOTES[s.name])})</span>` : ""} ${distanceTag(s.name)}</label>
+      <label class="check"><input type="checkbox" data-store="${i}" ${s.selected ? "checked" : ""}> <b>${esc(s.name)}</b> ${distanceTag(s.name)}</label>
       <div class="store-catalogs" ${s.selected ? "" : "hidden"}>
         ${s.catalogs.map(c => `<label class="check"><input type="checkbox" data-catalog="${esc(c.label)}" data-dealer="${esc(s.name)}" ${catalogExcluded(s.name, c.label, words) ? "" : "checked"}>
           ${esc(c.label)} <span class="period">${esc(c.period)}</span></label>`).join("")}

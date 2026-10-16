@@ -129,3 +129,14 @@ def test_lowest_price_in_weeks(cfg, categorizer):
         result = select_offers([cheap, same], cfg, categorizer, lows=lows)
         assert result[0].id == cheap.id
         assert "laveste pris i 4 uger" in result[0].reasons and result[0].lowest_weeks == 4
+
+
+def test_foetex_food_is_its_own_chain():
+    assert not store_selected("føtex food", Config(stores=["føtex"]))
+    assert store_selected("føtex food", Config(stores=["Føtex Food"]))
+    assert store_selected("føtex", Config(stores=["føtex", "Netto"]))
+    assert not store_selected("føtex", Config(stores=["føtex food"]))
+    assert store_selected("føtex", Config(stores=["føtex"], exclude_stores=["føtex food"]))
+    # Fravalg af føtex' ugeavis gælder ikke føtex food
+    cfg = Config(exclude_catalogs=["føtex: Uge 43"])
+    assert catalog_selected("Uge 43", cfg, "føtex food") and not catalog_selected("Uge 43", cfg, "føtex")
