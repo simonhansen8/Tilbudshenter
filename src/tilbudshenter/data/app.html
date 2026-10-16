@@ -988,8 +988,9 @@ function resetCats() {
 
 // <search> Søgning og "Mine basisvarer" bruger de samme regler. Et søgeord skal
 // være et helt ord i tilbuddet, en bøjning af det ("ost" finder "osten") eller
-// en del af et sammensat ord, hvor resten også er et ord ("æg" finder "skrabeæg"
-// og "æggebakke", men ikke "pålæg"). Ord med minus foran udelader tilbud.
+// en del af et sammensat ord ("æg" finder "skrabeæg", men ikke "pålæg"). Ord med
+// minus foran udelader tilbud. tests/search_cases.json holder styr på, at
+// søgeord i rigtige aviser finder alle de tilbud, de skal.
 const ENDINGS = new Set(["e", "en", "er", "et", "ene", "erne", "es", "ens", "ers", "ets", "s"]);
 const VOWEL_ENDINGS = new Set(["n", "r", "t", "ne", "rne", "ns", "rs", "ts"]);  // pølse -> pølser
 // "Mælke- og hasselnøddesnitte": et ord med bindestreg er forled i et sammensat ord
@@ -1005,26 +1006,40 @@ function okAfter(q, rest, vocab) {
   if (r[0] === "e" || r[0] === "s") r = r.slice(1);
   return r.length >= 4 && (vocab.has(r) || vocab.has(rest));
 }
-// Er head (det der står før søgeordet) første del af et sammensat ord?
-// Med søgeord på to bogstaver skal det sammensatte ord slutte med søgeordet
-// ("hvidtøl", men ikke "booster" for "te")
+// Er head (det der står før søgeordet) et kendt forled?
 function okBefore(q, head, rest, vocab) {
-  if (head.length < 3 || (q.length <= 2 && rest)) return false;
+  if (head.length < 3) return false;
   return /[es]$/.test(head) || (head.length >= 4 && vocab.has(head));
 }
-// Lange søgeord (5+ bogstaver) må stå inde i et sammensat ord, men ikke i et
-// andet ord: "banan" finder "rainforestbanan", ikke "Banani"
+// Sammensatte ord, der lyder som en madvare uden at være det
+const NOT_FOOD_WORDS = new Set(["piskeris", "piskeriset", "piskerisene", "kødnål", "kødnåle", "kødnåler"]);
+// Ord, der betyder noget andet i en kategori: "bønner" under kaffe er kaffebønner
+const OTHER_SENSE = {"bønne": ["kaffe_og_te"], "bønner": ["kaffe_og_te"]};
+// 2: sikkert træf. 1: løst træf, et sammensat ord med et ukendt forled eller
+// efterled ("rødløg", "blåskimmelost", "smørbar"); det tæller kun i
+// overskriften og kun når tilbuddet ligger i varens kategori, så "dybfrost"
+// ikke er ost. 0: intet træf ("Banani" er ikke banan).
 function wordMatches(word, q, vocab) {
-  if (word === q) return true;
+  if (word === q) return 2;
+  if (NOT_FOOD_WORDS.has(word)) return 0;
   const stem = q.length >= 5 ? q.replace(/(erne|ene|er|en|e|r)$/, "") : q;
+  let best = 0;
   for (const s of stem.length >= 4 && stem !== q ? [q, stem] : [q]) {  // "pølser" finder "spegepølse"
     for (let i = word.indexOf(s); i >= 0; i = word.indexOf(s, i + 1)) {
       const head = word.slice(0, i), rest = word.slice(i + s.length);
-      if (s.length >= 5 ? (!head || head.length >= 3) && (!rest || isEnding(s, rest) || rest.length >= 3)
-          : (!head || okBefore(s, head, rest, vocab)) && okAfter(s, rest, vocab)) return true;
+      const last = !rest || isEnding(s, rest);
+      // Søgeord på to bogstaver er ofte en endelse ("udvalg|te"), så deres sammensatte ord er løse
+      const knownHead = okBefore(s, head, rest, vocab) || head.length >= (s.length >= 4 ? 4 : 5) || vocab.has(head);  // "rød|løg", "vild|laks", ikke "gam|mel"
+      if (s.length <= 2) {  // "jule|hvidt|øl", men ikke "special|ris|te|t" eller "lat|te"
+        const tail = !rest && head.length >= 4 && (okBefore(s, head, rest, vocab) || [...head].some((_, j) => head.length - j >= 4 && vocab.has(head.slice(j))));
+        if (!head ? okAfter(s, rest, vocab) : tail) best = Math.max(best, head ? 1 : 2);
+        continue;
+      }
+      if ((!head || okBefore(s, head, rest, vocab)) && okAfter(s, rest, vocab)) return 2;
+      if ((knownHead && (last || (s.length >= 4 && rest.length >= 3))) || (!head && rest.length >= 3)) best = 1;  // "vild|laks|efilet"
     }
   }
-  return false;
+  return best;
 }
 // Står søgeordet kun som smag ("is med smag af banan", "bananmilkshake med
 // jordbær")? Så er det ikke selve varen.
@@ -1038,7 +1053,7 @@ function searchIndex(offers) {
   const vocab = new Set(), words = new Map();
   for (const o of offers) {
     const head = searchWords(`${o.heading} ${o.dealer || ""}`), desc = searchWords(o.description || "");
-    words.set(o, {head, all: head.concat(desc)});
+    words.set(o, {head, desc});
     for (const w of head.concat(desc)) if (w.length >= 3) vocab.add(w);
   }
   return {offers, vocab, words, homes: new Map(), hits: new Map()};
@@ -1049,13 +1064,23 @@ function hits(q, idx) {
   const memo = idx.hits.get(q);
   return w => { let m = memo.get(w); if (m === undefined) memo.set(w, m = wordMatches(w, q, idx.vocab)); return m; };
 }
+const NON_FOOD = new Set(["nonfood", "personlig_pleje", "husholdning"]);
+// Kategorierne hvor søgeordet oftest står i overskriften (ikke som smag)
 function homeCategories(q, idx) {
   if (!idx.homes.has(q)) {
-    const n = {}, hit = hits(q, idx);
-    for (const o of idx.offers) {
-      const words = idx.words.get(o).head;
-      if (words.some((w, i) => hit(w) && !isFlavour(words, i))) n[o.category] = (n[o.category] || 0) + 1;
-    }
+    const hit = hits(q, idx), other = OTHER_SENSE[q] || [];
+    const count = level => {
+      const n = {};
+      for (const o of idx.offers) {
+        const words = idx.words.get(o).head;
+        if (!other.includes(o.category) && words.some((w, i) => hit(w) >= level && !isFlavour(words, i))) n[o.category] = (n[o.category] || 0) + 1;
+      }
+      return n;
+    };
+    let n = count(2);
+    if (!Object.keys(n).length) n = count(1);
+    // Findes varen blandt madvarer, hører den ikke hjemme i non-food (piskeris er ikke ris)
+    if (Object.keys(n).some(c => !NON_FOOD.has(c))) for (const c of NON_FOOD) delete n[c];
     const top = Math.max(0, ...Object.values(n));
     idx.homes.set(q, new Set(Object.keys(n).filter(c => n[c] * 2 > top)));
   }
@@ -1064,20 +1089,22 @@ function homeCategories(q, idx) {
 // Giver for et tilbud 0 når alle søgeord står i overskriften, 1 når nogle kun
 // står i beskrivelsen, 2 når søgeordet kun er en smag eller tilbuddet ligger i
 // en anden kategori end varen plejer (de vises sidst), og -1 uden træf.
+// "Mine basisvarer" viser 0 og 1.
 function searchMatcher(query, idx) {
   const parts = query.split(/\s+/), skip = parts.filter(p => p.startsWith("-")).flatMap(p => searchWords(p));
   const qs = searchWords(parts.filter(p => !p.startsWith("-")).join(" "));
   if (!qs.length) return null;
   return o => {
-    const {head, all} = idx.words.get(o);
-    if (skip.some(x => all.some(w => w.includes(x)))) return -1;
+    const {head, desc} = idx.words.get(o);
+    if (skip.some(x => head.some(w => w.includes(x)) || desc.some(w => w.includes(x)))) return -1;
     let tier = 0;
     for (const q of qs) {
-      const hit = hits(q, idx), at = head.findIndex(hit);
-      if (at < 0 && !all.some(hit)) return -1;
-      const home = homeCategories(q, idx);
-      if ((home.size && !home.has(o.category)) || (at >= 0 && head.every((w, i) => !hit(w) || isFlavour(head, i)))) tier = 2;
-      else if (at < 0) tier = Math.max(tier, 1);
+      if ((OTHER_SENSE[q] || []).includes(o.category)) return -1;
+      const hit = hits(q, idx), home = homeCategories(q, idx), atHome = !home.size || home.has(o.category);
+      const found = head.map(w => hit(w) === 2 || (hit(w) === 1 && atHome));
+      if (!found.some(Boolean) && !desc.some(w => hit(w) === 2)) return -1;
+      if (!atHome || (found.some(Boolean) && found.every((f, i) => !f || isFlavour(head, i)))) tier = 2;
+      else if (!found.some(Boolean)) tier = Math.max(tier, 1);
     }
     return tier;
   };
