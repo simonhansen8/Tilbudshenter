@@ -80,7 +80,9 @@ select { padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; 
 .name { font-weight: 650; overflow-wrap: anywhere; }
 .desc { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .price { font-size: 20px; font-weight: 750; margin-top: 4px; }
-.pre { color: var(--muted); text-decoration: line-through; font-size: 13px; margin-left: 6px; font-weight: 400; }
+.normal { color: var(--muted); font-size: 13px; }
+.normal.yes { color: var(--accent); }
+.normal.no { color: var(--warn); font-weight: 600; }
 .unit { font-size: 13px; }
 .why { color: var(--accent); font-size: 13px; }
 .tags { display: flex; flex-wrap: wrap; gap: 4px; }
@@ -1271,6 +1273,48 @@ function renderChips() {
     ? `mine ${state.basics.items.length} basisvarer` : catText].join(" · ");
 }
 
+// <normalpris>
+// Normalprisen ved et tilbud, så man kan se, om tilbuddet faktisk er
+// billigere: butikkens egen normalpris fra avisen, ellers basisprisen (den
+// anslåede hyldepris uden tilbud fra madplanen, som man selv kan rette) for
+// almindelige basisvarer. Ligger tilbuddets pris pr. kg langt fra
+// basisprisen, er det næppe samme slags vare (fx tomater på dåse mod friske
+// tomater), og så vises ingen basispris. Ellers står der, at den er ukendt.
+const BASIS_MIN_RATIO = 0.35, BASIS_MAX_RATIO = 3;
+function normalPrice(o) {
+  if (o.pre_price) {
+    const save = Math.round((o.pre_price - o.price) * 100) / 100;
+    return save > 0
+      ? {kind: "store", cheaper: true, short: `Normalpris ${money(o.pre_price)} · spar ${money(save)}`,
+        long: `${money(o.pre_price)} ifølge avisen. Du sparer ${money(save)} (${Math.round(save / o.pre_price * 100)} %).`}
+      : {kind: "store", cheaper: false, short: `Normalpris ${money(o.pre_price)} · ikke billigere`,
+        long: `${money(o.pre_price)} ifølge avisen, så tilbuddet er ikke billigere end normalprisen.`};
+  }
+  const ing = o.basis_key && ING[o.basis_key];
+  if (ing && o.unit_price) {
+    const basis = o.unit === "stk" ? ing.price[0] * ing.price[1] / 1000 : ing.price[0];
+    const ratio = o.unit_price / basis;
+    if (basis > 0 && ratio >= BASIS_MIN_RATIO && ratio <= BASIS_MAX_RATIO) {
+      const per = n => money(n).replace(/ kr$/, ` kr/${o.unit}`);
+      const pct = Math.round((1 - ratio) * 100);
+      const cmp = pct > 0 ? `${pct} % billigere` : pct < 0 ? `${-pct} % dyrere` : "samme pris";
+      return {kind: "basis", cheaper: pct > 0, short: `Basispris ca. ${per(basis)} · ${cmp}`,
+        long: `Avisen oplyser ingen normalpris. Basisprisen for almindelig ${ing.name} er ca. ${per(basis)}, og tilbuddet koster ${per(o.unit_price)}, `
+          + (pct ? `${cmp} end basisprisen.` : "det samme som basisprisen.")
+          + " Basisprisen er anslået og kan rettes under Madplan → Basispriser."};
+    }
+  }
+  return {kind: null, cheaper: null, short: "Normalpris ukendt",
+    long: "Avisen oplyser ingen normalpris, og varen har ingen basispris, så det kan ikke ses, om tilbuddet er billigere end normalt."};
+}
+// </normalpris>
+
+function normalLine(o) {
+  const n = normalPrice(o);
+  const cls = n.cheaper === true ? " yes" : n.cheaper === false ? " no" : "";
+  return `<div class="normal${cls}" title="${esc(n.long)}">${esc(n.short)}</div>`;
+}
+
 function card(o) {
   const img = o.image_url ? `<div class="img"><img src="${esc(o.image_url)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>` : "";
   // Anslået rabat (fra andre butikker eller prishistorik) vises med kant i stedet for fyld
@@ -1286,8 +1330,9 @@ function card(o) {
     ${tags ? `<div class="tags">${tags}</div>` : ""}
     <div class="name">${esc(o.heading)}</div>
     ${o.description ? `<div class="desc" title="${esc(o.description)}">${esc(o.description)}</div>` : ""}
-    <div class="price">${esc(o.price_text)}${o.pre_price_text ? `<span class="pre">${esc(o.pre_price_text)}</span>` : ""}</div>
+    <div class="price">${esc(o.price_text)}</div>
     ${o.unit_price_text ? `<div class="unit">${esc(o.unit_price_text)}</div>` : ""}
+    ${normalLine(o)}
     ${o.reasons.length ? `<div class="why">${esc(o.reasons.join(", "))}</div>` : ""}
     <div class="meta">${esc(o.category_name)} · ${esc(o.period_text)}${o.catalog_label ? ` · ${esc(o.catalog_label)}` : ""}</div>
     ${listButton(o.id)}
@@ -1424,6 +1469,7 @@ function renderOffer() {
     ["Avis", [paper.label || o.catalog_label, o.catalog_page ? `side ${o.catalog_page}` : ""].filter(Boolean).join(", ")],
     ["Gælder", o.period_text],
     ["Kategori", o.category_name],
+    ["Normalpris", normalPrice(o).long],
     ["Rabat", o.reasons.join(", ")],
   ].filter(r => r[1]);
   const uses = offerView.uses && offerView.uses.get(o.id);
@@ -1432,8 +1478,9 @@ function renderOffer() {
     <div class="od-pic">${tabs}${pic}</div>
     <div class="od-info">
       ${tags ? `<div class="tags" style="align-items:center">${tags}</div>` : ""}
-      <div class="price">${esc(o.price_text)}${o.pre_price_text ? `<span class="pre">${esc(o.pre_price_text)}</span>` : ""}</div>
+      <div class="price">${esc(o.price_text)}</div>
       ${o.unit_price_text ? `<div class="unit">${esc(o.unit_price_text)}</div>` : ""}
+      ${normalLine(o)}
       ${o.description ? `<div class="desc">${esc(o.description)}</div>` : ""}
       <dl>${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>
       ${listButton(o.id)}
@@ -1652,6 +1699,7 @@ function setBasis(key, value) {
   if (v > 0 && v !== ING[key].base) custom[key] = v; else delete custom[key];
   store.set("basis", custom);
   applyBasis();
+  render();
   if ($("plan-dlg").open) renderPlan();
 }
 async function openBasis() {
@@ -2693,6 +2741,7 @@ $("btn-basis-reset").addEventListener("click", () => {
   store.set("basis", {});
   applyBasis();
   renderBasis();
+  render();
   if ($("plan-dlg").open) renderPlan();
 });
 $("btn-recipes-close").addEventListener("click", () => { $("recipes-dlg").close(); renderPlan(); });
@@ -3051,7 +3100,8 @@ $("settings-form").addEventListener("submit", e => {
     await loadList();
     await loadOffers();
     // Madplanens ingredienser bruges også til at sortere indkøbslisten
-    loadPlanData().catch(() => {});
+    // og til basispriserne ved tilbuddene
+    loadPlanData().then(render).catch(() => {});
     // Første gang: hent tilbud med det samme
     if (!STATIC && !s.last_scan && !s.scan.running) startScan();
     if (STATIC) {

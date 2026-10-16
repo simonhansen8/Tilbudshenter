@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 from importlib import resources
 
-from .comparison import PRODUCT_GROUPS, _has_word, _tokens
+from .comparison import PER_PIECE_GROUPS, PRODUCT_GROUPS, _has_word, _tokens, product_group
 
 # Ingrediens -> (navn, mønstre, udelukkelser). Samme form som
 # comparison.PRODUCT_GROUPS: et mønster er en liste af ord, der alle skal
@@ -200,6 +200,29 @@ def basis_price(key: str, market: dict[str, float] | None = None) -> float:
     base = NORMAL_PRICES[key][0]
     typical = (market or {}).get(key)
     return float(round(max(base, min(typical, base * MARKET_MAX_FACTOR)))) if typical else float(base)
+
+
+# Varetyperne fra sammenligningen på tværs af butikker, hvis basispris står
+# under et andet navn
+_GROUP_BASIS = {"letmaelk": "maelk", "minimaelk": "maelk", "soedmaelk": "maelk", "spaghetti": "pasta",
+                "skyr": "yoghurt"}
+
+
+def offer_basis_key(heading: str, unit: str | None) -> str | None:
+    """Basisvaren, et tilbud kan holdes op mod, når avisen ikke oplyser en
+    normalpris, fx "hakket_okse" for "Netto hakket oksekød 8-12%".
+
+    Bruger den strenge genkendelse fra sammenligningen på tværs af butikker
+    (ikke madplanens), så fx kartoffelspegepølse ikke regnes som kartofler.
+    En stykpris kan kun sammenlignes for varer, der sælges pr. stk.
+    """
+    group = product_group(heading)
+    if group is None or unit not in ("kg", "l", "stk"):
+        return None
+    key = _GROUP_BASIS.get(group, group)
+    if key not in NORMAL_PRICES or (unit == "stk" and group not in PER_PIECE_GROUPS):
+        return None
+    return key
 
 
 # Den mindste pakke af basisvaren i gram (eller ml), når den er større end ét
