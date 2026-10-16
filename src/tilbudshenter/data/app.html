@@ -292,9 +292,8 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
   <section id="filters" hidden>
     <div class="toolbar">
       <input class="search" id="search" type="search" placeholder="Søg efter vare, fx kylling eller kaffe">
-      <select id="sort" aria-label="Sortering">
-        <option value="best">Bedste tilbud først</option>
-        <option value="discount">Største rabat</option>
+      <select id="sort" aria-label="Sortering" title="Største rabat først: rabat i procent ift. normalprisen. Favoritter og laveste pris i flere uger rykker lidt op. Med Kun mine basisvarer kommer laveste pris pr. kg/l først.">
+        <option value="best">Største rabat først</option>
         <option value="unit">Laveste pris pr. kg/l</option>
         <option value="price">Laveste pris</option>
         <option value="store">Butik, som i avisen</option>
@@ -1196,7 +1195,6 @@ function filtered() {
   filtered.basicOf = basicOf;
   if (match) list = list.filter(o => { tier.set(o, match(o)); return tier.get(o) >= 0; });
   const by = {
-    discount: (a, b) => (b.known_discount ?? -1) - (a.known_discount ?? -1),
     unit: (a, b) => perKg(a) - perKg(b) || a.price - b.price,
     price: (a, b) => a.price - b.price,
     store: paperCompare,
