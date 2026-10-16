@@ -95,6 +95,10 @@ select { padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; 
 .paper-head { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 14px 0 0; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
 .paper-head:first-child { margin-top: 0; }
 .paper-head h3 { margin: 0; font-size: 17px; }
+.paper-head .fold { display: flex; align-items: baseline; gap: 6px; background: none; border: none; padding: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; }
+.paper-head .fold::before { content: "▾"; color: var(--muted); font-size: 14px; width: 12px; display: inline-block; }
+.paper-head .fold[aria-expanded="false"]::before { content: "▸"; }
+.count .link { margin-left: 10px; }
 .paper-head .sub { color: var(--muted); font-size: 13px; }
 .paper-head .acts { margin-left: auto; display: flex; gap: 12px; align-items: baseline; }
 .paper-head a, .od-info a.link { color: var(--accent); font-size: 13px; }
@@ -301,7 +305,7 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
     </details>
   </section>
 
-  <div class="count" id="count"></div>
+  <div class="count"><span id="count"></span><button class="link" id="btn-fold-all" hidden></button></div>
   <div class="grid" id="grid"></div>
   <div class="more"><button class="btn" id="btn-more" hidden>Vis flere</button></div>
   <div class="empty" id="empty" hidden></div>
@@ -534,6 +538,7 @@ const $ = (id) => document.getElementById(id);
 const PAGE = 120;
 const state = {
   offers: [], settings: null, categories: [], stores: new Set(), cats: new Set(),
+  folded: [],
   q: "", sort: "best", knownOnly: false, hideMember: false, limit: PAGE, catalogList: null, scanning: false,
   periods: new Set(["now", "later"]), list: [], papers: {},
   basics: {items: [], on: false},
@@ -563,8 +568,8 @@ async function api(path, body) {
 
 // Brugerens valg og indkøbsliste ligger i browseren under disse nøgler
 // (tilbudshenter.settings, tilbudshenter.list, tilbudshenter.prefs,
-// tilbudshenter.filters, tilbudshenter.mealplan, tilbudshenter.basics og
-// tilbudshenter.basis). De må ikke omdøbes, og gemte valg går altid
+// tilbudshenter.filters, tilbudshenter.mealplan, tilbudshenter.basics,
+// tilbudshenter.basis og tilbudshenter.folded). De må ikke omdøbes, og gemte valg går altid
 // forud for standardvalgene i data.json, så en ny udgave af siden aldrig
 // nulstiller dem.
 const store = {
@@ -800,6 +805,11 @@ function loadBasics() {
   state.basics = {items: Array.isArray(b.items) ? b.items.filter(w => typeof w === "string" && w.trim()) : [], on: !!b.on};
   $("basics-only").checked = state.basics.on;
   renderBasics();
+}
+// Sammenklappede grupper (se foldKey)
+function loadFolded() {
+  const v = store.get("folded", []);
+  state.folded = Array.isArray(v) ? v.filter(k => typeof k === "string") : [];
 }
 function renderBasics() {
   $("basics-chips").innerHTML = state.basics.items.map(w =>
@@ -1097,10 +1107,53 @@ function filtered() {
   return list;
 }
 
+// Grupperne (en avis eller en basisvare) kan klappes sammen ved at trykke på
+// overskriften. Valget huskes i browseren under tilbudshenter.folded.
+const foldKey = {
+  basic: word => "basis:" + word.toLowerCase(),
+  paper: o => "avis:" + o.dealer + "|" + ((state.papers[o.catalog_id] || {}).label || o.catalog_label || ""),
+};
+function isFolded(key) { return state.folded.includes(key); }
+function setFolded(keys, fold) {
+  const set = new Set(state.folded);
+  for (const k of keys) fold ? set.add(k) : set.delete(k);
+  state.folded = [...set];
+  store.set("folded", state.folded);
+}
+function foldTitle(key, text) {
+  const open = !isFolded(key);
+  return `<button class="fold" type="button" data-fold="${esc(key)}" aria-expanded="${open}"
+    title="${open ? "Klap sammen" : "Fold ud"}"><h3>${esc(text)}</h3></button>`;
+}
+
+// Gruppevisningen: en overskrift for hver gruppe og kortene under den, så
+// længe gruppen ikke er klappet sammen. Sammenklappede grupper tæller ikke
+// med i de tilbud, der vises ad gangen.
+// groupOf skiller grupperne ad, foldOf er nøglen, der huskes.
+function renderGroups(list, groupOf, foldOf, head) {
+  const keys = new Set();
+  for (const o of list) keys.add(foldOf(o));
+  let html = "", n = 0, prev = null, more = false;
+  for (const o of list) {
+    const g = groupOf(o), folded = isFolded(foldOf(o));
+    if (!folded && n >= state.limit) { more = true; break; }
+    if (g !== prev) { html += head(o); prev = g; }
+    if (!folded) { html += card(o); n++; }
+  }
+  $("grid").innerHTML = html;
+  $("btn-more").hidden = !more;
+  const allFolded = [...keys].every(isFolded);
+  $("btn-fold-all").hidden = keys.size < 2;
+  $("btn-fold-all").textContent = allFolded ? "Fold alle ud" : "Klap alle sammen";
+  $("btn-fold-all").dataset.keys = JSON.stringify([...keys]);
+  $("btn-fold-all").dataset.fold = allFolded ? "" : "1";
+  return n;
+}
+
 function basicHead(word, group) {
   const cheapest = group.filter(o => o.unit_price_text && perKg(o) < Infinity).sort((a, b) => perKg(a) - perKg(b))[0];
   const label = word.split(/\s+/).filter(p => !p.startsWith("-")).join(" ");
-  return `<div class="paper-head"><h3>${esc(cap(label))}</h3>
+  return `<div class="paper-head">${foldTitle(foldKey.basic(word), cap(label))}
     <span class="sub">${group.length} tilbud${cheapest ? ` · billigst ${esc(cheapest.unit_price_text)} i ${esc(cheapest.dealer)}` : ""}</span></div>`;
 }
 
@@ -1129,7 +1182,7 @@ function paperHead(o, n) {
   const url = paperUrl(o.catalog_id);
   const only = state.stores.size > 1
     ? `<button class="link" data-only-store="${esc(o.dealer)}">Vis kun ${esc(o.dealer)}</button>` : "";
-  return `<div class="paper-head"><h3>${esc(o.dealer)}</h3>
+  return `<div class="paper-head">${foldTitle(foldKey.paper(o), o.dealer)}
     <span class="sub">${label ? esc(label) + " · " : ""}${esc(o.period_text)} · ${n} tilbud</span>
     <span class="acts">${only}${url ? `<a href="${esc(url)}" target="_blank" rel="noopener">Åbn avisen ↗</a>` : ""}</span></div>`;
 }
@@ -1206,10 +1259,9 @@ function render() {
   const list = filtered();
   $("empty").hidden = list.length > 0;
   $("empty").textContent = "Ingen tilbud matcher dine filtre.";
-  $("count").textContent = `Viser ${Math.min(list.length, state.limit)} af ${list.length} tilbud`
-    + (list.length < state.offers.length ? ` (${state.offers.length} i alt)` : "");
   const shown = list.slice(0, state.limit);
   const basics = filtered.basics;
+  $("btn-fold-all").hidden = true;
   if (basics) {
     const bo = filtered.basicOf, groups = basics.map(() => []);
     for (const o of list) groups[bo.get(o)].push(o);
@@ -1217,16 +1269,22 @@ function render() {
     $("count").textContent = `${list.length} tilbud på ${basics.length - missing.length} af dine ${basics.length} basisvarer`
       + (missing.length ? `. Ingen tilbud på: ${missing.join(", ")}` : "");
     $("empty").textContent = "Ingen tilbud på dine basisvarer lige nu.";
-    $("grid").innerHTML = shown.map((o, i) =>
-      (i === 0 || bo.get(shown[i - 1]) !== bo.get(o) ? basicHead(basics[bo.get(o)].word, groups[bo.get(o)]) : "") + card(o)).join("");
-  } else if (state.sort === "store") {
-    const counts = {};
-    for (const o of list) counts[o.catalog_id] = (counts[o.catalog_id] || 0) + 1;
-    $("grid").innerHTML = shown.map((o, i) =>
-      (i === 0 || shown[i - 1].catalog_id !== o.catalog_id ? paperHead(o, counts[o.catalog_id]) : "") + card(o)).join("");
-  } else {
-    $("grid").innerHTML = shown.map(card).join("");
+    const word = o => basics[bo.get(o)].word;
+    renderGroups(list, o => bo.get(o), o => foldKey.basic(word(o)), o => basicHead(word(o), groups[bo.get(o)]));
+    return;
   }
+  if (state.sort === "store") {
+    // Samme avis kan have flere udgaver; hver avis får sin egen overskrift
+    const byPaper = new Map();
+    for (const o of list) byPaper.set(o.catalog_id, (byPaper.get(o.catalog_id) || 0) + 1);
+    const shownCount = renderGroups(list, o => o.catalog_id, foldKey.paper, o => paperHead(o, byPaper.get(o.catalog_id)));
+    $("count").textContent = `Viser ${shownCount} af ${list.length} tilbud`
+      + (list.length < state.offers.length ? ` (${state.offers.length} i alt)` : "");
+    return;
+  }
+  $("count").textContent = `Viser ${shown.length} af ${list.length} tilbud`
+    + (list.length < state.offers.length ? ` (${state.offers.length} i alt)` : "");
+  $("grid").innerHTML = shown.map(card).join("");
   $("btn-more").hidden = list.length <= state.limit;
 }
 
@@ -2755,6 +2813,8 @@ $("list-body").addEventListener("change", e => {
   if (id) changeList({action: "check", id, checked: e.target.checked});
 });
 $("grid").addEventListener("click", e => {
+  const fold = e.target.closest("[data-fold]");
+  if (fold) { setFolded([fold.dataset.fold], !isFolded(fold.dataset.fold)); render(); return; }
   const only = e.target.closest("[data-only-store]");
   if (only) { state.stores = new Set([only.dataset.onlyStore]); state.limit = PAGE; saveFilters(); render(); window.scrollTo({top: $("filters").offsetTop}); return; }
   if (e.target.closest("a")) return;
@@ -2802,6 +2862,9 @@ $("od-body").addEventListener("touchend", e => {
 }, {passive: true});
 $("btn-load-stores").addEventListener("click", loadStores);
 $("btn-more").addEventListener("click", () => { state.limit += PAGE; render(); });
+$("btn-fold-all").addEventListener("click", e => {
+  setFolded(JSON.parse(e.target.dataset.keys || "[]"), !!e.target.dataset.fold); render();
+});
 $("search").addEventListener("input", e => { state.q = e.target.value; state.limit = PAGE; render(); });
 $("sort").addEventListener("change", e => { state.sort = e.target.value; savePrefs(); render(); });
 $("known-only").addEventListener("change", e => { state.knownOnly = e.target.checked; saveFilters(); render(); });
@@ -2901,6 +2964,7 @@ $("settings-form").addEventListener("submit", e => {
   }
   loadPrefs();
   loadBasics();
+  loadFolded();
   try {
     const s = await refreshState();
     await loadList();
