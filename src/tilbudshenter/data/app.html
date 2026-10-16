@@ -214,6 +214,24 @@ details.have .hint { margin-top: 6px; }
 .own-recipe { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .own-recipe .dish-actions { margin-top: 0; }
 .recipe-form { margin-top: 18px; }
+.week-nav { display: flex; align-items: center; gap: 10px; margin: 12px 0 4px; }
+.week-nav .t { flex: 1; text-align: center; }
+.week-nav .t b { font-size: 18px; display: block; }
+.week-nav .t span { color: var(--muted); font-size: 13px; }
+.week-dish { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-top: 8px; }
+.week-dish .no { color: var(--accent); font-weight: 700; min-width: 18px; padding-top: 1px; }
+.week-dish .what { flex: 1; min-width: 0; }
+.week-dish .dish-actions { margin-top: 0; flex-wrap: nowrap; gap: 4px; }
+.week-dish .sub, .week-recipe .sub { color: var(--muted); font-size: 13px; }
+.week-recipe { display: flex; gap: 8px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.week-recipe .what { flex: 1; min-width: 0; }
+.week-recipe summary, .week-dish summary { cursor: pointer; font-weight: 600; }
+.week-recipe summary .sub, .week-dish summary .sub { font-weight: 400; }
+.week-recipe ul, .week-dish ul { margin: 6px 0 0; padding-left: 18px; font-size: 13px; }
+.week-recipe a, .week-dish a { color: var(--accent); font-size: 13px; }
+.week-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 4px; align-items: center; }
+.week-tools h3 { margin: 0; font-size: 16px; flex: 1 1 100%; }
+.week-tools .search { flex: 1 1 200px; }
 .basis-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-top: 1px solid var(--line); font-size: 14px; }
 .basis-row .n { flex: 1; min-width: 0; }
 .basis-row input { width: 80px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); text-align: right; }
@@ -257,6 +275,7 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
     <div class="actions">
       <button class="btn primary" id="btn-scan">Hent nye tilbud</button>
       <button class="btn" id="btn-plan">Madplan</button>
+      <button class="btn" id="btn-week">Ugeplan</button>
       <button class="btn" id="btn-list">Indkøbsliste <span id="list-count"></span></button>
       <button class="btn" id="btn-settings">Indstillinger</button>
     </div>
@@ -469,6 +488,7 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
       <span style="flex:1"></span>
       <button class="btn small" id="btn-plan-basis">Basispriser</button>
       <button class="btn small" id="btn-plan-recipes">Mine opskrifter</button>
+      <button class="btn small" id="btn-plan-week">Ugeplan</button>
       <button class="btn small primary" id="btn-plan-list">Læg på indkøbslisten</button>
     </div>
   </div>
@@ -526,6 +546,39 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
           <button type="button" class="btn small" id="btn-recipe-cancel" hidden>Annuller</button>
         </div>
       </form>
+    </div>
+  </div>
+</dialog>
+<dialog id="week-dlg">
+  <div class="dlg">
+    <div class="dlg-head">
+      <h2>Ugeplan</h2>
+      <button class="btn small" id="btn-week-close">Luk</button>
+    </div>
+    <div class="dlg-body">
+      <div class="week-nav">
+        <button class="btn small" id="btn-week-prev" title="Ugen før" aria-label="Ugen før">‹</button>
+        <div class="t"><b id="week-title"></b><span id="week-dates"></span></div>
+        <button class="btn small" id="btn-week-next" title="Ugen efter" aria-label="Ugen efter">›</button>
+      </div>
+      <div id="week-chosen"></div>
+      <div class="week-tools">
+        <h3>Alle opskrifter <span class="hint" id="week-count"></span></h3>
+        <input class="search" id="week-search" type="search" placeholder="Find ret eller ingrediens, fx laks" autocomplete="off">
+        <select id="week-kind" aria-label="Slags">
+          <option value="">Alle slags</option><option value="okse">Okse</option><option value="gris">Gris</option>
+          <option value="kylling">Kylling</option><option value="fisk">Fisk</option><option value="vegetar">Vegetar</option>
+          <option value="andet">Andet kød</option><option value="own">Mine opskrifter</option>
+        </select>
+      </div>
+      <div id="week-recipes"></div>
+      <button class="btn small" id="btn-week-more" style="margin-top:10px" hidden>Vis flere</button>
+    </div>
+    <div class="dlg-foot" style="flex-wrap:wrap">
+      <span class="hint" id="week-sum" style="margin:0"></span>
+      <span style="flex:1"></span>
+      <label class="field" style="flex-direction:row;align-items:center">Personer <select id="week-persons"></select></label>
+      <button class="btn small primary" id="btn-week-list">Læg på indkøbslisten</button>
     </div>
   </div>
 </dialog>
@@ -2330,6 +2383,7 @@ function renderPlan() {
         <button class="btn small" data-move="${i}:-1" ${i ? "" : "disabled"} title="Byt med dagen før">↑</button>
         <button class="btn small" data-move="${i}:1" ${i < entries.length - 1 ? "" : "disabled"} title="Byt med dagen efter">↓</button>
         <button class="btn small" data-drop="${i}">Fjern</button>
+        <button class="btn small" data-to-week="${i}">${inWeek(r.id, weekOf(x.day)) ? "✓ I" : "Gem i"} uge ${weekOf(x.day).week}</button>
       </div>
     </article>`;
   }).join("");
@@ -2554,6 +2608,11 @@ $("plan-body").addEventListener("click", e => {
     plan.double.delete(id);
     plan.ids = plan.ids.filter(x => x !== id);
     $("plan-count").value = plan.count;
+  } else if (d.toWeek !== undefined) {
+    const x = plan.entries[Number(d.toWeek)], w = weekOf(x.day);
+    if (inWeek(x.recipe.id, w)) { toast(`${x.recipe.name} er allerede i uge ${w.week}`); return; }
+    setWeek(w, [...weekIds(w), x.recipe.id]);
+    toast(`${x.recipe.name} er gemt i uge ${w.week}`);
   } else if (e.target.closest("[data-plan-offer]")) {
     openPlanOffer(e.target.closest("[data-plan-offer]").dataset.planOffer);
     return;
@@ -2589,6 +2648,176 @@ function openPlanOffer(id) {
   }
   openOffer(id, [...offers.values()], uses);
 }
+
+// -- Ugeplan -------------------------------------------------------------
+// Retter, man selv vælger til en uge, i den rækkefølge man har lyst til
+// at spise dem. Gemmes i browseren under tilbudshenter.weeks som
+// {"2026-W42": [ret-id, ...]}. Ugerne har ISO-ugenumre som i kalenderen.
+// <weeks>
+const MONTHS = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
+// ISO-ugen for en dato: ugen med torsdagen afgør året, og uge 1 er ugen med 4. januar
+function weekOf(d) {
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  const year = t.getUTCFullYear();
+  const week = Math.ceil(((t - Date.UTC(year, 0, 1)) / 86400000 + 1) / 7);
+  const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1 - day, 12);
+  return {year, week, key: `${year}-W${String(week).padStart(2, "0")}`, monday};
+}
+function weekDates(w) {
+  const a = w.monday, b = new Date(a.getFullYear(), a.getMonth(), a.getDate() + 6, 12);
+  return a.getMonth() === b.getMonth() ? `${a.getDate()}.–${b.getDate()}. ${MONTHS[b.getMonth()]}`
+    : `${a.getDate()}. ${MONTHS[a.getMonth()]} – ${b.getDate()}. ${MONTHS[b.getMonth()]}`;
+}
+// Ugens retter, også dem i flere uger; gamle uger (over fire uger siden) ryddes væk
+function cleanWeeks(weeks, now) {
+  const first = weekOf(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 28)).key;
+  return Object.fromEntries(Object.entries(weeks).filter(([k, ids]) => k >= first && ids.length));
+}
+// </weeks>
+const WEEKS_AHEAD = 12, WEEK_PAGE = 50;
+const week = {offset: 0, q: "", kind: "", limit: WEEK_PAGE};
+function shownWeek() { const d = today(); return weekOf(addDays(d, 7 * week.offset)); }
+function allWeeks() { return store.get("weeks", {}); }
+function weekIds(w) { return allWeeks()[w.key] || []; }
+function inWeek(id, w) { return weekIds(w).includes(id); }
+function setWeek(w, ids) { store.set("weeks", cleanWeeks({...allWeeks(), [w.key]: ids}, today())); }
+// Andre uger, retten står i, fx "uge 44"
+function otherWeeks(id, w) {
+  return Object.entries(allWeeks()).filter(([k, ids]) => k !== w.key && ids.includes(id))
+    .map(([k]) => "uge " + Number(k.split("-W")[1]));
+}
+function recipeSub(r) {
+  return [KIND_NAMES[r.kind] || r.kind, r.minutes ? `${r.minutes} min` : "", r.own ? "egen opskrift" : r.source ? host(r.source) : ""]
+    .filter(Boolean).join(" · ");
+}
+function weekPersons() { return Number(store.get("weekpersons", 0)) || store.get("mealplan", {}).persons || 4; }
+function recipeDetails(r, persons) {
+  const old = plan.persons;
+  plan.persons = persons;  // itemText skalerer efter madplanens personer
+  const items = r.items.filter(i => !i.side).map(i => `<li>${esc(itemText(i, 1))}</li>`).join("");
+  plan.persons = old;
+  return `<ul>${items}</ul>${r.pantry.length ? `<div class="sub">Har du derhjemme: ${esc(r.pantry.join(", "))}</div>` : ""}
+    ${r.source ? `<a href="${esc(r.source)}" target="_blank" rel="noopener">Se opskriften hos ${esc(host(r.source))}</a>` : ""}`;
+}
+
+function renderWeek(recipes = true) {
+  const w = shownWeek(), persons = weekPersons();
+  const byId = new Map(allRecipes().map(r => [r.id, r]));
+  const ids = weekIds(w).filter(id => byId.has(id));
+  $("week-title").textContent = `Uge ${w.week}`;
+  $("week-dates").textContent = `${week.offset === 0 ? "Denne uge" : week.offset === 1 ? "Næste uge" : `Om ${week.offset} uger`} · ${weekDates(w)}`;
+  $("btn-week-prev").disabled = week.offset <= 0;
+  $("btn-week-next").disabled = week.offset >= WEEKS_AHEAD;
+  $("week-chosen").innerHTML = ids.length ? ids.map((id, i) => {
+    const r = byId.get(id);
+    return `<div class="week-dish"><span class="no">${i + 1}</span>
+      <div class="what"><details><summary>${esc(r.name)}<div class="sub">${esc(recipeSub(r))}</div></summary>${recipeDetails(r, persons)}</details></div>
+      <div class="dish-actions">
+        <button class="btn small" data-week-move="${i}:-1" ${i ? "" : "disabled"} title="Tidligere i ugen" aria-label="Flyt op">↑</button>
+        <button class="btn small" data-week-move="${i}:1" ${i < ids.length - 1 ? "" : "disabled"} title="Senere i ugen" aria-label="Flyt ned">↓</button>
+        <button class="btn small" data-week-drop="${esc(id)}" title="Fjern fra ugen" aria-label="Fjern">✕</button>
+      </div></div>`;
+  }).join("") : `<p class="hint" style="margin-top:10px">Ingen retter i uge ${w.week} endnu. Vælg dem i listen herunder.
+    Bagefter kan du sætte dem i den rækkefølge, du har lyst til at spise dem.</p>`;
+  $("week-sum").textContent = ids.length ? `${ids.length} ${ids.length === 1 ? "ret" : "retter"} i uge ${w.week}` : "";
+  $("btn-week-list").disabled = !ids.length;
+  if (recipes) renderWeekRecipes();
+}
+
+// 'Cheesy' lakselasagne sorteres under C
+function sortName(r) { return r.name.replace(/^[^\p{L}\p{N}]+/u, ""); }
+function renderWeekRecipes() {
+  const w = shownWeek(), chosen = new Set(weekIds(w)), persons = weekPersons();
+  const q = tokens(week.q);
+  const list = allRecipes().filter(r => (!week.kind || (week.kind === "own" ? r.own : r.kind === week.kind)) &&
+    q.every(t => tokens(r.name + " " + r.items.map(i => i.name).join(" ")).some(x => x.startsWith(t))))
+    .sort((a, b) => (b.own || false) - (a.own || false) || sortName(a).localeCompare(sortName(b), "da"));
+  $("week-count").textContent = `(${list.length.toLocaleString("da-DK")})`;
+  $("week-recipes").innerHTML = list.slice(0, week.limit).map(r => {
+    const other = otherWeeks(r.id, w), on = chosen.has(r.id);
+    return `<div class="week-recipe"><div class="what"><details><summary>${esc(r.name)}
+      <div class="sub">${esc(recipeSub(r))}${other.length ? ` · <b>i ${esc(joinDa(other))}</b>` : ""}</div></summary>${recipeDetails(r, persons)}</details></div>
+      <button class="btn small add${on ? " on" : ""}" data-week-add="${esc(r.id)}">${on ? "✓ I" : "+"} uge ${w.week}</button></div>`;
+  }).join("") || `<p class="hint">Ingen opskrifter passer til søgningen.</p>`;
+  $("btn-week-more").hidden = list.length <= week.limit;
+}
+
+async function openWeek() {
+  week.limit = WEEK_PAGE;
+  const persons = weekPersons();
+  $("week-persons").innerHTML = [1, 2, 3, 4, 5, 6, 8].map(n => `<option ${n === persons ? "selected" : ""}>${n}</option>`).join("");
+  $("week-chosen").innerHTML = `<p class="hint" style="margin-top:14px">Henter opskrifterne…</p>`;
+  $("week-recipes").innerHTML = "";
+  if ($("plan-dlg").open) $("plan-dlg").close();
+  $("week-dlg").showModal();
+  try { await loadPlanData(); renderWeek(); }
+  catch (e) { $("week-chosen").innerHTML = `<p class="hint" style="color:var(--error)">${esc(e.message)}</p>`; }
+}
+
+// Ugens ingredienser på indkøbslisten, lagt sammen pr. vare
+async function weekToList() {
+  const w = shownWeek(), byId = new Map(allRecipes().map(r => [r.id, r]));
+  const recipes = weekIds(w).map(id => byId.get(id)).filter(Boolean);
+  const old = plan.persons;
+  plan.persons = weekPersons();
+  const lines = new Map();
+  for (const r of recipes) {
+    for (const item of r.items) {
+      const key = item.side ? "side" : item.keys[0] || item.name;
+      const e = lines.get(key) || {item, dishes: [], amounts: new Map()};
+      if (!e.dishes.includes(r.name)) e.dishes.push(r.name);
+      if (item.amount) e.amounts.set(item.unit, (e.amounts.get(item.unit) || 0) + scaledAmount(item));
+      lines.set(key, e);
+    }
+  }
+  plan.persons = old;
+  const texts = [...lines.values()].map(e => {
+    const a = [...e.amounts].map(([unit, n]) => { const t = amountText(Math.round(n * 10) / 10, unit); return unit === "stk" ? `${t} stk` : t; }).join(" + ");
+    const name = e.item.side ? "Grønt tilbehør (råkost, salat eller broccoli)" : cap(e.item.name);
+    return {text: name + (a ? ` (${a})` : ""), note: `til ${joinDa(e.dishes)} (uge ${w.week})`,
+      category: e.item.keys.length ? ING[e.item.keys[0]].dept : "andet"};
+  }).filter(t => !state.list.some(i => i.heading === t.text));
+  const btn = $("btn-week-list");
+  btn.disabled = true;
+  try {
+    for (const t of texts) state.list = (await api("/api/list", {action: "add_text", ...t})).items;
+    toast(texts.length ? `${texts.length} varer fra uge ${w.week} er lagt på indkøbslisten` : "Varerne er allerede på indkøbslisten");
+  } catch (e) { toast(e.message); }
+  finally { btn.disabled = false; }
+  renderListCount();
+}
+
+$("btn-week").addEventListener("click", openWeek);
+$("btn-plan-week").addEventListener("click", openWeek);
+$("btn-week-close").addEventListener("click", () => $("week-dlg").close());
+$("btn-week-prev").addEventListener("click", () => { week.offset = Math.max(0, week.offset - 1); renderWeek(); });
+$("btn-week-next").addEventListener("click", () => { week.offset = Math.min(WEEKS_AHEAD, week.offset + 1); renderWeek(); });
+$("btn-week-more").addEventListener("click", () => { week.limit += WEEK_PAGE; renderWeekRecipes(); });
+$("btn-week-list").addEventListener("click", weekToList);
+$("week-search").addEventListener("input", e => { week.q = e.target.value; week.limit = WEEK_PAGE; renderWeekRecipes(); });
+$("week-kind").addEventListener("change", e => { week.kind = e.target.value; week.limit = WEEK_PAGE; renderWeekRecipes(); });
+$("week-persons").addEventListener("change", e => { store.set("weekpersons", Number(e.target.value)); renderWeek(); });
+$("week-dlg").addEventListener("click", e => {
+  const b = e.target.closest("[data-week-add], [data-week-move], [data-week-drop]");
+  if (!b) return;
+  const w = shownWeek(), ids = weekIds(w), d = b.dataset;
+  if (d.weekAdd !== undefined) {
+    // Kun knappen skifter, så listen bliver stående, mens man bladrer
+    const on = !ids.includes(d.weekAdd);
+    setWeek(w, on ? [...ids, d.weekAdd] : ids.filter(x => x !== d.weekAdd));
+    b.classList.toggle("on", on);
+    b.textContent = `${on ? "✓ I" : "+"} uge ${w.week}`;
+    renderWeek(false);
+    return;
+  } else if (d.weekMove !== undefined) {
+    const [i, step] = d.weekMove.split(":").map(Number);
+    [ids[i], ids[i + step]] = [ids[i + step], ids[i]];
+    setWeek(w, ids);
+  } else setWeek(w, ids.filter(x => x !== d.weekDrop));
+  renderWeek(d.weekDrop !== undefined);
+});
 
 // -- Egne opskrifter ----------------------------------------------------
 let editing = null;
