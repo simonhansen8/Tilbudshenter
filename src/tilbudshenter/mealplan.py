@@ -48,8 +48,9 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "koteletter": ("koteletter", [["kotelet"]], ["lam", "kalv", "okse"]),
     "poelser": ("pølser", [["pølser"]], ["cocktail", "salami", "spege", "rulle", "leverpostej", "vegansk"]),
     "chorizo": ("chorizo", [["chorizo"]], ["chips", "snack", "pizza", "skiver"]),
-    "boef": ("bøf", [["bøf "], ["bøffer"], ["oksebøf"], ["entrecote"], ["ribeye"], ["culotte"], ["flanksteak"],
-                     ["oksefilet"]], ["hakke", "burger", "kylling", "kalkun", "lam", "lammekød", "gris", "vegansk", "plantebaseret"]),
+    "boef": ("bøf", [["bøf "], ["bøffer"], ["oksebøf"], ["entrecote"], ["ribeye"], ["culotte"], ["flanksteak"], ["flatsteak"],
+                     ["oksefilet"]], ["hakke", "burger", "kylling", "kalkun", "lam", "lammekød", "gris", "vegansk", "plantebaseret",
+                                   "laks", "fisk", "veggie", "vegetar", "grønt", "grønsag"]),
     "okse_tern": ("oksekød i tern", [["okse", "tern"], ["gullasch"], ["oksegryde"], ["oksekødsstrimler"], ["oksestrimler"]],
                   ["kylling", "gris"]),
     # Fisk
@@ -67,14 +68,25 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "floede": ("fløde", [["fløde "], ["piskefløde"], ["madlavningsfløde"], ["kogefløde"], ["cremefine"]],
                ["is ", "kaffe", "skum", "chokolade", "buko", "ost", "kartofler"]),
     "creme_fraiche": ("creme fraiche", [["creme", "fraiche"], ["cremefraiche"], ["fraiche"]], ["dressing"]),
-    "revet_ost": ("revet ost", [["revet "], ["pizzaost"], ["mozzarella"], ["cheddar"]],
-                  ["kokos", "rødbede", "citron", "gulerod", "chokolade", "snack", "sticks", "nuggets", "skiver"]),
+    # "revet" alene er ikke ost: "revet ingefær", "hvidkål - revet"
+    "revet_ost": ("revet ost", [["revet", "ost"], ["revet", "topping"], ["pizzaost"], ["gratinost"],
+                                ["mozzarella"], ["mozarella"], ["cheddar"],
+                                *[["revet", w] for w in ["gouda", "emmentaler", "havarti", "gruyère", "gruyere",
+                                                          "comté", "comte", "danbo"]]],
+                  ["kokos", "rødbede", "citron", "gulerod", "chokolade", "snack", "sticks", "nuggets", "skiver",
+                   "twist", "kiks"]),
+    # Frisk mozzarella i kugler er en anden vare end revet mozzarella
+    "frisk_mozzarella": ("frisk mozzarella", [*[[w, "frisk"] for w in ["mozzarella", "mozarella"]],
+                                              *[[w, "kugle"] for w in ["mozzarella", "mozarella"]],
+                                              ["bufala"], ["buffel"], ["burrata"]],
+                         ["revet", "snack", "sticks", "pizza "]),
     # Parmesan er dyrere end revet ost og kan ikke erstattes af pizzatopping
     "parmesan": ("parmesan", [["parmesan"], ["parmigiano"], ["grana", "padano"], ["pecorino"]],
                  ["chips", "snack", "kiks", "chili"]),
     "feta": ("feta", [["feta"], ["salatost"]], ["salat ", "oliven"]),
     "yoghurt": ("yoghurt eller skyr", [["yoghurt"], ["skyr"]],
-                ["drik", "drikke", "is ", "müsli", "musli", "bar", "smoothie", "dressing", "frugt", "vanilje"]),
+                ["drik", "drikke", "is ", "müsli", "musli", "bar", "smoothie", "dressing", "frugt", "vanilje",
+                 "soja", "havre", "plante", "vegansk"]),
     "smoer": PRODUCT_GROUPS["smoer"],
     # Kolonial og brød
     "pasta": ("pasta", [["pasta "], ["spaghetti"], ["penne"], ["fusilli"], ["makaroni"], ["tagliatelle"],
@@ -143,6 +155,7 @@ NORMAL_PRICES: dict[str, tuple[float, float]] = {
     "laksefilet": (230, 125), "hvid_fisk": (200, 125), "fiskefrikadeller": (120, 60), "tun": (120, 185),
     "rejer": (220, 400),
     "aeg": (55, 60), "maelk": (14, 1000), "floede": (50, 250), "creme_fraiche": (45, 200), "revet_ost": (110, 175),
+    "frisk_mozzarella": (110, 125),
     "parmesan": (300, 150), "feta": (110, 200), "yoghurt": (25, 1000), "smoer": (110, 250),
     "pasta": (22, 500), "lasagneplader": (40, 250), "ris": (25, 1000), "nudler": (45, 250), "tortilla": (45, 40),
     "burgerboller": (50, 70), "poelsebroed": (40, 40), "pizzadej": (40, 400), "hakkede_tomater": (18, 400),
@@ -212,7 +225,32 @@ _NOT_RAW = [
 # Ord der gælder hele tilbuddet, også når det nævner flere varer
 # ("Syltede rødløg, agurker eller aioli", "æble- eller pærecidereddike",
 # "Indbagt laks med spinat eller rejer med asparges")
-_NOT_RAW_HEADING = ["syltede", "eddike", "indbagt"]
+_NOT_RAW_HEADING = ["syltede", "eddike", "indbagt", "kniv", "pande ", "pepsi", "cola "]
+
+# Smagsord: et tilbud med et af dem ("Revet mexi-topping", "BBQ koteletter",
+# "Skyr vanilje") bruges kun til en ingrediens, der selv nævner ordet
+FLAVOR_WORDS = [
+    "mexi", "mexicana", "tex", "taco", "krydret", "krydder", "chili", "hvidløg", "urte", "bbq", "barbecue",
+    "marineret", "marinerede", "pesto", "trøffel", "honning", "karry", "teriyaki", "tandoori", "jalapeño",
+    "jalapeno", "vanilje", "jordbær", "hindbær", "blåbær", "kokos", "chokolade", "karamel", "citron", "lime",
+    "mango", "basilikum", "oregano", "paprika", "sennep", "ingefær", "soja", "sweet ", "spicy", "hot ", "gyros",
+    "kebab", "røget", "kold", "varm", "paner", "veggie", "vegansk", "vegetar", "plante",
+]
+# Smagsord, der hører til varen og ikke ændrer den: bacon er næsten altid røget
+FLAVOR_OK = {"bacon": ["røget"], "hakkede_tomater": ["basilikum", "hvidløg"], "kokosmaelk": ["kokos"]}
+
+# Sorter, der ikke kan bytte plads. Nævner opskriften en sort, skal tilbuddet
+# være samme sort eller ikke nævne nogen: til "lagret cheddar" duer "revet
+# ost" og "revet cheddar", men ikke "revet mozzarella" eller "pizzatopping".
+VARIETIES = {
+    "revet_ost": ["cheddar", "mozzarella", "gouda", "emmentaler", "havarti", "gruyère", "gruyere", "pizza",
+                  "parmesan", "danbo", "comté", "comte", "mild ", "lagret"],
+    "ris": ["basmati", "jasmin", "arborio", "risotto", "grødris", "sushi", "vildris", "vild", "fuldkorn", "brun", "sort", "rød ", "røde"],
+    "hvid_fisk": ["torsk", "sej", "kuller", "rødspætte", "kulmule", "pangasius", "hellefisk", "rødfisk", "skrubbe"],
+    "yoghurt": ["græsk", "skyr", "drikke"],
+    "salat": ["iceberg", "hjertesalat", "feldsalat", "frisée", "endivie"],
+    "pasta": ["frisk", "glutenfri"],
+}
 
 
 @dataclass
@@ -608,7 +646,10 @@ RECIPES: list[Recipe] = [
 
 
 def _parts(heading: str) -> list[str]:
-    parts = [p.strip() for p in re.split(r",|\beller\b", heading, flags=re.IGNORECASE)]
+    """Varerne i et varenavn. Det, der står efter "med", er tilbehør:
+    "Skinkeculotte med tomat & ramsløg" er ikke tomater."""
+    parts = [re.split(r"\bmed\b", p, maxsplit=1, flags=re.IGNORECASE)[0].strip()
+             for p in re.split(r",|\beller\b", heading, flags=re.IGNORECASE)]
     return [p for p in parts if p and not p.startswith("-")]
 
 
@@ -621,7 +662,7 @@ def _matches(tokens: list[str], spec: tuple[str, list[list[str]], list[str]]) ->
 
 # Mere præcise ingredienser, der vinder over en bredere: står der
 # "revet parmesan", er det parmesan og ikke en hvilken som helst revet ost
-REPLACES = {"parmesan": ["revet_ost"], "romaine": ["salat"], "rucola": ["salat"], "cherrytomater": ["tomater"],
+REPLACES = {"parmesan": ["revet_ost"], "frisk_mozzarella": ["revet_ost"], "romaine": ["salat"], "rucola": ["salat"], "cherrytomater": ["tomater"],
             "foraarsloeg": ["loeg"]}
 
 
@@ -653,6 +694,44 @@ def ingredient_names(heading: str) -> dict[str, str]:
             if key in keys and key not in names:
                 names[key] = part
     return names if len(set(names.values())) > 1 else {}
+
+
+@lru_cache(maxsize=None)
+def _flavor_ok(key: str) -> tuple[str, ...]:
+    """Smagsord, der er ingrediensens eget navn ("citron" i citroner) eller
+    står i FLAVOR_OK."""
+    own = [w for w in FLAVOR_WORDS if any(t.strip().casefold().startswith(w.strip())
+                                          for pattern in INGREDIENTS[key][1] for t in pattern)]
+    return tuple(FLAVOR_OK.get(key, [])) + tuple(own)
+
+
+def offer_fits(line: str, heading: str, key: str) -> bool:
+    """Kan tilbuddet bruges som ``key`` til ingrediensen ``line``?
+
+    Nej, hvis tilbuddet har en smag, ingrediensen ikke nævner ("Revet
+    mexi-topping" til "lagret cheddarost"), er en anden sort (VARIETIES), eller
+    er kød til en vegetarisk ingrediens ("veggie bacon").
+    Nævner tilbuddet flere varer, er det nok, at én af dem passer.
+    """
+    want = _tokens(line)
+    veggie = any(_has_word(want, w) for w in VEGGIE_WORDS)
+    ok_words = _flavor_ok(key)
+    sorts = VARIETIES.get(key, [])
+    wanted = [w for w in sorts if _has_word(want, w)]
+    for part in _parts(heading):
+        if key not in _ingredient_keys(part):
+            continue
+        tokens = _tokens(part)
+        if any(_has_word(tokens, w) and not _has_word(want, w) for w in FLAVOR_WORDS if w not in ok_words):
+            continue
+        # "veggie bacon" er ikke bacon
+        if veggie and key in _MEAT_KEYS and not any(_has_word(tokens, w) for w in VEGGIE_WORDS):
+            continue
+        got = [w for w in sorts if _has_word(tokens, w)]
+        if wanted and got and not set(got) & set(wanted):
+            continue
+        return True
+    return False
 
 
 @lru_cache(maxsize=8192)
@@ -754,7 +833,7 @@ _DEPARTMENT_KEYS = {
              "hel_kylling", "bacon", "stegeflaesk", "medister", "flaeskesteg", "moerbrad", "koteletter", "poelser",
              "boef", "okse_tern", "chorizo"],
     "fisk": ["laksefilet", "hvid_fisk", "fiskefrikadeller", "rejer"],
-    "mejeri": ["aeg", "maelk", "floede", "creme_fraiche", "revet_ost", "parmesan", "feta", "yoghurt", "smoer",
+    "mejeri": ["aeg", "maelk", "floede", "creme_fraiche", "revet_ost", "frisk_mozzarella", "parmesan", "feta", "yoghurt", "smoer",
                "pizzadej"],
     "broed_og_bager": ["tortilla", "burgerboller", "poelsebroed"],
     "frost": ["aerter", "wokgroent"],
@@ -869,17 +948,32 @@ def _has_any(text: str, words: list[str]) -> bool:
     return any(_has_word(tokens, w) for w in words)
 
 
+# "veggie bøffer" og "plantefars" er ikke kød
+VEGGIE_WORDS = ["veggie", "vegansk", "vegetar", "plante"]
+
+
 def diet_flag(text: str) -> str:
     """ "pork", "fish" eller "meat", hvis linjen nævner kød eller fisk."""
+    if _has_any(text, VEGGIE_WORDS):
+        return ""
     for flag, words in (("pork", PORK_WORDS), ("fish", FISH_WORDS), ("meat", MEAT_WORDS)):
         if _has_any(text, words):
             return flag
     return ""
 
 
+def _before_til(name: str) -> str:
+    """Det, der står før "til": i "salt til ris" er varen salt, ikke ris."""
+    return re.split(r"\btil\b", name, maxsplit=1, flags=re.IGNORECASE)[0].strip() or name
+
+
 def line_keys(name: str) -> list[str]:
-    """Ingredienserne i en ingredienslinje (uden mængde)."""
-    return ingredient_keys(name)
+    """Ingredienserne i en ingredienslinje (uden mængde). En mere præcis
+    ingrediens vinder i hele linjen: "parmesanost, revet" er parmesan, ikke
+    også revet ost."""
+    keys = ingredient_keys(_before_til(name))
+    replaced = {r for k in keys for r in REPLACES.get(k, [])}
+    return [k for k in keys if k not in replaced]
 
 
 def _piece_grams(key: str) -> float:
@@ -995,7 +1089,9 @@ def plan_payload(market: dict[str, float] | None = None) -> dict:
         "ingredients": ingredients_payload(market),
         "side": _item_payload(SIDE),
         "words": {"not_raw": _NOT_RAW, "not_raw_heading": _NOT_RAW_HEADING, "pantry": PANTRY_WORDS,
-                  "pork": PORK_WORDS, "fish": FISH_WORDS, "meat": MEAT_WORDS},
+                  "flavor": FLAVOR_WORDS, "flavor_ok": {k: list(_flavor_ok(k)) for k in INGREDIENTS if _flavor_ok(k)},
+                  "varieties": VARIETIES,
+                  "pork": PORK_WORDS, "fish": FISH_WORDS, "meat": MEAT_WORDS, "veggie": VEGGIE_WORDS},
         "min_veg": MIN_VEG_PER_PERSON,
         "piece_g": DEFAULT_PIECE_G,
         "units": {u: list(v) for u, v in UNITS.items()},

@@ -1628,21 +1628,48 @@ function hasWord(toks, word) {
   return toks.some(t => t === w || (!whole && (t.startsWith(w) || t.endsWith(w))));
 }
 
+// Varerne i et varenavn; det, der står efter "med", er tilbehør
+function textParts(text) {
+  return text.split(/,|(?<![\p{L}\p{N}_])eller(?![\p{L}\p{N}_])/iu)
+    .map(p => p.split(/(?<![\p{L}\p{N}_])med(?![\p{L}\p{N}_])/iu)[0].trim()).filter(p => p && !p.startsWith("-"));
+}
+
+// Kan tilbuddet bruges som k til ingrediensen? Ikke med en smag, ingrediensen
+// ikke nævner ("Revet mexi-topping" til cheddar), en anden sort eller kød til
+// en vegetarisk ingrediens
+function offerFits(line, heading, k) {
+  const words = planData.words, want = tokens(line);
+  const ok = words.flavor_ok[k] || [], sorts = words.varieties[k] || [];
+  const wanted = sorts.filter(w => hasWord(want, w)), veggie = words.veggie.some(w => hasWord(want, w));
+  return textParts(heading).some(part => {
+    if (!textKeys(part).includes(k)) return false;
+    const toks = tokens(part);
+    if (words.flavor.some(w => !ok.includes(w) && hasWord(toks, w) && !hasWord(want, w))) return false;
+    if (veggie && MEAT.has(k) && !words.veggie.some(w => hasWord(toks, w))) return false;
+    const got = sorts.filter(w => hasWord(toks, w));
+    return !wanted.length || !got.length || got.some(w => wanted.includes(w));
+  });
+}
+
+// Ingredienserne i en opskriftslinje; i "salt til ris" er varen salt, ikke ris
 function lineKeys(text) {
+  return textKeys(text.split(/(?<![\p{L}\p{N}_])til(?![\p{L}\p{N}_])/iu)[0].trim() || text);
+}
+
+function textKeys(text) {
   const words = planData.words;
   if (words.not_raw_heading.some(w => hasWord(tokens(text), w))) return [];
   const found = [];
-  const parts = text.split(/,|(?<![\p{L}\p{N}_])eller(?![\p{L}\p{N}_])/iu).map(p => p.trim()).filter(p => p && !p.startsWith("-"));
-  for (const part of parts) {
+  for (const part of textParts(text)) {
     const toks = tokens(part);
     if (words.not_raw.some(w => hasWord(toks, w))) continue;
     const here = planData.ingredients.filter(ing =>
       !ing.exclude.some(w => hasWord(toks, w)) && ing.patterns.some(p => p.every(w => hasWord(toks, w)))).map(ing => ing.key);
-    // En mere præcis ingrediens vinder over en bredere i samme del ("revet parmesan")
-    const replaced = new Set(here.flatMap(k => ING[k].replaces || []));
-    for (const k of here) if (!replaced.has(k) && !found.includes(k)) found.push(k);
+    for (const k of here) if (!found.includes(k)) found.push(k);
   }
-  return found;
+  // En mere præcis ingrediens vinder over en bredere ("parmesanost, revet")
+  const replaced = new Set(found.flatMap(k => ING[k].replaces || []));
+  return found.filter(k => !replaced.has(k));
 }
 
 const FRACTIONS = {"½": 0.5, "¼": 0.25, "¾": 0.75, "⅓": 1 / 3, "⅔": 2 / 3};
@@ -1682,6 +1709,7 @@ function hasAny(text, words) { const toks = tokens(text); return words.some(w =>
 
 function dietFlag(text) {
   const w = planData.words;
+  if (hasAny(text, w.veggie)) return "";
   return hasAny(text, w.pork) ? "pork" : hasAny(text, w.fish) ? "fish" : hasAny(text, w.meat) ? "meat" : "";
 }
 
@@ -1808,8 +1836,15 @@ function ingredientIndex() {
 
 // Billigste tilbud på varen; helst fra butikken med hovedingrediensen, så
 // en ret kan købes ind ét sted
+const FITS = new Map();
+function fits(item, o) {
+  const id = `${item.name}|${o.id}`;
+  if (!FITS.has(id)) FITS.set(id, item.keys.some(k => o.ingredients.includes(k) && offerFits(item.name, o.heading, k)));
+  return FITS.get(id);
+}
+
 function bestOffer(item, index, dealer, day = null) {
-  const found = item.keys.flatMap(k => index.get(k) || []).filter(o => !day || validOn(o, day));
+  const found = [...new Set(item.keys.flatMap(k => index.get(k) || []))].filter(o => (!day || validOn(o, day)) && fits(item, o));
   const there = dealer ? found.filter(o => o.dealer === dealer) : [];
   const pool = there.length ? there : found;
   // Billigst for de hele pakker, retten skal bruge, så en kæmpepakke til
@@ -1833,7 +1868,7 @@ function rankRecipes() {
     const main = mains.length ? mains.reduce((a, b) => (b.score > a.score ? b : a)) : null;
     const items = r.items.map(item => {
       if (haveItem(item)) return {item, offer: null, have: true};
-      const offer = main && item.main && item.keys.some(k => main.ingredients.includes(k)) ? main
+      const offer = main && item.main && fits(item, main) ? main
         : bestOffer(item, index, main && main.dealer);
       return {item, offer, have: false};
     });
@@ -2103,7 +2138,7 @@ function buyPacks(entries) {
       // Resten sammenlignes i kg, så stk og kg kan blandes.
       const other = byKey.get(p.key);
       if ((!l || (p.size && l.amount < p.need * 0.9)) && other && other !== l && p.size && p.kg
-          && other.amount * other.unitKg >= p.kg * 0.9) {
+          && other.amount * other.unitKg >= p.kg * 0.9 && (!other.offer || fits(y.item, other.offer))) {
         other.amount = Math.max(0, other.amount - p.kg / other.unitKg);
         y = x.items[j] = {...y, offer: other.offer};
         y.rest = other.entry === x ? "samme ret" : other.from;

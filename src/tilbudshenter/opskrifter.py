@@ -432,11 +432,15 @@ def update(list_path: Path, json_path: Path = DEFAULT_JSON, fetcher=None, delay:
     recipes, added, failed = [], 0, 0
     for url in wanted:
         if url in known:
-            # Reglerne for aftensmad kan være blevet skærpet siden
-            if is_dinner(known[url]):
-                recipes.append(known[url])
+            # Reglerne for aftensmad og varerne kan være blevet skærpet siden
+            r = known[url]
+            why = "" if is_dinner(r) else "ikke aftensmad"
+            if not why:
+                why = recipe_from_lines("", r["name"], r["ingredients"], r.get("persons") or 4)[1]
+            if why:
+                skipped[url] = why
             else:
-                skipped[url] = "ikke aftensmad"
+                recipes.append(r)
             continue
         if url not in pages:
             continue
