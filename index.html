@@ -1,0 +1,3373 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>Tilbudshenter</title>
+<style>
+:root {
+  --bg: #f6f5f1; --surface: #ffffff; --surface-2: #efede7; --fg: #1d1d1b; --muted: #6b6a64;
+  --line: #e2e0d8; --accent: #1f6f43; --accent-fg: #ffffff; --accent-soft: #e3f1e8;
+  --badge: #c8102e; --warn: #9a5b00; --warn-soft: #fff3dc; --error: #b42318; --error-soft: #fdecea;
+  --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141412; --surface: #1d1d1a; --surface-2: #272724; --fg: #ecebe6; --muted: #a3a29b;
+    --line: #34332f; --accent: #4cc283; --accent-fg: #0d1f15; --accent-soft: #1b3326;
+    --badge: #ff5a6e; --warn: #f2b45c; --warn-soft: #33270f; --error: #ff8a80; --error-soft: #3a1b18;
+    --shadow: none;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--fg); }
+button, input, select { font: inherit; color: inherit; }
+main { max-width: 1180px; margin: 0 auto; padding: 20px 16px 64px; }
+
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; justify-content: space-between; }
+h1 { margin: 0; font-size: 24px; letter-spacing: -.01em; }
+.status { color: var(--muted); font-size: 14px; margin-top: 2px; }
+.status.stale { color: var(--error); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 9px 14px; cursor: pointer; font-weight: 600; }
+.btn:hover { background: var(--surface-2); }
+.btn:disabled { opacity: .55; cursor: default; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.btn.primary:hover { filter: brightness(1.07); }
+.btn.small { padding: 5px 10px; font-size: 13px; font-weight: 500; }
+.link { background: none; border: none; color: var(--accent); cursor: pointer; padding: 0; font-size: 13px; text-decoration: underline; }
+
+.notice { margin-top: 16px; padding: 12px 14px; border-radius: 10px; background: var(--accent-soft); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.notice.error { background: var(--error-soft); color: var(--error); }
+.notice.warn { background: var(--warn-soft); color: var(--warn); }
+.notice .grow { flex: 1 1 240px; }
+.progress { height: 6px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin-top: 8px; }
+.progress > div { height: 100%; background: var(--accent); width: 0; transition: width .3s; }
+.progress.indeterminate > div { width: 30%; animation: slide 1.2s infinite ease-in-out; }
+@keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 22px 0 8px; }
+.search { flex: 1 1 260px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+select { padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.check { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+.check input { width: 16px; height: 16px; accent-color: var(--accent); }
+
+.group-label { display: flex; gap: 10px; align-items: baseline; color: var(--muted); font-size: 13px; margin: 12px 0 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 11px; cursor: pointer; font-size: 13px; }
+.chip .n { color: var(--muted); margin-left: 4px; }
+.chip.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.chip.on .n { color: inherit; opacity: .7; }
+.filter-menu { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); margin-top: 4px; }
+.filter-menu > summary { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; padding: 10px 14px; cursor: pointer; list-style: none; user-select: none; }
+.filter-menu > summary::-webkit-details-marker { display: none; }
+.filter-menu > summary::before { content: "▸"; color: var(--muted); transition: transform .15s; }
+.filter-menu[open] > summary::before { transform: rotate(90deg); }
+.filter-menu > summary b { font-weight: 650; }
+.filter-menu .sum { color: var(--muted); font-size: 13px; flex: 1 1 200px; }
+.filter-menu .body { padding: 0 14px 12px; border-top: 1px solid var(--line); }
+
+.count { color: var(--muted); font-size: 14px; margin: 18px 0 10px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 3px; box-shadow: var(--shadow); min-width: 0; }
+.card .img { height: 120px; display: flex; align-items: center; justify-content: center; background: #fff; border-radius: 8px; margin-bottom: 6px; overflow: hidden; }
+.card img { max-width: 100%; max-height: 120px; object-fit: contain; }
+.top { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); }
+.badge { background: var(--badge); color: #fff; border-radius: 6px; padding: 1px 6px; font-weight: 700; font-size: 13px; white-space: nowrap; }
+.badge.est { background: transparent; color: var(--badge); box-shadow: inset 0 0 0 1.5px var(--badge); }
+.name { font-weight: 650; overflow-wrap: anywhere; }
+.desc { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.price { font-size: 20px; font-weight: 750; margin-top: 4px; }
+.normal { color: var(--muted); font-size: 13px; }
+.normal.yes { color: var(--accent); }
+.normal.no { color: var(--warn); font-weight: 600; }
+.unit { font-size: 13px; }
+.why { color: var(--accent); font-size: 13px; }
+.tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.tag { font-size: 12px; border-radius: 6px; padding: 0 6px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
+.tag.member { background: var(--warn-soft); color: var(--warn); }
+.tag.later { background: var(--accent-soft); color: var(--accent); }
+.tag.low { background: var(--badge); color: #fff; }
+.meta { color: var(--muted); font-size: 12px; margin-top: auto; padding-top: 6px; }
+.card[data-offer] { cursor: pointer; transition: border-color .15s, transform .15s; }
+.card[data-offer]:hover { border-color: var(--accent); }
+.card[data-offer]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.paper-head { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 14px 0 0; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+.paper-head:first-child { margin-top: 0; }
+.paper-head h3 { margin: 0; font-size: 17px; }
+.paper-head .fold { display: flex; align-items: baseline; gap: 6px; background: none; border: none; padding: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; }
+.paper-head .fold::before { content: "▾"; color: var(--muted); font-size: 14px; width: 12px; display: inline-block; }
+.paper-head .fold[aria-expanded="false"]::before { content: "▸"; }
+.count .link { margin-left: 10px; }
+.paper-head .sub { color: var(--muted); font-size: 13px; }
+.paper-head .acts { margin-left: auto; display: flex; gap: 12px; align-items: baseline; }
+.paper-head a, .od-info a.link { color: var(--accent); font-size: 13px; }
+#offer-dlg { width: min(920px, calc(100vw - 32px)); }
+.od { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px; padding-top: 12px; }
+.od-pic { min-width: 0; }
+.od-tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+.od-img { background: #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; min-height: 220px; overflow: hidden; }
+.od-img > img { max-width: 100%; max-height: 62vh; object-fit: contain; display: block; }
+.od-page { position: relative; line-height: 0; }
+.od-page img { width: 100%; height: auto; display: block; }
+.od-page .mark { position: absolute; border: 3px solid var(--badge); border-radius: 6px; box-shadow: 0 0 0 9999px rgba(0,0,0,.28); }
+.od-pagewrap { max-height: 62vh; overflow: auto; border-radius: 10px; background: #fff; }
+.od-info { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.od-info .price { font-size: 30px; margin: 0; }
+.od-info .desc { -webkit-line-clamp: unset; display: block; font-size: 14px; white-space: pre-line; }
+.od-info dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 6px 0 0; font-size: 13px; }
+.od-info dt { color: var(--muted); }
+.od-info dd { margin: 0; overflow-wrap: anywhere; }
+.od-info .add { margin-top: 6px; }
+.od-foot { justify-content: space-between; flex-wrap: wrap; }
+.od-nav { display: flex; gap: 6px; align-items: center; color: var(--muted); font-size: 13px; }
+.od-head-sub { color: var(--muted); font-size: 13px; }
+@media (max-width: 680px) {
+  .od { grid-template-columns: 1fr; }
+  .od-img > img { max-height: 42vh; }
+  .od-pagewrap { max-height: 55vh; }
+}
+.more { display: flex; justify-content: center; margin-top: 18px; }
+.empty { text-align: center; color: var(--muted); padding: 48px 16px; border: 1px dashed var(--line); border-radius: 12px; margin-top: 16px; }
+
+dialog { border: none; border-radius: 14px; padding: 0; width: min(760px, calc(100vw - 32px)); max-height: calc(100vh - 32px); background: var(--surface); color: var(--fg); box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+dialog::backdrop { background: rgba(0,0,0,.45); }
+.dlg { display: flex; flex-direction: column; max-height: calc(100vh - 32px); }
+.dlg-head, .dlg-foot { padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.dlg-head { border-bottom: 1px solid var(--line); }
+.dlg-head h2 { margin: 0; font-size: 18px; }
+.dlg-foot { border-top: 1px solid var(--line); justify-content: flex-end; }
+.dlg-body { overflow: auto; padding: 6px 18px 18px; }
+fieldset { border: none; padding: 0; margin: 16px 0 0; }
+legend { font-weight: 700; margin-bottom: 4px; padding: 0; }
+.hint { color: var(--muted); font-size: 13px; margin: 0 0 8px; }
+.fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+label.field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+label.field select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
+.place-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+.store .dist { color: var(--muted); font-size: 13px; font-weight: 400; }
+.store .dist.far { color: var(--warn); }
+label.field input { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
+.wide { grid-column: 1 / -1; }
+.store { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; margin-top: 6px; }
+.store-catalogs { display: flex; flex-direction: column; gap: 3px; margin: 6px 0 2px 24px; font-size: 13px; }
+.store-catalogs .period { color: var(--muted); }
+.cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 6px; }
+.toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 14px; max-width: calc(100vw - 32px); }
+.add { margin-top: 8px; align-self: flex-start; }
+.add.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.list-store { margin-top: 14px; }
+.list-store h3 { margin: 0 0 4px; font-size: 15px; display: flex; justify-content: space-between; gap: 8px; }
+.list-store h3 .sum { color: var(--muted); font-weight: 500; }
+.item { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.item input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--accent); flex: none; }
+.item .what { flex: 1; min-width: 0; }
+.item .sub { color: var(--muted); font-size: 12px; }
+.item.done .what { text-decoration: line-through; color: var(--muted); }
+.item .x { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; line-height: 1; padding: 0 4px; }
+.item .p { white-space: nowrap; font-weight: 600; }
+.item .open { background: none; border: none; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+.item .open:hover { text-decoration-color: currentColor; }
+.item .open::after { content: " ›"; color: var(--muted); }
+.expired { color: var(--error); }
+.add-own { display: flex; gap: 8px; margin-top: 12px; }
+.add-own input { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
+#print-area { display: none; }
+.plan-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 4px; }
+.plan-controls select { padding: 7px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
+.dish { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-top: 12px; }
+.dish-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.dish h3 { margin: 0; font-size: 17px; }
+.dish .sub { color: var(--muted); font-size: 13px; }
+.dish ul { list-style: none; padding: 0; margin: 8px 0 0; }
+.dish li { display: flex; flex-wrap: wrap; gap: 2px 10px; padding: 4px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.dish li .what { flex: 1 1 180px; }
+.dish li .src { flex: 2 1 220px; color: var(--muted); font-size: 13px; }
+.dish li .src button.offer { all: unset; cursor: pointer; color: inherit; text-decoration: underline; text-decoration-color: var(--line);
+  text-underline-offset: 2px; }
+.dish li .src button.offer:hover, .dish li .src button.offer:focus-visible { color: var(--accent); text-decoration-color: var(--accent); }
+.dish li .cost { margin-left: auto; white-space: nowrap; font-weight: 600; font-size: 13px; }
+.dish li .buy { flex-basis: 100%; color: var(--muted); font-size: 12px; }
+.dish .save { color: var(--accent); font-weight: 600; }
+.dish .price-tag { font-weight: 700; font-size: 17px; white-space: nowrap; }
+.dish li.on .what::before { content: "✓ "; color: var(--accent); font-weight: 700; }
+.dish li.on .src { color: var(--fg); }
+.dish .pantry { color: var(--muted); font-size: 13px; margin-top: 6px; }
+.dish details { margin-top: 6px; font-size: 14px; }
+.dish summary { cursor: pointer; color: var(--accent); font-size: 13px; }
+.dish details p { margin: 6px 0 0; }
+.dish a, .own-recipe a { color: var(--accent); }
+.dish-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.plan-total { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; margin-top: 14px; padding: 12px 14px;
+  border-radius: 12px; background: var(--accent-soft); }
+.plan-total .label { font-size: 13px; font-weight: 600; color: var(--accent); }
+.plan-total .sum { font-size: 26px; font-weight: 800; line-height: 1.1; white-space: nowrap; }
+.plan-total .details { flex: 1 1 220px; font-size: 13px; color: var(--muted); }
+.plan-total .save { color: var(--accent); font-weight: 600; }
+.dish .day { color: var(--accent); font-weight: 700; font-size: 13px; text-transform: none; margin-bottom: 2px; }
+.dish .leftover { background: var(--accent-soft); color: var(--accent); border-radius: 8px; padding: 6px 10px; margin-top: 8px; font-size: 13px; }
+.dish li.have .what { color: var(--muted); text-decoration: line-through; }
+.dish li .cost .link { margin-left: 8px; font-weight: 400; }
+details.have { border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; margin-top: 12px; }
+details.have summary { cursor: pointer; font-weight: 600; }
+details.have .hint { margin-top: 6px; }
+.own-recipe { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.own-recipe .dish-actions { margin-top: 0; }
+.recipe-form { margin-top: 18px; }
+.week-nav { display: flex; align-items: center; gap: 10px; margin: 12px 0 4px; }
+.week-nav .t { flex: 1; text-align: center; }
+.week-nav .t b { font-size: 18px; display: block; }
+.week-nav .t span { color: var(--muted); font-size: 13px; }
+.week-dish { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-top: 8px; }
+.week-dish .no { color: var(--accent); font-weight: 700; min-width: 18px; padding-top: 1px; }
+.week-dish .what { flex: 1; min-width: 0; }
+.week-dish .dish-actions { margin-top: 0; flex-wrap: nowrap; gap: 4px; }
+.week-dish .sub, .week-recipe .sub { color: var(--muted); font-size: 13px; }
+.week-recipe { display: flex; gap: 8px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.week-recipe .what { flex: 1; min-width: 0; }
+.week-recipe summary, .week-dish summary { cursor: pointer; font-weight: 600; }
+.week-recipe summary .sub, .week-dish summary .sub { font-weight: 400; }
+.week-recipe ul, .week-dish ul { margin: 6px 0 0; padding-left: 18px; font-size: 13px; }
+.week-recipe a, .week-dish a { color: var(--accent); font-size: 13px; }
+.week-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 4px; align-items: center; }
+.week-tools h3 { margin: 0; font-size: 16px; flex: 1 1 100%; }
+.week-tools .search { flex: 1 1 200px; }
+.basis-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.basis-row .n { flex: 1; min-width: 0; }
+.basis-row input { width: 80px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); text-align: right; }
+.basis-row .u { color: var(--muted); font-size: 12px; width: 34px; }
+.basis-row .std { color: var(--muted); font-size: 12px; width: 92px; text-align: right; }
+.basis-row.changed input { border-color: var(--accent); }
+#basis-list .dept { color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; margin: 14px 0 2px; }
+.recipe-form h3 { margin: 0 0 4px; font-size: 16px; }
+label.field textarea { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); font: inherit; resize: vertical; }
+ul.preview { list-style: none; padding: 0; margin: 0; font-size: 13px; }
+ul.preview li { padding: 2px 0; }
+ul.preview li.ok::before { content: "✓ "; color: var(--accent); font-weight: 700; }
+ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 700; }
+.list-store .dept { color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; margin: 10px 0 0; }
+@media print {
+  body { background: #fff; color: #000; }
+  main, dialog, .toast { display: none !important; }
+  #print-area { display: block; font: 13px/1.4 system-ui, sans-serif; }
+  #print-area h1 { font-size: 18px; margin: 0 0 8px; }
+  #print-area h2 { font-size: 15px; margin: 14px 0 4px; }
+  #print-area li { list-style: "☐  "; margin: 2px 0; }
+  #print-area li.dept { list-style: none; font-weight: 700; margin: 8px 0 2px -16px; }
+}
+[hidden] { display: none !important; }
+@media (max-width: 520px) {
+  h1 { font-size: 21px; }
+  .actions { width: 100%; }
+  .actions .btn { flex: 1; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+  .card .img { height: 96px; }
+}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Tilbudshenter <span id="demo-tag" class="status" hidden>(demo)</span></h1>
+      <div class="status" id="status">Indlæser…</div>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="btn-scan">Hent nye tilbud</button>
+      <button class="btn" id="btn-plan">Madplan</button>
+      <button class="btn" id="btn-week">Ugeplan</button>
+      <button class="btn" id="btn-list">Indkøbsliste <span id="list-count"></span></button>
+      <button class="btn" id="btn-settings">Indstillinger</button>
+    </div>
+  </header>
+
+  <div class="notice" id="scan-box" hidden>
+    <div class="grow">
+      <div id="scan-text">Henter…</div>
+      <div class="progress" id="scan-progress"><div></div></div>
+    </div>
+  </div>
+  <div class="notice" id="message" hidden></div>
+
+  <section id="filters" hidden>
+    <div class="toolbar">
+      <input class="search" id="search" type="search" placeholder="Søg efter vare, fx kylling eller kaffe">
+      <select id="sort" aria-label="Sortering" title="Største rabat først: rabat i procent ift. normalprisen. Favoritter og laveste pris i flere uger rykker lidt op. Med Kun mine basisvarer kommer laveste pris pr. kg/l først.">
+        <option value="best">Største rabat først</option>
+        <option value="unit">Laveste pris pr. kg/l</option>
+        <option value="price">Laveste pris</option>
+        <option value="store">Butik, som i avisen</option>
+      </select>
+      <label class="check"><input type="checkbox" id="known-only"> Kun kendt rabat</label>
+      <label class="check" title="Tilbud der kræver Lidl Plus, kædens app eller medlemskab"><input type="checkbox" id="hide-member"> Skjul medlems- og app-priser</label>
+      <label class="check" title="Vis kun tilbud på de varer, du selv har valgt under Filtre"><input type="checkbox" id="basics-only"> Kun mine basisvarer</label>
+    </div>
+    <details class="filter-menu" id="filter-menu">
+      <summary><b>Filtre</b> <span class="sum" id="filter-sum"></span></summary>
+      <div class="body">
+        <div class="group-label">Periode</div>
+        <div class="chips" id="period-chips"></div>
+        <div class="group-label">Butik <button class="link" data-all="stores">Vis alle</button></div>
+        <div class="chips" id="store-chips"></div>
+        <div class="group-label">Kategori <button class="link" data-all="cats">Vis alle</button> <button class="link" data-reset="cats">Mine kategorier</button></div>
+        <div class="chips" id="cat-chips"></div>
+        <div class="group-label" id="basics">Mine basisvarer <button class="link" id="btn-basics-clear" hidden>Ryd</button></div>
+        <p class="hint" style="margin:0 0 6px">Varer du altid køber. Sæt flueben ved <b>Kun mine basisvarer</b> for at se alle tilbud på dem, samlet vare for vare.
+          Et minus udelader noget: <i>mælk -kakao</i>.</p>
+        <div class="chips" id="basics-chips"></div>
+        <form class="add-own" id="basics-form" style="margin-top:8px">
+          <input id="basics-input" placeholder="fx mælk, smør, kaffe, bananer" autocomplete="off" aria-label="Tilføj basisvarer">
+          <button class="btn small">Tilføj</button>
+        </form>
+      </div>
+    </details>
+  </section>
+
+  <div class="count"><span id="count"></span><button class="link" id="btn-fold-all" hidden></button></div>
+  <div class="grid" id="grid"></div>
+  <div class="more"><button class="btn" id="btn-more" hidden>Vis flere</button></div>
+  <div class="empty" id="empty" hidden></div>
+</main>
+
+<dialog id="offer-dlg" aria-labelledby="od-title">
+  <div class="dlg">
+    <div class="dlg-head">
+      <div style="min-width:0"><h2 id="od-title"></h2><div class="od-head-sub" id="od-sub"></div></div>
+      <button class="btn small" id="btn-offer-close">Luk</button>
+    </div>
+    <div class="dlg-body" id="od-body"></div>
+    <div class="dlg-foot od-foot">
+      <div class="od-nav">
+        <button class="btn small" id="btn-offer-prev" aria-label="Forrige tilbud">‹ Forrige</button>
+        <span id="od-pos"></span>
+        <button class="btn small" id="btn-offer-next" aria-label="Næste tilbud">Næste ›</button>
+      </div>
+      <a class="btn primary" id="od-paper" target="_blank" rel="noopener" style="text-decoration:none">Se i tilbudsavisen ↗</a>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="settings">
+  <form class="dlg" method="dialog" id="settings-form">
+    <div class="dlg-head">
+      <h2>Indstillinger</h2>
+      <button class="btn small" value="cancel" formnovalidate>Luk</button>
+    </div>
+    <div class="dlg-body">
+      <fieldset id="s-place-box" hidden>
+        <legend>Hvor handler du?</legend>
+        <p class="hint">Skriv dit postnummer eller din by, eller brug telefonens placering. Så ser du kun tilbud fra kæder, der har en butik i nærheden.</p>
+        <div class="fields">
+          <label class="field wide">Postnummer eller by <input id="s-place" list="place-list" placeholder="fx 8000 eller Aarhus" autocomplete="off"></label>
+          <label class="field">Afstand
+            <select id="s-place-radius">
+              <option value="2">Inden for 2 km</option><option value="5">Inden for 5 km</option>
+              <option value="10">Inden for 10 km</option><option value="20">Inden for 20 km</option>
+              <option value="50">Inden for 50 km</option>
+            </select>
+          </label>
+        </div>
+        <div class="place-actions">
+          <button type="button" class="btn small" id="btn-geo">📍 Brug min placering</button>
+          <button type="button" class="link" id="btn-place-clear">Vis alle butikker</button>
+        </div>
+        <p class="hint" id="s-place-status" style="margin-top:10px"></p>
+        <datalist id="place-list"></datalist>
+      </fieldset>
+
+      <fieldset id="s-location">
+        <legend>Placering</legend>
+        <p class="hint">Bruges til at finde aviserne i dit område. Find koordinater ved at højreklikke på et sted i Google Maps.</p>
+        <div class="fields">
+          <label class="field">Breddegrad <input id="s-lat" type="number" step="any" required></label>
+          <label class="field">Længdegrad <input id="s-lng" type="number" step="any" required></label>
+          <label class="field">Radius (km) <input id="s-radius" type="number" step="any" min="1" required></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Butikker og aviser</legend>
+        <p class="hint">Vælg de butikker og aviser, du vil have tilbud fra. Nye ugeaviser kommer automatisk med.</p>
+        <button type="button" class="btn small" id="btn-load-stores">Vis butikker i mit område</button>
+        <div id="store-list"></div>
+        <div class="fields" style="margin-top:10px">
+          <label class="field wide">Fravælg aviser, hvis navnet indeholder (adskil med komma; "føtex: uge" gælder kun føtex)
+            <input id="s-excl-catalogs" placeholder="fx legetøj, nonfood, halloween">
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Kategorier</legend>
+        <p class="hint">Vælg de typer tilbud, du som udgangspunkt vil se.</p>
+        <div class="cat-grid" id="s-cats"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Filtre</legend>
+        <div class="fields">
+          <label class="field">Mindste rabat (%) <input id="s-min-discount" type="number" step="1" min="0" max="100"></label>
+          <label class="field">Højeste pris (kr) <input id="s-max-price" type="number" step="any" min="0" placeholder="Ingen grænse"></label>
+          <label class="field wide">Udelad tilbud der nævner (adskil med komma) <input id="s-exclude-words" placeholder="fx øl, energidrik"></label>
+          <label class="field wide">Favoritter, som rykkes op på listen (adskil med komma) <input id="s-favorites" placeholder="fx kyllingebryst, skyr"></label>
+          <label class="check wide"><input type="checkbox" id="s-known-only"> Vis kun tilbud, hvor rabatten kendes</label>
+        </div>
+      </fieldset>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn" value="cancel" formnovalidate>Annuller</button>
+      <button class="btn primary" id="btn-save" value="save">Gem</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="list-dlg">
+  <div class="dlg">
+    <div class="dlg-head">
+      <h2>Indkøbsliste</h2>
+      <button class="btn small" id="btn-list-close">Luk</button>
+    </div>
+    <div class="dlg-body">
+      <form class="add-own" id="add-own">
+        <input id="own-text" placeholder="Tilføj egen vare, fx mælk eller toiletpapir" maxlength="200">
+        <button class="btn small">Tilføj</button>
+      </form>
+      <div id="list-body"></div>
+    </div>
+    <div class="dlg-foot" style="flex-wrap:wrap">
+      <button class="btn small" id="btn-list-clear-checked">Fjern afkrydsede</button>
+      <button class="btn small" id="btn-list-clear">Tøm listen</button>
+      <span style="flex:1"></span>
+      <button class="btn small" id="btn-list-copy">Kopiér</button>
+      <a class="btn small" id="btn-list-mail" href="#" style="text-decoration:none;color:inherit">Send som mail</a>
+      <button class="btn small primary" id="btn-list-print">Udskriv</button>
+    </div>
+  </div>
+</dialog>
+<dialog id="plan-dlg">
+  <div class="dlg">
+    <div class="dlg-head">
+      <h2>Madplan</h2>
+      <button class="btn small" id="btn-plan-close">Luk</button>
+    </div>
+    <div class="dlg-body">
+      <p class="hint">Billig aftensmad ud fra ugens tilbud, efter kostrådene: fisk hver uge, mindre rødt kød og masser af grønt.
+        Prisen på en ret er det, du betaler i butikken for hele pakker; resten af en pakke bruges i en senere ret. Under hver vare står, hvad retten bruger, og prisen pr. person. Tryk på et tilbud for at se det. ✓ = på tilbud og billigere end basisvaren, fx kædens eget mærke.</p>
+      <div class="plan-controls">
+        <label class="field">Fra <select id="plan-start"></select></label>
+        <label class="field">Dage <select id="plan-count"></select></label>
+        <label class="field">Personer <select id="plan-persons"></select></label>
+        <label class="field">Vægt på <select id="plan-focus">
+          <option value="">Pris, sundhed og variation</option>
+          <option value="cheap">Lavest mulig pris</option>
+        </select></label>
+        <label class="field">Kost <select id="plan-diet">
+          <option value="">Alt</option>
+          <option value="nopork">Uden svinekød</option>
+          <option value="nofish">Uden fisk</option>
+          <option value="vegetar">Vegetar</option>
+        </select></label>
+        <label class="field">Butik <select id="plan-store"></select></label>
+        <button class="btn small" id="btn-plan-new">Ny madplan</button>
+      </div>
+      <details class="have" id="plan-have">
+        <summary>Det har jeg allerede <span id="have-count"></span></summary>
+        <p class="hint">Skriv hvad du har i køleskabet eller skabet. Retter med det kommer først, og det kommer ikke på indkøbslisten.</p>
+        <form class="add-own" id="have-form" style="margin-top:0">
+          <input id="have-input" list="have-list" placeholder="fx kyllingebryst, broccoli, ris" autocomplete="off">
+          <button class="btn small">Tilføj</button>
+        </form>
+        <datalist id="have-list"></datalist>
+        <div class="chips" id="have-chips" style="margin-top:8px"></div>
+      </details>
+      <div id="plan-body"></div>
+    </div>
+    <div class="dlg-foot" style="flex-wrap:wrap">
+      <span class="hint" id="plan-sum" style="margin:0"></span>
+      <span style="flex:1"></span>
+      <button class="btn small" id="btn-plan-basis">Basispriser</button>
+      <button class="btn small" id="btn-plan-recipes">Mine opskrifter</button>
+      <button class="btn small" id="btn-plan-week">Ugeplan</button>
+      <button class="btn small primary" id="btn-plan-list">Læg på indkøbslisten</button>
+    </div>
+  </div>
+</dialog>
+<dialog id="basis-dlg">
+  <div class="dlg">
+    <div class="dlg-head">
+      <h2>Basispriser</h2>
+      <button class="btn small" id="btn-basis-close">Luk</button>
+    </div>
+    <div class="dlg-body">
+      <p class="hint">Basisprisen er den almindelige hyldepris uden tilbud på en almindelig udgave af varen. Koster varen typisk mere på tilbud i aviserne, bruges det i stedet. Et tilbud bruges kun i
+        madplanen, når det er billigere, og varer uden tilbud regnes til basisprisen. Ret en pris, hvis du kender en bedre. Dine priser gemmes i browseren.</p>
+      <input class="search" id="basis-search" type="search" placeholder="Find vare, fx bacon" style="width:100%;margin-top:4px">
+      <div id="basis-list"></div>
+    </div>
+    <div class="dlg-foot">
+      <span class="hint" id="basis-sum" style="margin:0"></span>
+      <span style="flex:1"></span>
+      <button class="btn small" id="btn-basis-reset">Brug standardpriserne</button>
+    </div>
+  </div>
+</dialog>
+<dialog id="recipes-dlg">
+  <div class="dlg">
+    <div class="dlg-head">
+      <h2>Mine opskrifter</h2>
+      <button class="btn small" id="btn-recipes-close">Tilbage til madplanen</button>
+    </div>
+    <div class="dlg-body">
+      <div id="recipes-list" style="margin-top:12px"></div>
+      <form id="recipe-form" class="recipe-form">
+        <h3 id="recipe-form-title">Ny opskrift</h3>
+        <p class="hint" id="recipe-import-hint"></p>
+        <div class="add-own" id="recipe-import-box" style="margin-top:0">
+          <input id="r-url" type="url" placeholder="Link til opskriften, fx https://…">
+          <button type="button" class="btn small" id="btn-recipe-import">Hent</button>
+        </div>
+        <div class="fields" style="margin-top:10px">
+          <label class="field wide">Navn <input id="r-name" maxlength="80" placeholder="fx Mormors frikadeller"></label>
+          <label class="field">Personer <input id="r-persons" type="number" min="1" max="12" value="4"></label>
+          <label class="field">Minutter <input id="r-minutes" type="number" min="0" max="600" value="30"></label>
+          <label class="field">Slags <select id="r-kind">
+            <option value="">Find selv</option><option value="okse">Okse</option><option value="gris">Gris</option>
+            <option value="kylling">Kylling</option><option value="fisk">Fisk</option><option value="vegetar">Vegetar</option>
+            <option value="andet">Andet kød</option>
+          </select></label>
+          <label class="field wide">Ingredienser, én pr. linje
+            <textarea id="r-lines" rows="7" placeholder="500 g hakket oksekød&#10;1 løg&#10;2 fed hvidløg&#10;salt og peber"></textarea></label>
+          <div class="wide" id="r-preview"></div>
+          <label class="field wide">Sådan gør du <textarea id="r-method" rows="4"></textarea></label>
+        </div>
+        <div class="dish-actions">
+          <button class="btn small primary">Gem opskrift</button>
+          <button type="button" class="btn small" id="btn-recipe-cancel" hidden>Annuller</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</dialog>
+<dialog id="week-dlg">
+  <div class="dlg">
+    <div class="dlg-head">
+      <h2>Ugeplan</h2>
+      <button class="btn small" id="btn-week-close">Luk</button>
+    </div>
+    <div class="dlg-body">
+      <div class="week-nav">
+        <button class="btn small" id="btn-week-prev" title="Ugen før" aria-label="Ugen før">‹</button>
+        <div class="t"><b id="week-title"></b><span id="week-dates"></span></div>
+        <button class="btn small" id="btn-week-next" title="Ugen efter" aria-label="Ugen efter">›</button>
+      </div>
+      <div id="week-chosen"></div>
+      <div class="week-tools">
+        <h3>Alle opskrifter <span class="hint" id="week-count"></span></h3>
+        <input class="search" id="week-search" type="search" placeholder="Find ret eller ingrediens, fx laks" autocomplete="off">
+        <select id="week-kind" aria-label="Slags">
+          <option value="">Alle slags</option><option value="okse">Okse</option><option value="gris">Gris</option>
+          <option value="kylling">Kylling</option><option value="fisk">Fisk</option><option value="vegetar">Vegetar</option>
+          <option value="andet">Andet kød</option><option value="own">Mine opskrifter</option>
+        </select>
+      </div>
+      <div id="week-recipes"></div>
+      <button class="btn small" id="btn-week-more" style="margin-top:10px" hidden>Vis flere</button>
+    </div>
+    <div class="dlg-foot" style="flex-wrap:wrap">
+      <span class="hint" id="week-sum" style="margin:0"></span>
+      <span style="flex:1"></span>
+      <label class="field" style="flex-direction:row;align-items:center">Personer <select id="week-persons"></select></label>
+      <button class="btn small primary" id="btn-week-list">Læg på indkøbslisten</button>
+    </div>
+  </div>
+</dialog>
+<div id="print-area"></div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>window.TILBUDSHENTER_STATIC = true;</script>
+<script>
+const $ = (id) => document.getElementById(id);
+const PAGE = 120;
+const state = {
+  offers: [], settings: null, categories: [], stores: new Set(), cats: new Set(),
+  folded: [],
+  q: "", sort: "best", knownOnly: false, hideMember: false, limit: PAGE, catalogList: null, scanning: false,
+  periods: new Set(["now", "later"]), list: [], papers: {},
+  basics: {items: [], on: false},
+};
+
+// "now": gælder i dag, "later": avisen starter først om nogle dage
+function period(o) { return o.run_from && new Date(o.run_from) > new Date() ? "later" : "now"; }
+
+function startText(o) {
+  return "Fra " + new Date(o.run_from).toLocaleDateString("da-DK", {weekday: "short", day: "numeric", month: "numeric"});
+}
+
+// Statisk udgave (GitHub Pages): tilbuddene ligger i data.json, og
+// indstillinger og indkøbsliste gemmes i browseren
+const STATIC = !!window.TILBUDSHENTER_STATIC;
+
+async function api(path, body) {
+  if (STATIC) return staticApi(path, body);
+  const opts = body === undefined ? {} : {
+    method: "POST", headers: {"Content-Type": "application/json", "X-Tilbudshenter": "1"}, body: JSON.stringify(body),
+  };
+  const res = await fetch(path, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Fejl ${res.status}`);
+  return data;
+}
+
+// Brugerens valg og indkøbsliste ligger i browseren under disse nøgler
+// (tilbudshenter.settings, tilbudshenter.list, tilbudshenter.prefs,
+// tilbudshenter.filters, tilbudshenter.mealplan, tilbudshenter.basics,
+// tilbudshenter.basis og tilbudshenter.folded). De må ikke omdøbes, og gemte valg går altid
+// forud for standardvalgene i data.json, så en ny udgave af siden aldrig
+// nulstiller dem.
+const store = {
+  get(key, fallback) {
+    try { const v = localStorage.getItem("tilbudshenter." + key); return v ? JSON.parse(v) : fallback; }
+    catch (e) { return fallback; }
+  },
+  set(key, value) {
+    try { localStorage.setItem("tilbudshenter." + key, JSON.stringify(value)); } catch (e) {}
+    // Bed browseren om ikke at rydde valgene væk, når der mangler plads
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+  },
+};
+
+let siteData = null;
+async function loadSiteData() {
+  if (!siteData) {
+    const res = await fetch("data.json", {cache: "no-cache"});
+    if (!res.ok) throw new Error(`Kunne ikke hente tilbuddene (fejl ${res.status})`);
+    siteData = await res.json();
+    upgradeSiteSettings();
+  }
+  return siteData;
+}
+
+// Kæder der er kommet til, efter brugeren gemte sit butiksvalg: opgradering
+// -> [ny kæde, kæden den før hørte under]. Hver tilføjes én gang (som
+// opgraderingerne i config.py), så den kan fravælges bagefter.
+const ADDED_STORES = {"foetex-food-2026-10": ["føtex food", "føtex"]};
+function upgradeSiteSettings() {
+  const saved = store.get("settings", null);
+  if (!saved) return;
+  const done = saved.upgrades || [], todo = Object.keys(ADDED_STORES).filter(k => !done.includes(k));
+  if (!todo.length) return;
+  const stores = saved.stores || [];
+  for (const k of todo) {
+    const [name, before] = ADDED_STORES[k];
+    if (stores.some(n => chainMatches(before, n)) && !stores.some(n => normStore(n) === normStore(name))) stores.push(name);
+  }
+  store.set("settings", {...saved, ...(saved.stores ? {stores} : {}), upgrades: [...done, ...todo]});
+}
+
+function siteSettings() { return {...siteData.default_settings, ...store.get("settings", {})}; }
+
+// Samme regler som selection.py: butiksnavne matcher begyndelsen af
+// længere navne ("365" matcher "365discount"), aviser en del af navnet
+function normStore(name) { return name.toLowerCase().replace(/[^\p{L}\p{N}_]+/gu, ""); }
+// Kæder uden egen avis, der vises for sig: "føtex" matcher ikke "føtex food"
+const SEPARATE_STORES = ["føtex food"].map(normStore);
+function chainMatches(dealer, name) {
+  const d = normStore(dealer), n = normStore(name);
+  return !!n && d.startsWith(n) && !SEPARATE_STORES.some(x => d.startsWith(x) && !n.startsWith(x));
+}
+function storeSelected(dealer, s) {
+  return !s.stores.length || s.stores.some(n => chainMatches(dealer, n));
+}
+function containsAny(text, words) {
+  const t = text.toLowerCase();
+  return words.find(w => w.trim() && t.includes(w.toLowerCase()));
+}
+// Fravalgte aviser: "legetøj" gælder alle kæder, "føtex: Uge 42" kun føtex
+function catalogExcluded(dealer, label, words) {
+  const l = label.toLowerCase();
+  return words.some(w => {
+    const i = w.indexOf(":"), chain = i < 0 ? "" : w.slice(0, i), part = i < 0 ? "" : w.slice(i + 1).trim();
+    if (normStore(chain) && part) return chainMatches(dealer, chain) && l.includes(part.toLowerCase());
+    return w.trim() && l.includes(w.toLowerCase());
+  });
+}
+
+// -- Placering (kun den statiske side) ---------------------------------
+// Afstand i km mellem to punkter (haversine)
+function distKm(lat1, lng1, lat2, lng2) {
+  const r = Math.PI / 180;
+  const a = Math.sin((lat2 - lat1) * r / 2) ** 2
+    + Math.cos(lat1 * r) * Math.cos(lat2 * r) * Math.sin((lng2 - lng1) * r / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(a));
+}
+
+// Afstand til kædens nærmeste butik, eller null hvis den ikke kendes
+function nearestKm(dealer, loc) {
+  const st = siteData.stores.find(st => st.name === dealer);
+  if (!loc || loc.latitude == null || !st || !st.locations || !st.locations.length) return null;
+  return Math.min(...st.locations.map(([lat, lng]) => distKm(loc.latitude, loc.longitude, lat, lng)));
+}
+
+function storeNearby(dealer, s) {
+  const d = nearestKm(dealer, s);
+  return d === null || d <= s.radius_km;
+}
+
+function km(d) { return d.toLocaleString("da-DK", {maximumFractionDigits: d < 10 ? 1 : 0}) + " km"; }
+
+function placeName(p) { return `${p[0]} ${p[1]}`; }
+
+// Finder et postnummer eller en by i listen fra data.json
+function findPlace(text) {
+  const t = text.trim().toLowerCase();
+  if (!t) return null;
+  const places = siteData.places;
+  const zip = t.match(/^\d{4}/);
+  if (zip) {
+    // Postnumre uden butikker mangler i listen; brug så det nærmeste nummer
+    const n = Number(zip[0]);
+    const exact = places.find(p => p[0] === zip[0]);
+    const close = exact || places.reduce((best, p) =>
+      Math.abs(Number(p[0]) - n) < Math.abs(Number(best[0]) - n) ? p : best, places[0]);
+    if (!close || Math.abs(Number(close[0]) - n) > 30) return null;
+    return {latitude: close[2], longitude: close[3], place: exact ? placeName(exact) : `${zip[0]} (nær ${placeName(close)})`};
+  }
+  const hit = places.find(p => p[1].toLowerCase() === t || placeName(p).toLowerCase() === t)
+      || places.find(p => p[1].toLowerCase().startsWith(t))
+      || places.find(p => p[1].toLowerCase().includes(t));
+  return hit ? {latitude: hit[2], longitude: hit[3], place: placeName(hit)} : null;
+}
+
+function nearestPlace(lat, lng) {
+  let best = null, bestD = Infinity;
+  for (const p of siteData.places) {
+    const d = distKm(lat, lng, p[2], p[3]);
+    if (d < bestD) { best = p; bestD = d; }
+  }
+  return best;
+}
+
+function currentPosition() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) return reject(new Error("Din browser kan ikke finde din placering"));
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const {latitude, longitude} = pos.coords;
+        const near = nearestPlace(latitude, longitude);
+        resolve({latitude, longitude, place: near ? `din placering (${placeName(near)})` : "din placering"});
+      },
+      err => reject(new Error(err.code === 1
+        ? "Du har ikke givet lov til at bruge din placering. Skriv i stedet dit postnummer."
+        : "Kunne ikke finde din placering. Skriv i stedet dit postnummer.")),
+      {enableHighAccuracy: false, timeout: 15000, maximumAge: 600000});
+  });
+}
+
+function siteOffers(s) {
+  let offers = siteData.offers.filter(o => {
+    const text = `${o.heading} ${o.description}`;
+    return storeSelected(o.dealer, s) && storeNearby(o.dealer, s) && !catalogExcluded(o.dealer, o.catalog_label || "", s.exclude_catalogs) &&
+      (s.max_price == null || o.price <= s.max_price) &&
+      (!s.include_keywords.length || containsAny(text, s.include_keywords)) &&
+      !containsAny(text, s.exclude_keywords);
+  });
+  if (s.favorites.length) {
+    offers = offers.map(o => {
+      const fav = containsAny(`${o.heading} ${o.description}`, s.favorites);
+      return fav ? {...o, score: o.score + siteData.favorite_bonus, reasons: [...o.reasons, `favorit (${fav})`]} : o;
+    }).sort((a, b) => b.score - a.score);
+  }
+  return offers;
+}
+
+function siteList() {
+  const now = new Date();
+  return store.get("list", []).map(i => ({...i, expired: !!(i.run_till && new Date(i.run_till) < now)}));
+}
+
+function changeSiteList(body) {
+  let items = store.get("list", []);
+  if (body.action === "add") {
+    const o = siteData.offers.find(o => o.id === body.id);
+    if (!o) throw new Error("Tilbuddet findes ikke længere");
+    if (!items.some(i => i.id === o.id)) {
+      items.push({
+        id: o.id, dealer: o.dealer, heading: o.heading, description: o.description, price: o.price,
+        price_text: o.price_text, unit_price_text: o.unit_price_text, period_text: o.period_text,
+        member: o.member, run_till: o.run_till, category: o.category, checked: false, added: Date.now(),
+      });
+    }
+    if (body.note) items = items.map(i => i.id === o.id ? {...i, note: String(body.note).slice(0, 200)} : i);
+    if (body.count) items = items.map(i => i.id === o.id ? {...i, count: listCount(body.count)} : i);
+  } else if (body.action === "add_text") {
+    const text = String(body.text || "").trim().slice(0, 200);
+    if (!text) throw new Error("Skriv hvad der skal på listen");
+    items.push({id: "egen-" + Date.now() + "-" + items.length, dealer: null, heading: text, description: "", price: null,
+      price_text: "", unit_price_text: "", period_text: "", member: null, checked: false, added: Date.now(),
+      note: body.note ? String(body.note).slice(0, 200) : null, category: body.category || null});
+  } else if (body.action === "check") {
+    items = items.map(i => i.id === body.id ? {...i, checked: !!body.checked} : i);
+  } else if (body.action === "remove") {
+    items = items.filter(i => i.id !== body.id);
+  } else if (body.action === "clear") {
+    items = body.only_checked ? items.filter(i => !i.checked) : [];
+  }
+  // Som i den lokale app: efter butik, egne varer sidst
+  items.sort((a, b) => (a.dealer === null) - (b.dealer === null) ||
+    (a.dealer || "").localeCompare(b.dealer || "", "da") || a.added - b.added);
+  store.set("list", items);
+}
+
+// Antal pakker af et tilbud på indkøbslisten (1-99)
+function listCount(n) { return Math.max(1, Math.min(99, Math.round(Number(n) || 1))); }
+function itemTotal(i) { return (i.price || 0) * listCount(i.count); }
+
+function saveSiteSettings(body) {
+  const num = (v) => { const n = Number(v); if (!isFinite(n)) throw new Error("Ugyldigt tal"); return n; };
+  const s = {...store.get("settings", {}), ...body};
+  for (const k of ["radius_km", "min_discount_pct"]) if (k in body) s[k] = num(body[k]);
+  for (const k of ["latitude", "longitude"]) if (k in body) s[k] = body[k] === null || body[k] === "" ? null : num(body[k]);
+  if ("max_price" in body) s.max_price = body.max_price === "" || body.max_price == null ? null : num(body.max_price);
+  store.set("settings", s);
+}
+
+async function staticApi(path, body) {
+  await loadSiteData();
+  const s = siteSettings();
+  if (path === "/api/state") {
+    return {demo: false, scan: {running: false}, settings: s, catalog_count: siteData.catalog_count,
+      last_scan: siteData.last_scan, generated: siteData.generated, categories: siteData.categories};
+  }
+  if (path === "/api/offers") return {offers: siteOffers(s), papers: siteData.papers || {}};
+  if (path === "/api/catalogs") {
+    return {stores: siteData.stores.map(st => ({
+      name: st.name, selected: storeSelected(st.name, s), nearest_km: nearestKm(st.name, s),
+      catalogs: st.catalogs.map(c => ({...c, selected: !catalogExcluded(st.name, c.label, s.exclude_catalogs)})),
+    }))};
+  }
+  if (path === "/api/list") {
+    if (body !== undefined) changeSiteList(body);
+    return {items: siteList()};
+  }
+  if (path === "/api/settings") { saveSiteSettings(body); return {ok: true}; }
+  if (path === "/api/recipes") return siteData.plan;
+  throw new Error("Tilbuddene hentes automatisk hver dag");
+}
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+}
+
+function toast(text) {
+  const t = $("toast"); t.textContent = text; t.hidden = false;
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => t.hidden = true, 3500);
+}
+
+function showMessage(html, kind) {
+  const m = $("message");
+  m.className = "notice" + (kind ? " " + kind : "");
+  m.innerHTML = html; m.hidden = !html;
+}
+
+// Små valg i appen, som huskes i browseren
+function savePrefs() {
+  try { localStorage.setItem("tilbudshenter.prefs", JSON.stringify({hideMember: state.hideMember, sort: state.sort})); } catch (e) {}
+}
+// Mine basisvarer: ord som "mælk" og "kaffe" og om filteret er slået til
+function saveBasics() { store.set("basics", state.basics); }
+function loadBasics() {
+  const b = store.get("basics", {});
+  state.basics = {items: Array.isArray(b.items) ? b.items.filter(w => typeof w === "string" && w.trim()) : [], on: !!b.on};
+  $("basics-only").checked = state.basics.on;
+  renderBasics();
+}
+// Sammenklappede grupper (se foldKey)
+function loadFolded() {
+  const v = store.get("folded", []);
+  state.folded = Array.isArray(v) ? v.filter(k => typeof k === "string") : [];
+}
+function renderBasics() {
+  $("basics-chips").innerHTML = state.basics.items.map(w =>
+    `<button class="chip on" type="button" data-basic="${esc(w)}" title="Fjern ${esc(w)}">${esc(w)} <span class="n">×</span></button>`).join("")
+    || `<span class="hint" style="margin:0">Ingen basisvarer endnu.</span>`;
+  $("btn-basics-clear").hidden = !state.basics.items.length;
+}
+function addBasics(text) {
+  const have = new Set(state.basics.items.map(w => w.toLowerCase()));
+  for (const w of splitList(text)) {
+    if (!have.has(w.toLowerCase())) { state.basics.items.push(w); have.add(w.toLowerCase()); }
+  }
+  saveBasics(); renderBasics(); state.limit = PAGE; render();
+}
+function basicsMatchers() {
+  if (!state.basics.on || !state.basics.items.length) return null;
+  return state.basics.items.map(word => ({word, match: searchFor(word)})).filter(b => b.match);
+}
+
+function loadPrefs() {
+  try {
+    const p = JSON.parse(localStorage.getItem("tilbudshenter.prefs") || "{}");
+    state.hideMember = !!p.hideMember;
+    if (p.sort && [...$("sort").options].some(o => o.value === p.sort)) state.sort = p.sort;
+  } catch (e) {}
+  $("hide-member").checked = state.hideMember;
+  $("sort").value = state.sort;
+}
+
+// Filtrene (periode, butikker, kategorier og "kun kendt rabat") huskes i
+// browseren. Butikker og kategorier gemmes som dem, der er slået fra, så nye
+// butikker og kategorier vises, indtil de selv bliver fravalgt.
+function savedFilters() { return store.get("filters", {}); }
+function saveFilters() {
+  if (!state.offers.length) return;
+  const dealers = new Set(state.offers.map(o => o.dealer));
+  store.set("filters", {
+    periods: [...state.periods],
+    hiddenStores: [...dealers].filter(d => !state.stores.has(d)),
+    hiddenCats: state.categories.map(c => c.key).filter(k => !state.cats.has(k)),
+    knownOnly: state.knownOnly,
+    open: $("filter-menu").open,
+  });
+}
+
+function splitList(text) { return text.split(",").map(s => s.trim()).filter(Boolean); }
+
+function timeAgo(iso) {
+  if (!iso) return "aldrig";
+  const d = new Date(iso);
+  return d.toLocaleString("da-DK", {weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"});
+}
+
+// -- Status og hentning ----------------------------------------------
+const STALE_HOURS = 36;
+async function refreshState() {
+  const s = await api("/api/state");
+  state.settings = s.settings;
+  state.categories = s.categories;
+  $("demo-tag").hidden = !s.demo;
+  // Siden bygges to gange om dagen; er den ikke blevet bygget i over et døgn,
+  // er noget gået galt, og tilbuddene kan være forældede
+  const stale = STATIC && s.generated && Date.now() - new Date(s.generated) > STALE_HOURS * 3600e3;
+  $("status").classList.toggle("stale", !!stale);
+  $("status").textContent = (STATIC ? `Opdateret ${timeAgo(s.generated)}` : `Sidst hentet: ${timeAgo(s.last_scan)}`)
+    + ` · ${s.catalog_count} aktive aviser`
+    + (stale ? " · ikke opdateret som planlagt, så nogle tilbud kan mangle" : STATIC ? " · opdateres automatisk hver dag" : "")
+    + (STATIC && s.settings.latitude != null ? ` · butikker inden for ${km(s.settings.radius_km)} af ${s.settings.place}` : "");
+  renderScan(s.scan);
+  return s;
+}
+
+function renderScan(scan) {
+  const wasScanning = state.scanning;
+  state.scanning = scan.running;
+  $("btn-scan").disabled = scan.running;
+  $("btn-scan").textContent = scan.running ? "Henter…" : "Hent nye tilbud";
+  $("scan-box").hidden = !scan.running;
+  if (scan.running) {
+    const bar = $("scan-progress");
+    if (scan.total) {
+      bar.classList.remove("indeterminate");
+      bar.firstElementChild.style.width = `${Math.round(100 * scan.done / scan.total)}%`;
+      $("scan-text").textContent = `Henter avis ${scan.done + 1} af ${scan.total} · ${scan.message}`;
+    } else {
+      bar.classList.add("indeterminate");
+      $("scan-text").textContent = scan.message || "Finder aviser…";
+    }
+    setTimeout(pollScan, 800);
+    if (!wasScanning && !state.offers.length) render();
+  } else if (wasScanning) {
+    if (scan.error) {
+      showMessage(`<div class="grow"><b>Hentningen mislykkedes.</b> ${esc(scan.error)}</div>`, "error");
+    } else if (scan.result) {
+      const r = scan.result;
+      const failed = r.failed.length ? ` ${r.failed.length} aviser kunne ikke hentes.` : "";
+      showMessage(r.new_catalogs
+        ? `<div class="grow">${r.new_catalogs} nye aviser hentet med ${r.offers_fetched} tilbud.${esc(failed)}</div>`
+        : `<div class="grow">Ingen nye aviser siden sidst. Du ser de aktuelle tilbud.${esc(failed)}</div>`,
+        r.failed.length ? "warn" : "");
+    }
+    loadOffers();
+  }
+}
+
+async function pollScan() {
+  try { await refreshState(); } catch (e) { setTimeout(pollScan, 2000); }
+}
+
+async function startScan(force) {
+  showMessage("");
+  try {
+    await api("/api/scan", {force: !!force});
+    renderScan({running: true, done: 0, total: 0, message: "Finder aviser…"});
+  } catch (e) { showMessage(`<div class="grow">${esc(e.message)}</div>`, "error"); }
+}
+
+// -- Tilbud -------------------------------------------------------------
+async function loadOffers() {
+  const data = await api("/api/offers");
+  // Udløbne tilbud vises ikke, også selvom siden ikke er hentet igen siden
+  const now = new Date();
+  state.offers = data.offers.filter(o => !o.run_till || new Date(o.run_till) >= now);
+  state.papers = data.papers || {};
+  const stores = new Set(state.offers.map(o => o.dealer));
+  if (!loadOffers.didInit) {
+    // Første gang: de gemte filtre, ellers standardvalgene
+    const f = savedFilters();
+    const hidden = new Set(f.hiddenStores || []);
+    state.stores = new Set([...stores].filter(s => !hidden.has(s)));
+    if (Array.isArray(f.periods)) state.periods = new Set(f.periods.filter(p => p === "now" || p === "later"));
+    if (Array.isArray(f.hiddenCats)) {
+      const hiddenCats = new Set(f.hiddenCats);
+      state.cats = new Set(state.categories.map(c => c.key).filter(k => !hiddenCats.has(k)));
+    } else resetCats();
+    state.knownOnly = typeof f.knownOnly === "boolean" ? f.knownOnly : state.settings.only_known_discount;
+    $("filter-menu").open = !!f.open;
+    loadOffers.didInit = true;
+  } else {
+    state.stores = new Set([...stores].filter(s => state.stores.size === 0 || state.stores.has(s)));
+  }
+  if (state.stores.size === 0) state.stores = stores;
+  if (state.periods.size === 0) state.periods = new Set(["now", "later"]);
+  $("known-only").checked = state.knownOnly;
+  state.limit = PAGE;
+  render();
+}
+
+function resetCats() {
+  const chosen = state.settings.categories;
+  state.cats = new Set(chosen.length ? chosen : state.categories.map(c => c.key));
+}
+
+// <search> Søgning og "Mine basisvarer" bruger de samme regler. Et søgeord skal
+// være et helt ord i tilbuddet, en bøjning af det ("ost" finder "osten") eller
+// en del af et sammensat ord ("æg" finder "skrabeæg", men ikke "pålæg"). Ord med
+// minus foran udelader tilbud. tests/search_cases.json holder styr på, at
+// søgeord i rigtige aviser finder alle de tilbud, de skal.
+const ENDINGS = new Set(["e", "en", "er", "et", "ene", "erne", "es", "ens", "ers", "ets", "s"]);
+const VOWEL_ENDINGS = new Set(["n", "r", "t", "ne", "rne", "ns", "rs", "ts"]);  // pølse -> pølser
+// "Mælke- og hasselnøddesnitte": et ord med bindestreg er forled i et sammensat ord
+function searchWords(text) {
+  return text.normalize("NFC").toLowerCase().replace(/[\p{L}]+-(?=\s)/gu, " ").match(/[\p{L}\p{N}]+/gu) || [];
+}
+// Er rest (det der står efter søgeordet) en bøjning eller et nyt ord?
+function isEnding(q, rest) { return ENDINGS.has(rest) || (/[aeiouyæøå]$/.test(q) && VOWEL_ENDINGS.has(rest)); }
+function okAfter(q, rest, vocab) {
+  if (!rest || isEnding(q, rest)) return true;
+  if (rest[0] === q.at(-1) && (rest.length === 1 || isEnding(q, rest.slice(1)))) return true;  // æg -> ægget
+  let r = rest[0] === q.at(-1) ? rest.slice(1) : rest;  // æg|g|episker
+  if (r[0] === "e" || r[0] === "s") r = r.slice(1);
+  return r.length >= 4 && (vocab.has(r) || vocab.has(rest));
+}
+// Er head (det der står før søgeordet) et kendt forled?
+function okBefore(q, head, rest, vocab) {
+  if (head.length < 3) return false;
+  return /[es]$/.test(head) || (head.length >= 4 && vocab.has(head));
+}
+// Sammensatte ord, der lyder som en madvare uden at være det
+const NOT_FOOD_WORDS = new Set(["piskeris", "piskeriset", "piskerisene", "kødnål", "kødnåle", "kødnåler"]);
+// Ord, der betyder noget andet i en kategori: "bønner" under kaffe er kaffebønner
+const OTHER_SENSE = {"bønne": ["kaffe_og_te"], "bønner": ["kaffe_og_te"]};
+// Varer, der sjældent kalder sig selv ved navn: "Thisted Bryghus" og "Grøn
+// Tuborg" er øl. "sikker" tæller overalt, "maerker" kun i varens kategori
+// (Tuborg Squash er sodavand, ikke øl).
+const RELATED = {
+  øl: {sikker: ["bryghus", "bryggeri", "bryggeriet", "bryg", "pilsner", "ipa", "porter", "stout", "hvedeøl"],
+       maerker: ["tuborg", "carlsberg", "heineken", "royal", "harboe", "ceres", "albani", "grimbergen", "jacobsen", "leffe",
+                 "kronenbourg", "brooklyn", "brewmasters", "blanche", "lager", "pils", "classic", "export", "1664"]},
+  vin: {sikker: ["rødvin", "hvidvin", "rosévin", "mousserende", "prosecco", "cava", "champagne", "crémant", "cremant"],
+        maerker: ["chardonnay", "riesling", "merlot", "cabernet", "sauvignon", "pinot", "primitivo", "chianti", "rioja",
+                  "zinfandel", "malbec", "ripasso", "amarone", "shiraz", "tempranillo", "syrah", "grenache", "montepulciano",
+                  "barolo", "valpolicella", "bordeaux", "appassimento", "nebbiolo", "negroamaro", "albarino", "godello"]},
+  sodavand: {sikker: [],
+             maerker: ["cola", "fanta", "sprite", "pepsi", "kondi", "squash", "faxe", "cocacola", "fuze", "schweppes", "nikoline"]},
+};
+// 2: sikkert træf. 1: løst træf, et sammensat ord med et ukendt forled eller
+// efterled ("rødløg", "blåskimmelost", "smørbar"); det tæller kun i
+// overskriften og kun når tilbuddet ligger i varens kategori, så "dybfrost"
+// ikke er ost. 0: intet træf ("Banani" er ikke banan).
+function wordMatches(word, q, vocab) {
+  if (word === q) return 2;
+  if (NOT_FOOD_WORDS.has(word)) return 0;
+  const stem = q.length >= 5 ? q.replace(/(erne|ene|er|en|e|r)$/, "") : q;
+  let best = 0;
+  for (const s of stem.length >= 4 && stem !== q ? [q, stem] : [q]) {  // "pølser" finder "spegepølse"
+    for (let i = word.indexOf(s); i >= 0; i = word.indexOf(s, i + 1)) {
+      const head = word.slice(0, i), rest = word.slice(i + s.length);
+      const last = !rest || isEnding(s, rest);
+      // Søgeord på to bogstaver er ofte en endelse ("udvalg|te"), så deres sammensatte ord er løse
+      const knownHead = okBefore(s, head, rest, vocab) || head.length >= (s.length >= 4 ? 4 : 5) || vocab.has(head);  // "rød|løg", "vild|laks", ikke "gam|mel"
+      if (s.length <= 2) {  // "jule|hvidt|øl", men ikke "special|ris|te|t" eller "lat|te"
+        const tail = !rest && head.length >= 4 && (okBefore(s, head, rest, vocab) || [...head].some((_, j) => head.length - j >= 4 && vocab.has(head.slice(j))));
+        if (!head ? okAfter(s, rest, vocab) : tail) best = Math.max(best, head ? 1 : 2);
+        continue;
+      }
+      if ((!head || okBefore(s, head, rest, vocab)) && okAfter(s, rest, vocab)) return 2;
+      if ((knownHead && (last || (s.length >= 4 && rest.length >= 3))) || (!head && rest.length >= 3)) best = 1;  // "vild|laks|efilet"
+    }
+  }
+  return best;
+}
+// Står søgeordet kun som smag ("is med smag af banan", "bananmilkshake med
+// jordbær")? Så er det ikke selve varen.
+function isFlavour(words, i) {
+  return words[i - 1] === "med" || (words[i - 2] === "smag" && words[i - 1] === "af") || words[i + 1] === "smag"
+    || /smag$/.test(words[i]);
+}
+// Ordlisten bruges til at kende sammensatte ord, og kategorierne til at se
+// hvor en vare hører hjemme (bananer under frugt, ikke is med banan)
+function searchIndex(offers) {
+  const vocab = new Set(), words = new Map();
+  for (const o of offers) {
+    const head = searchWords(`${o.heading} ${o.dealer || ""}`), desc = searchWords(o.description || "");
+    words.set(o, {head, desc});
+    for (const w of head.concat(desc)) if (w.length >= 3) vocab.add(w);
+  }
+  return {offers, vocab, words, homes: new Map(), hits: new Map()};
+}
+// Svarene huskes pr. søgeord, så det går hurtigt mens man skriver
+function hits(q, idx) {
+  if (!idx.hits.has(q)) idx.hits.set(q, new Map());
+  const memo = idx.hits.get(q);
+  const rel = RELATED[q] || RELATED[q.replace(/(e|er)$/, "")] || {sikker: [], maerker: []};
+  // Beslægtede ord skal stå som ord eller sidst i et sammensat ord ("julebryg", ikke "transporterer")
+  const isRel = (w, r) => w === r || (w.startsWith(r) && isEnding(r, w.slice(r.length))) || (w.endsWith(r) && w.length - r.length >= 3);
+  const match = w => Math.max(wordMatches(w, q, idx.vocab), rel.sikker.some(r => isRel(w, r)) ? 3 : 0,
+                              rel.maerker.some(r => isRel(w, r)) ? 1 : 0);
+  return w => { let m = memo.get(w); if (m === undefined) memo.set(w, m = match(w)); return m; };
+}
+const NON_FOOD = new Set(["nonfood", "personlig_pleje", "husholdning"]);
+// Kategorierne hvor søgeordet oftest står i overskriften (ikke som smag)
+function homeCategories(q, idx) {
+  if (!idx.homes.has(q)) {
+    const hit = hits(q, idx), other = OTHER_SENSE[q] || [];
+    const count = level => {
+      const n = {};
+      for (const o of idx.offers) {
+        const words = idx.words.get(o).head;
+        if (!other.includes(o.category) && words.some((w, i) => hit(w) >= level && !isFlavour(words, i))) n[o.category] = (n[o.category] || 0) + 1;
+      }
+      return n;
+    };
+    let n = count(2);
+    if (!Object.keys(n).length) n = count(1);
+    // Findes varen blandt madvarer, hører den ikke hjemme i non-food (piskeris er ikke ris)
+    if (Object.keys(n).some(c => !NON_FOOD.has(c))) for (const c of NON_FOOD) delete n[c];
+    const top = Math.max(0, ...Object.values(n));
+    idx.homes.set(q, new Set(Object.keys(n).filter(c => n[c] * 2 > top)));
+  }
+  return idx.homes.get(q);
+}
+// Giver for et tilbud 0 når alle søgeord står i overskriften, 1 når nogle kun
+// står i beskrivelsen, 2 når søgeordet kun er en smag eller tilbuddet ligger i
+// en anden kategori end varen plejer (de vises sidst), og -1 uden træf.
+// "Mine basisvarer" viser 0 og 1.
+function searchMatcher(query, idx) {
+  const parts = query.split(/\s+/), skip = parts.filter(p => p.startsWith("-")).flatMap(p => searchWords(p));
+  const qs = searchWords(parts.filter(p => !p.startsWith("-")).join(" "));
+  if (!qs.length) return null;
+  return o => {
+    const {head, desc} = idx.words.get(o);
+    if (skip.some(x => head.some(w => w.includes(x)) || desc.some(w => w.includes(x)))) return -1;
+    let tier = 0;
+    for (const q of qs) {
+      if ((OTHER_SENSE[q] || []).includes(o.category)) return -1;
+      const hit = hits(q, idx), home = homeCategories(q, idx);
+      // 3: et beslægtet ord, der altid betyder varen ("Thisted Bryghus" er øl i alle kategorier)
+      const atHome = !home.size || home.has(o.category) || head.some(w => hit(w) === 3);
+      const found = head.map(w => hit(w) >= 2 || (hit(w) === 1 && atHome));
+      if (!found.some(Boolean) && !desc.some(w => hit(w) >= 2)) return -1;
+      if (!atHome || (found.some(Boolean) && found.every((f, i) => !f || isFlavour(head, i)))) tier = 2;
+      else if (!found.some(Boolean)) tier = Math.max(tier, 1);
+    }
+    return tier;
+  };
+}
+// </search>
+
+// Pris pr. kg eller liter; stykpriser kan ikke sammenlignes og kommer sidst
+function perKg(o) { return (o.unit === "kg" || o.unit === "l") && o.unit_price ? o.unit_price : Infinity; }
+
+// Ordlisten bruges til at kende sammensatte ord; den bygges når tilbuddene skifter
+function searchFor(query) {
+  if (searchFor.idx?.offers !== state.offers) searchFor.idx = searchIndex(state.offers);
+  return searchMatcher(query, searchFor.idx);
+}
+
+// Med "Kun mine basisvarer" vises alle tilbud på varerne uanset kategori og
+// mindste rabat, grupperet vare for vare; filtered.basicOf siger hvilken.
+function filtered() {
+  const match = searchFor(state.q), tier = new Map();
+  const minDiscount = state.settings.min_discount_pct || 0;
+  const basics = basicsMatchers(), basicOf = new Map();
+  let list = state.offers.filter(o =>
+    state.stores.has(o.dealer) && (basics || state.cats.has(o.category)) && state.periods.has(period(o)) &&
+    (!state.hideMember || !o.member) &&
+    (!state.knownOnly || o.known_discount !== null) &&
+    (basics || o.known_discount === null || o.known_discount >= minDiscount || o.reasons.some(r => r.startsWith("favorit"))));
+  if (basics) {
+    list = list.filter(o => {
+      // En basisvare viser kun den rigtige vare, ikke is med smag af banan
+      const i = basics.findIndex(b => { const t = b.match(o); return t === 0 || t === 1; });
+      if (i >= 0) basicOf.set(o, i);
+      return i >= 0;
+    });
+  }
+  filtered.basics = basics;
+  filtered.basicOf = basicOf;
+  if (match) list = list.filter(o => { tier.set(o, match(o)); return tier.get(o) >= 0; });
+  const by = {
+    unit: (a, b) => perKg(a) - perKg(b) || a.price - b.price,
+    price: (a, b) => a.price - b.price,
+    store: paperCompare,
+  }[state.sort];
+  if (by) list = [...list].sort(by);
+  // Ved søgning kommer træf i overskriften først; butiksvisningen holder aviserne samlet
+  if (match && state.sort !== "store") list = [...list].sort((a, b) => tier.get(a) - tier.get(b));
+  // Under hver basisvare kommer den billigste pr. kg eller liter først, medmindre andet er valgt
+  if (basics && state.sort === "best") list = [...list].sort((a, b) => perKg(a) - perKg(b) || a.price - b.price);
+  if (basics) list = [...list].sort((a, b) => basicOf.get(a) - basicOf.get(b));
+  return list;
+}
+
+// Grupperne (en avis eller en basisvare) kan klappes sammen ved at trykke på
+// overskriften. Valget huskes i browseren under tilbudshenter.folded.
+const foldKey = {
+  basic: word => "basis:" + word.toLowerCase(),
+  paper: o => "avis:" + o.dealer + "|" + ((state.papers[o.catalog_id] || {}).label || o.catalog_label || ""),
+};
+function isFolded(key) { return state.folded.includes(key); }
+function setFolded(keys, fold) {
+  const set = new Set(state.folded);
+  for (const k of keys) fold ? set.add(k) : set.delete(k);
+  state.folded = [...set];
+  store.set("folded", state.folded);
+}
+function foldTitle(key, text) {
+  const open = !isFolded(key);
+  return `<button class="fold" type="button" data-fold="${esc(key)}" aria-expanded="${open}"
+    title="${open ? "Klap sammen" : "Fold ud"}"><h3>${esc(text)}</h3></button>`;
+}
+
+// Gruppevisningen: en overskrift for hver gruppe og kortene under den, så
+// længe gruppen ikke er klappet sammen. Sammenklappede grupper tæller ikke
+// med i de tilbud, der vises ad gangen.
+// groupOf skiller grupperne ad, foldOf er nøglen, der huskes.
+function renderGroups(list, groupOf, foldOf, head) {
+  const keys = new Set();
+  for (const o of list) keys.add(foldOf(o));
+  let html = "", n = 0, prev = null, more = false;
+  for (const o of list) {
+    const g = groupOf(o), folded = isFolded(foldOf(o));
+    if (!folded && n >= state.limit) { more = true; break; }
+    if (g !== prev) { html += head(o); prev = g; }
+    if (!folded) { html += card(o); n++; }
+  }
+  $("grid").innerHTML = html;
+  $("btn-more").hidden = !more;
+  const allFolded = [...keys].every(isFolded);
+  $("btn-fold-all").hidden = keys.size < 2;
+  $("btn-fold-all").textContent = allFolded ? "Fold alle ud" : "Klap alle sammen";
+  $("btn-fold-all").dataset.keys = JSON.stringify([...keys]);
+  $("btn-fold-all").dataset.fold = allFolded ? "" : "1";
+  return n;
+}
+
+function basicHead(word, group) {
+  const cheapest = group.filter(o => o.unit_price_text && perKg(o) < Infinity).sort((a, b) => perKg(a) - perKg(b))[0];
+  const label = word.split(/\s+/).filter(p => !p.startsWith("-")).join(" ");
+  return `<div class="paper-head">${foldTitle(foldKey.basic(word), cap(label))}
+    <span class="sub">${group.length} tilbud${cheapest ? ` · billigst ${esc(cheapest.unit_price_text)} i ${esc(cheapest.dealer)}` : ""}</span></div>`;
+}
+
+// Butik for butik, avis for avis, og tilbuddene som de står i avisen
+function paperCompare(a, b) {
+  const pa = state.papers[a.catalog_id] || {}, pb = state.papers[b.catalog_id] || {};
+  return a.dealer.localeCompare(b.dealer, "da")
+    || (pa.run_from || "").localeCompare(pb.run_from || "")
+    || (pa.label || a.catalog_label || "").localeCompare(pb.label || b.catalog_label || "", "da")
+    || a.catalog_id.localeCompare(b.catalog_id)
+    || (a.catalog_order ?? 1e9) - (b.catalog_order ?? 1e9)
+    || b.score - a.score;
+}
+
+// Link til avisen på eTilbudsavis; med et tilbud åbnes avisen ved tilbuddet
+// (https://etilbudsavis.dk/Netto?publication=<avis>&offer=<tilbud>)
+function paperUrl(catalogId, offerId) {
+  const url = (state.papers[catalogId] || {}).url;
+  if (!url) return "";
+  return offerId ? `${url}&offer=${encodeURIComponent(offerId)}` : url;
+}
+
+function paperHead(o, n) {
+  const p = state.papers[o.catalog_id] || {};
+  const label = p.label || o.catalog_label || "";
+  const url = paperUrl(o.catalog_id);
+  const only = state.stores.size > 1
+    ? `<button class="link" data-only-store="${esc(o.dealer)}">Vis kun ${esc(o.dealer)}</button>` : "";
+  return `<div class="paper-head">${foldTitle(foldKey.paper(o), o.dealer)}
+    <span class="sub">${label ? esc(label) + " · " : ""}${esc(o.period_text)} · ${n} tilbud</span>
+    <span class="acts">${only}${url ? `<a href="${esc(url)}" target="_blank" rel="noopener">Åbn avisen ↗</a>` : ""}</span></div>`;
+}
+
+function chip(kind, value, label, n, on) {
+  return `<button class="chip${on ? " on" : ""}" data-kind="${kind}" data-value="${esc(value)}">${esc(label)}<span class="n">${n}</span></button>`;
+}
+
+function renderChips() {
+  const storeCounts = {}, catCounts = {};
+  for (const o of state.offers) {
+    storeCounts[o.dealer] = (storeCounts[o.dealer] || 0) + 1;
+    catCounts[o.category] = (catCounts[o.category] || 0) + 1;
+  }
+  $("store-chips").innerHTML = Object.keys(storeCounts).sort((a, b) => a.localeCompare(b, "da"))
+    .map(s => chip("stores", s, s, storeCounts[s], state.stores.has(s))).join("");
+  const periodCounts = {now: 0, later: 0};
+  for (const o of state.offers) periodCounts[period(o)]++;
+  $("period-chips").innerHTML = [["now", "Gælder nu"], ["later", "Starter senere"]]
+    .map(([k, label]) => chip("periods", k, label, periodCounts[k], state.periods.has(k))).join("");
+  $("cat-chips").innerHTML = state.categories.filter(c => catCounts[c.key])
+    .map(c => chip("cats", c.key, c.name, catCounts[c.key], state.cats.has(c.key))).join("");
+  // Kort oversigt, så filtrene kan ses, når menuen er lukket
+  const allStores = Object.keys(storeCounts).sort((a, b) => a.localeCompare(b, "da"));
+  const onStores = allStores.filter(s => state.stores.has(s));
+  const allCats = state.categories.filter(c => catCounts[c.key]), onCats = allCats.filter(c => state.cats.has(c.key));
+  const periodText = state.periods.size === 2 ? "Gælder nu og senere"
+    : state.periods.has("now") ? "Gælder nu" : state.periods.has("later") ? "Starter senere" : "Ingen periode";
+  const storeText = onStores.length === allStores.length ? "Alle butikker"
+    : onStores.length <= 3 ? onStores.join(", ") || "Ingen butikker"
+    : `${onStores.length} af ${allStores.length} butikker`;
+  const catText = onCats.length === allCats.length ? "alle kategorier"
+    : onCats.length <= 2 ? onCats.map(c => c.name).join(", ") || "ingen kategorier"
+    : `${onCats.length} af ${allCats.length} kategorier`;
+  $("filter-sum").textContent = [periodText, storeText, state.basics.on && state.basics.items.length
+    ? `mine ${state.basics.items.length} basisvarer` : catText].join(" · ");
+}
+
+// <normalpris>
+// Normalprisen ved et tilbud, så man kan se, om tilbuddet faktisk er
+// billigere: butikkens egen normalpris fra avisen, ellers basisprisen (den
+// anslåede hyldepris uden tilbud fra madplanen, som man selv kan rette) for
+// almindelige basisvarer. Ligger tilbuddets pris pr. kg langt fra
+// basisprisen, er det næppe samme slags vare (fx tomater på dåse mod friske
+// tomater), og så vises ingen basispris. Ellers står der, at den er ukendt.
+const BASIS_MIN_RATIO = 0.35, BASIS_MAX_RATIO = 3;
+function normalPrice(o) {
+  if (o.pre_price) {
+    const save = Math.round((o.pre_price - o.price) * 100) / 100;
+    return save > 0
+      ? {kind: "store", cheaper: true, short: `Normalpris ${money(o.pre_price)} · spar ${money(save)}`,
+        long: `${money(o.pre_price)} ifølge avisen. Du sparer ${money(save)} (${Math.round(save / o.pre_price * 100)} %).`}
+      : {kind: "store", cheaper: false, short: `Normalpris ${money(o.pre_price)} · ikke billigere`,
+        long: `${money(o.pre_price)} ifølge avisen, så tilbuddet er ikke billigere end normalprisen.`};
+  }
+  const ing = o.basis_key && ING[o.basis_key];
+  if (ing && o.unit_price) {
+    const basis = o.unit === "stk" ? ing.price[0] * ing.price[1] / 1000 : ing.price[0];
+    const ratio = o.unit_price / basis;
+    if (basis > 0 && ratio >= BASIS_MIN_RATIO && ratio <= BASIS_MAX_RATIO) {
+      const per = n => money(n).replace(/ kr$/, ` kr/${o.unit}`);
+      const pct = Math.round((1 - ratio) * 100);
+      const cmp = pct > 0 ? `${pct} % billigere` : pct < 0 ? `${-pct} % dyrere` : "samme pris";
+      return {kind: "basis", cheaper: pct > 0, short: `Basispris ca. ${per(basis)} · ${cmp}`,
+        long: `Avisen oplyser ingen normalpris. Basisprisen for almindelig ${ing.name} er ca. ${per(basis)}, og tilbuddet koster ${per(o.unit_price)}, `
+          + (pct ? `${cmp} end basisprisen.` : "det samme som basisprisen.")
+          + " Basisprisen er anslået og kan rettes under Madplan → Basispriser."};
+    }
+  }
+  return {kind: null, cheaper: null, short: "Normalpris ukendt",
+    long: "Avisen oplyser ingen normalpris, og varen har ingen basispris, så det kan ikke ses, om tilbuddet er billigere end normalt."};
+}
+// </normalpris>
+
+function normalLine(o) {
+  const n = normalPrice(o);
+  const cls = n.cheaper === true ? " yes" : n.cheaper === false ? " no" : "";
+  return `<div class="normal${cls}" title="${esc(n.long)}">${esc(n.short)}</div>`;
+}
+
+function card(o) {
+  const img = o.image_url ? `<div class="img"><img src="${esc(o.image_url)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>` : "";
+  // Anslået rabat (fra andre butikker eller prishistorik) vises med kant i stedet for fyld
+  const est = o.discount_basis && o.discount_basis !== "foerpris" ? " est" : "";
+  const badge = o.discount_text ? `<span class="badge${est}" title="${esc(o.reasons.join(", "))}">${esc(o.discount_text)}</span>` : "";
+  const tags = [
+    period(o) === "later" ? `<span class="tag later">${esc(startText(o))}</span>` : "",
+    o.lowest_weeks ? `<span class="tag low" title="Lavere pris end i alle tidligere aviser i ${o.lowest_weeks} uger">Laveste i ${o.lowest_weeks} uger</span>` : "",
+    o.member ? `<span class="tag member" title="Prisen kræver Lidl Plus, kædens app eller medlemskab">${esc(o.member)}</span>` : "",
+  ].join("");
+  return `<article class="card" data-offer="${esc(o.id)}" tabindex="0" aria-label="${esc(o.heading)}, ${esc(o.price_text)}">${img}
+    <div class="top"><span>${esc(o.dealer)}</span>${badge}</div>
+    ${tags ? `<div class="tags">${tags}</div>` : ""}
+    <div class="name">${esc(o.heading)}</div>
+    ${o.description ? `<div class="desc" title="${esc(o.description)}">${esc(o.description)}</div>` : ""}
+    <div class="price">${esc(o.price_text)}</div>
+    ${o.unit_price_text ? `<div class="unit">${esc(o.unit_price_text)}</div>` : ""}
+    ${normalLine(o)}
+    ${o.reasons.length ? `<div class="why">${esc(o.reasons.join(", "))}</div>` : ""}
+    <div class="meta">${esc(o.category_name)} · ${esc(o.period_text)}${o.catalog_label ? ` · ${esc(o.catalog_label)}` : ""}</div>
+    ${listButton(o.id)}
+  </article>`;
+}
+
+function render() {
+  const hasOffers = state.offers.length > 0;
+  $("filters").hidden = !hasOffers;
+  if (!hasOffers) {
+    $("grid").innerHTML = ""; $("count").textContent = ""; $("btn-more").hidden = true;
+    $("empty").hidden = false;
+    $("empty").innerHTML = state.scanning ? "Henter tilbud…"
+      : STATIC ? "Der er ingen tilbud endnu. De hentes automatisk hver dag."
+      : "Der er ingen tilbud endnu.<br><br><button class='btn primary' onclick='startScan()'>Hent nye tilbud</button>";
+    return;
+  }
+  renderChips();
+  const list = filtered();
+  $("empty").hidden = list.length > 0;
+  $("empty").textContent = "Ingen tilbud matcher dine filtre.";
+  const shown = list.slice(0, state.limit);
+  const basics = filtered.basics;
+  $("btn-fold-all").hidden = true;
+  if (basics) {
+    const bo = filtered.basicOf, groups = basics.map(() => []);
+    for (const o of list) groups[bo.get(o)].push(o);
+    const missing = basics.filter((b, i) => !groups[i].length).map(b => b.word);
+    $("count").textContent = `${list.length} tilbud på ${basics.length - missing.length} af dine ${basics.length} basisvarer`
+      + (missing.length ? `. Ingen tilbud på: ${missing.join(", ")}` : "");
+    $("empty").textContent = "Ingen tilbud på dine basisvarer lige nu.";
+    const word = o => basics[bo.get(o)].word;
+    renderGroups(list, o => bo.get(o), o => foldKey.basic(word(o)), o => basicHead(word(o), groups[bo.get(o)]));
+    return;
+  }
+  if (state.sort === "store") {
+    // Samme avis kan have flere udgaver; hver avis får sin egen overskrift
+    const byPaper = new Map();
+    for (const o of list) byPaper.set(o.catalog_id, (byPaper.get(o.catalog_id) || 0) + 1);
+    const shownCount = renderGroups(list, o => o.catalog_id, foldKey.paper, o => paperHead(o, byPaper.get(o.catalog_id)));
+    $("count").textContent = `Viser ${shownCount} af ${list.length} tilbud`
+      + (list.length < state.offers.length ? ` (${state.offers.length} i alt)` : "");
+    return;
+  }
+  $("count").textContent = `Viser ${shown.length} af ${list.length} tilbud`
+    + (list.length < state.offers.length ? ` (${state.offers.length} i alt)` : "");
+  $("grid").innerHTML = shown.map(card).join("");
+  $("btn-more").hidden = list.length <= state.limit;
+}
+
+// -- Et enkelt tilbud ---------------------------------------------------
+// Rækkefølgen, der bladres i, er den samme som på siden bag vinduet
+const offerView = {id: null, list: [], mode: "offer", touch: null, uses: null};
+
+// Fra madplanen bladres der i tilbuddene i planen, og vinduet viser, hvad
+// tilbuddet bruges til (uses: tilbud -> linjer som "500 g til Lasagne, onsdag")
+function openOffer(id, list = null, uses = null) {
+  offerView.list = list || filtered();
+  if (!offerView.list.some(o => o.id === id)) offerView.list = state.offers;
+  offerView.uses = uses;
+  offerView.id = id;
+  offerView.mode = "offer";
+  renderOffer();
+  const dlg = $("offer-dlg");
+  if (!dlg.open) dlg.showModal();
+  $("btn-offer-close").focus();
+}
+
+function stepOffer(delta) {
+  const i = offerView.list.findIndex(o => o.id === offerView.id);
+  const next = offerView.list[i + delta];
+  if (!next) return;
+  offerView.id = next.id;
+  renderOffer();
+  $("od-body").scrollTop = 0;
+}
+
+// Tilbuddets placering på avissiden står i billedets adresse (x1r, y1r, x2r, y2r)
+function offerBox(o) {
+  try {
+    const q = new URL(o.image_url).searchParams;
+    const box = ["x1r", "y1r", "x2r", "y2r"].map(k => parseFloat(q.get(k)));
+    return box.every(v => isFinite(v)) && box[2] > box[0] && box[3] > box[1] ? box : null;
+  } catch (e) { return null; }
+}
+
+let pagesPromise = null;
+async function paperPages(catalogId) {
+  const p = state.papers[catalogId];
+  if (!p) return [];
+  if (p.pages) return p.pages;
+  if (!STATIC || !p.page_count) return [];
+  pagesPromise = pagesPromise || fetch("aviser.json", {cache: "no-cache"}).then(r => r.ok ? r.json() : {}).catch(() => ({}));
+  const all = await pagesPromise;
+  if (!Object.keys(all).length) pagesPromise = null;  // prøv igen næste gang
+  return all[catalogId] || [];
+}
+
+function renderOffer() {
+  const list = offerView.list;
+  const i = list.findIndex(x => x.id === offerView.id);
+  const o = list[i];
+  if (!o) { $("offer-dlg").close(); return; }
+  const paper = state.papers[o.catalog_id] || {};
+  $("od-title").textContent = o.heading;
+  $("od-sub").textContent = [o.dealer, paper.label || o.catalog_label, o.catalog_page ? `side ${o.catalog_page}` : ""].filter(Boolean).join(" · ");
+  $("od-pos").textContent = list.length > 1 ? `${i + 1} af ${list.length}` : "";
+  $("btn-offer-prev").disabled = i <= 0;
+  $("btn-offer-next").disabled = i >= list.length - 1;
+  const url = paperUrl(o.catalog_id, o.id);
+  $("od-paper").hidden = !url;
+  if (url) $("od-paper").href = url;
+
+  const box = offerBox(o);
+  const canPage = !!(o.catalog_page && box && (paper.pages || paper.page_count));
+  if (!canPage && offerView.mode === "page") offerView.mode = "offer";
+  const tabs = canPage ? `<div class="od-tabs">
+      <button class="chip${offerView.mode === "offer" ? " on" : ""}" data-view="offer">Tilbuddet</button>
+      <button class="chip${offerView.mode === "page" ? " on" : ""}" data-view="page">Hele siden i avisen</button></div>` : "";
+  const pic = offerView.mode === "page"
+    ? `<div class="od-pagewrap" id="od-pagewrap"><div class="od-img" style="min-height:300px"><span class="status">Henter siden…</span></div></div>`
+    : o.image_url ? `<div class="od-img"><img src="${esc(o.image_url)}" alt="${esc(o.heading)}" onerror="this.parentNode.innerHTML='<span class=status>Intet billede</span>'"></div>`
+    : `<div class="od-img"><span class="status">Intet billede</span></div>`;
+
+  const est = o.discount_basis && o.discount_basis !== "foerpris" ? " est" : "";
+  const tags = [
+    o.discount_text ? `<span class="badge${est}">${esc(o.discount_text)}</span>` : "",
+    period(o) === "later" ? `<span class="tag later">${esc(startText(o))}</span>` : "",
+    o.lowest_weeks ? `<span class="tag low">Laveste i ${o.lowest_weeks} uger</span>` : "",
+    o.member ? `<span class="tag member" title="Prisen kræver Lidl Plus, kædens app eller medlemskab">${esc(o.member)}</span>` : "",
+  ].join("");
+  const rows = [
+    ["Butik", o.dealer],
+    ["Avis", [paper.label || o.catalog_label, o.catalog_page ? `side ${o.catalog_page}` : ""].filter(Boolean).join(", ")],
+    ["Gælder", o.period_text],
+    ["Kategori", o.category_name],
+    ["Normalpris", normalPrice(o).long],
+    ["Rabat", o.reasons.join(", ")],
+  ].filter(r => r[1]);
+  const uses = offerView.uses && offerView.uses.get(o.id);
+  if (uses) rows.unshift(["Madplanen", uses.join("; ")]);
+  $("od-body").innerHTML = `<div class="od">
+    <div class="od-pic">${tabs}${pic}</div>
+    <div class="od-info">
+      ${tags ? `<div class="tags" style="align-items:center">${tags}</div>` : ""}
+      <div class="price">${esc(o.price_text)}</div>
+      ${o.unit_price_text ? `<div class="unit">${esc(o.unit_price_text)}</div>` : ""}
+      ${normalLine(o)}
+      ${o.description ? `<div class="desc">${esc(o.description)}</div>` : ""}
+      <dl>${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>
+      ${listButton(o.id)}
+    </div></div>`;
+
+  if (offerView.mode === "page") {
+    const id = o.id;
+    paperPages(o.catalog_id).then(pages => {
+      const wrap = $("od-pagewrap");
+      if (!wrap || offerView.id !== id || offerView.mode !== "page") return;
+      const src = pages[o.catalog_page - 1];
+      if (!src) { wrap.innerHTML = `<div class="od-img"><span class="status">Siden kunne ikke hentes</span></div>`; return; }
+      const [x1, y1, x2, y2] = box;
+      const pct = v => (v * 100).toFixed(2) + "%";
+      wrap.innerHTML = `<div class="od-page"><img src="${esc(src)}" alt="Side ${o.catalog_page} i avisen">
+        <div class="mark" style="left:${pct(x1)};top:${pct(y1)};width:${pct(x2 - x1)};height:${pct(y2 - y1)}"></div></div>`;
+      // Rul tilbuddet frem, når siden er højere end vinduet
+      wrap.querySelector("img").addEventListener("load", () => {
+        wrap.scrollTop = Math.max(0, y1 * wrap.scrollHeight - wrap.clientHeight / 4);
+      });
+    });
+  }
+}
+
+// -- Indkøbsliste -------------------------------------------------------
+function onList(id) { return state.list.some(i => i.id === id); }
+
+function listButton(id) {
+  return onList(id)
+    ? `<button class="btn small add on" data-list="${esc(id)}">✓ På listen</button>`
+    : `<button class="btn small add" data-list="${esc(id)}">+ Indkøbsliste</button>`;
+}
+
+async function loadList() {
+  state.list = (await api("/api/list")).items;
+  renderListCount();
+}
+
+async function changeList(body) {
+  try {
+    state.list = (await api("/api/list", body)).items;
+  } catch (e) { toast(e.message); }
+  renderListCount();
+  if ($("list-dlg").open) renderList();
+}
+
+function renderListCount() {
+  const open = state.list.filter(i => !i.checked).length;
+  $("list-count").textContent = state.list.length ? `(${open})` : "";
+  document.querySelectorAll("[data-list]").forEach(b => { b.outerHTML = listButton(b.dataset.list); });
+}
+
+// Afdelingerne i den rækkefølge, man typisk går gennem butikken
+const DEPT_ORDER = ["frugt_og_groent", "broed_og_bager", "koed", "fisk", "mejeri", "frost", "kolonial", "kaffe_og_te",
+  "drikkevarer", "oel_og_vin", "slik_og_snacks", "husholdning", "personlig_pleje", "baby", "dyr", "nonfood", "andet"];
+
+// Afdelingen for en vare: fra tilbuddet, madplanen eller varenavnet
+function itemDept(i) {
+  if (i.category) return i.category;
+  const o = state.offers.find(o => o.id === i.id);
+  if (o) return o.category;
+  const key = planData && lineKeys(i.heading)[0];
+  return key ? ING[key].dept : "andet";
+}
+
+function deptName(key) {
+  const c = state.categories.find(c => c.key === key);
+  return c ? c.name : "Andet";
+}
+
+// Varer grupperet efter butik og sorteret efter afdeling; egne varer til sidst
+function listGroups() {
+  const groups = new Map();
+  for (const i of state.list) {
+    const key = i.dealer || "Andre varer";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push({...i, dept: itemDept(i)});
+  }
+  const rank = (d) => { const n = DEPT_ORDER.indexOf(d); return n < 0 ? DEPT_ORDER.length : n; };
+  for (const items of groups.values()) items.sort((a, b) => rank(a.dept) - rank(b.dept));
+  return [...groups.entries()];
+}
+
+// Varerne med en overskrift, hver gang afdelingen skifter
+function withDepts(items, head, row) {
+  let last = null;
+  return items.map(i => {
+    const h = i.dept !== last ? head(deptName(i.dept)) : "";
+    last = i.dept;
+    return h + row(i);
+  }).join("");
+}
+
+function money(n) { return n.toLocaleString("da-DK", {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " kr"; }
+
+function renderList() {
+  $("btn-list-mail").href = "mailto:?subject=" + encodeURIComponent("Indkøbsliste") + "&body=" + encodeURIComponent(listText());
+  if (!state.list.length) {
+    $("list-body").innerHTML = `<p class="hint" style="margin-top:14px">Listen er tom. Tryk "+ Indkøbsliste" på et tilbud for at lægge det her.</p>`;
+    return;
+  }
+  const total = state.list.reduce((s, i) => s + itemTotal(i), 0);
+  const offerIds = new Set(listOffers().map(o => o.id));
+  $("list-body").innerHTML = listGroups().map(([store, items]) => {
+    const sum = items.reduce((s, i) => s + itemTotal(i), 0);
+    return `<div class="list-store"><h3>${esc(store)}${sum ? `<span class="sum">${money(sum)}</span>` : ""}</h3>
+      ${withDepts(items, name => `<div class="dept">${esc(name)}</div>`, i => `<div class="item${i.checked ? " done" : ""}">
+        <input type="checkbox" data-check="${esc(i.id)}" ${i.checked ? "checked" : ""}>
+        <div class="what">${listCount(i.count) > 1 ? `<b>${listCount(i.count)} ×</b> ` : ""}${offerIds.has(i.id)
+          ? `<button class="open" data-open="${esc(i.id)}" title="Se tilbuddet">${esc(i.heading)}</button>` : esc(i.heading)}
+          <div class="sub">${[i.note, i.unit_price_text, i.period_text, i.member].filter(Boolean).map(esc).join(" · ")}
+          ${i.expired ? ` · <span class="expired">Tilbuddet er udløbet</span>` : ""}</div></div>
+        ${i.price_text ? `<span class="p">${listCount(i.count) > 1 ? money(itemTotal(i)) : esc(i.price_text)}</span>` : ""}
+        <button class="x" data-remove="${esc(i.id)}" title="Fjern">×</button>
+      </div>`)}</div>`;
+  }).join("") + (total ? `<p style="text-align:right;font-weight:700;margin:12px 0 0">I alt ${money(total)}</p>` : "");
+}
+
+// Tilbuddene på listen i samme rækkefølge som listen, så man kan bladre i dem
+function listOffers() {
+  const byId = new Map(state.offers.map(o => [o.id, o]));
+  return listGroups().flatMap(([, items]) => items).map(i => byId.get(i.id)).filter(Boolean);
+}
+
+function listText() {
+  return listGroups().map(([store, items]) =>
+    `${store}:\n` + items.filter(i => !i.checked).map(i => `- ${listCount(i.count) > 1 ? `${listCount(i.count)} × ` : ""}${i.heading}${i.price_text ? ` (${i.price_text})` : ""}${i.note ? `, ${i.note}` : ""}`).join("\n")
+  ).join("\n\n");
+}
+
+function openList() {
+  renderList();
+  $("list-dlg").showModal();
+}
+
+function printList() {
+  $("print-area").innerHTML = `<h1>Indkøbsliste</h1>` + listGroups().map(([store, items]) =>
+    `<h2>${esc(store)}</h2><ul>${withDepts(items.filter(i => !i.checked), name => `<li class="dept">${esc(name)}</li>`, i =>
+      `<li>${listCount(i.count) > 1 ? `${listCount(i.count)} × ` : ""}${esc(i.heading)}${i.price_text ? ` · ${esc(i.price_text)}` : ""}${i.note ? ` · ${esc(i.note)}` : ""}</li>`)}</ul>`).join("");
+  window.print();
+}
+
+// -- Madplan ------------------------------------------------------------
+// Retterne (til 4 personer), ingredienserne og reglerne for at læse en
+// ingrediensliste kommer fra serveren eller data.json (mealplan.py). Hvert
+// tilbud har en liste "ingredients" med de ingredienser, det kan bruges
+// som. Valgene huskes i browseren under tilbudshenter.mealplan og egne
+// opskrifter under tilbudshenter.myrecipes.
+const plan = {ids: [], count: 5, persons: 4, diet: "", focus: "", store: "", start: "",
+  skipped: new Set(), have: new Set(), double: new Set()};
+let planData = null, ING = {};
+const KIND_NAMES = {okse: "Okse", gris: "Gris", kylling: "Kylling", fisk: "Fisk", vegetar: "Vegetar", andet: "Andet kød"};
+const RED = new Set(["okse", "gris", "andet"]);
+const PLAN_MAX_PER_KIND = 2;
+// En tilbudsret: hovedingrediensen er på tilbud, og tilbuddene skal også
+// bære retten: mindst halvdelen af varerne på tilbud (og mindst to, eller
+// alle, hvis retten kun har én), mindst halvdelen af prisen fra tilbud og
+// mindst 10 % sparet mod basisvarerne
+const OFFER_MIN_ITEMS = 2, OFFER_MIN_RATIO = 0.5, OFFER_MIN_SHARE = 0.5, OFFER_MIN_SAVING = 0.1;
+// Retter, der er vist de sidste 14 dage, kommer bagerst i køen, så "Ny
+// madplan" og næste uges plan giver nye retter
+const SEEN_DAYS = 14, SEEN_PENALTY = 20;
+const WEEKDAYS = ["søndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag"];
+
+async function loadPlanData() {
+  if (!planData) {
+    planData = await api("/api/recipes");
+    ING = Object.fromEntries(planData.ingredients.map(i => [i.key, i]));
+    // Retternes varer peger på samme pris som ingrediensen, så en rettet basispris gælder overalt
+    const link = (item) => { item.prices = Object.fromEntries(item.keys.map(k => [k, ING[k].price])); };
+    for (const r of planData.recipes) r.items.forEach(link);
+    link(planData.side);
+    applyBasis();
+  }
+  return planData;
+}
+
+// -- Basispriser ----------------------------------------------------------
+// Standardprisen kommer fra mealplan.py; brugerens egne priser ligger i
+// browseren under tilbudshenter.basis som {ingrediens: kr pr. kg}.
+const LITER_KEYS = new Set(["maelk", "floede"]);
+function basisUnit(k) { return LITER_KEYS.has(k) ? "kr/l" : "kr/kg"; }
+function basisText(k) { return `basispris ${ING[k].price[0].toLocaleString("da-DK")} ${basisUnit(k)}`; }
+function applyBasis() {
+  const custom = store.get("basis", {});
+  for (const [k, ing] of Object.entries(ING)) {
+    if (ing.base === undefined) ing.base = ing.price[0];
+    const v = Number(custom[k]);
+    ing.price[0] = v > 0 ? v : ing.base;
+  }
+}
+function renderBasis() {
+  const q = $("basis-search").value.trim().toLowerCase();
+  const custom = store.get("basis", {});
+  const rank = (d) => { const n = DEPT_ORDER.indexOf(d); return n < 0 ? DEPT_ORDER.length : n; };
+  const ings = planData.ingredients.filter(i => !q || i.name.toLowerCase().includes(q))
+    .sort((a, b) => rank(a.dept) - rank(b.dept) || a.name.localeCompare(b.name, "da"));
+  let last = null;
+  $("basis-list").innerHTML = ings.map(i => {
+    const head = i.dept !== last ? `<div class="dept">${esc(deptName(i.dept))}</div>` : "";
+    last = i.dept;
+    const changed = Number(custom[i.key]) > 0;
+    return head + `<div class="basis-row${changed ? " changed" : ""}">
+      <span class="n">${esc(cap(i.name))}</span>
+      <input type="number" min="1" step="1" inputmode="decimal" data-basis="${esc(i.key)}" value="${ING[i.key].price[0]}" aria-label="Basispris for ${esc(i.name)}">
+      <span class="u">${basisUnit(i.key)}</span>
+      <span class="std">${changed ? `<button class="link" data-basis-reset="${esc(i.key)}">standard ${ING[i.key].base}</button>` : `standard`}</span>
+    </div>`;
+  }).join("") || `<p class="hint">Ingen varer passer til søgningen.</p>`;
+  const n = Object.keys(custom).length;
+  $("basis-sum").textContent = n ? `Du har rettet ${n} ${n === 1 ? "pris" : "priser"}` : "";
+}
+function setBasis(key, value) {
+  const custom = store.get("basis", {});
+  const v = Number(String(value).replace(",", "."));
+  if (v > 0 && v !== ING[key].base) custom[key] = v; else delete custom[key];
+  store.set("basis", custom);
+  applyBasis();
+  render();
+  if ($("plan-dlg").open) renderPlan();
+}
+async function openBasis() {
+  await loadPlanData();
+  $("basis-search").value = "";
+  renderBasis();
+  $("basis-dlg").showModal();
+}
+
+// <matcher> Samme regler som mealplan.py (ingredient_keys, parse_line og
+// recipe_from_lines), så egne opskrifter og indkøbslisten læses som
+// tilbuddene. tests/test_matcher_js.py tjekker, at de giver det samme.
+const PORK = new Set(["hakket_gris", "hakket_gris_kalv", "bacon", "stegeflaesk", "medister", "flaeskesteg",
+  "moerbrad", "koteletter", "poelser", "chorizo", "svinekam", "skinkekoed", "lufttoerret_skinke"]);
+const FISH = new Set(["laksefilet", "roeget_laks", "hvid_fisk", "fiskefrikadeller", "tun", "rejer"]);
+const CHICKEN = new Set(["hakket_kylling", "kyllingebryst", "kyllingelaar", "hel_kylling", "kalkun", "and"]);
+const BEEF = new Set(["hakket_okse", "boef", "okse_tern", "oksesteg", "oksemoerbrad", "kalvekoed", "lam"]);
+const MEAT = new Set([...PORK, ...FISH, ...CHICKEN, ...BEEF]);
+
+function tokens(text) { return text.normalize("NFC").toLowerCase().match(/[\p{L}\p{N}_]+/gu) || []; }
+
+function hasWord(toks, word) {
+  const whole = word.endsWith(" "), w = word.trim().toLowerCase();
+  return toks.some(t => t === w || (!whole && (t.startsWith(w) || t.endsWith(w))));
+}
+
+// Varerne i et varenavn; det, der står efter "med", er tilbehør
+function textParts(text) {
+  return text.split(/,|(?<![\p{L}\p{N}_])eller(?![\p{L}\p{N}_])/iu)
+    .map(p => p.split(/(?<![\p{L}\p{N}_])med(?![\p{L}\p{N}_])/iu)[0].trim()).filter(p => p && !p.startsWith("-"));
+}
+
+// Kan tilbuddet bruges som k til ingrediensen? Ikke med en smag, ingrediensen
+// ikke nævner ("Revet mexi-topping" til cheddar), en anden sort eller kød til
+// en vegetarisk ingrediens
+function offerFits(line, heading, k) {
+  const words = planData.words, want = tokens(line);
+  const ok = words.flavor_ok[k] || [], sorts = words.varieties[k] || [];
+  const wanted = sorts.filter(w => hasWord(want, w)), veggie = words.veggie.some(w => hasWord(want, w));
+  return textParts(heading).some(part => {
+    if (!textKeys(part).includes(k)) return false;
+    const toks = tokens(part);
+    if (words.flavor.some(w => !ok.includes(w) && hasWord(toks, w) && !hasWord(want, w))) return false;
+    if (veggie && MEAT.has(k) && !words.veggie.some(w => hasWord(toks, w))) return false;
+    const got = sorts.filter(w => hasWord(toks, w));
+    return !wanted.length || !got.length || got.some(w => wanted.includes(w));
+  });
+}
+
+// Ingredienserne i en opskriftslinje; i "salt til ris" er varen salt, ikke ris
+function lineKeys(text) {
+  return textKeys(text.split(/(?<![\p{L}\p{N}_])til(?![\p{L}\p{N}_])/iu)[0].trim() || text);
+}
+
+function textKeys(text) {
+  const words = planData.words;
+  if (words.not_raw_heading.some(w => hasWord(tokens(text), w))) return [];
+  const found = [];
+  for (const part of textParts(text)) {
+    const toks = tokens(part);
+    if (words.not_raw.some(w => hasWord(toks, w))) continue;
+    const here = planData.ingredients.filter(ing =>
+      !ing.exclude.some(w => hasWord(toks, w)) && ing.patterns.some(p => p.every(w => hasWord(toks, w)))).map(ing => ing.key);
+    for (const k of here) if (!found.includes(k)) found.push(k);
+  }
+  // En mere præcis ingrediens vinder over en bredere ("parmesanost, revet")
+  const replaced = new Set(found.flatMap(k => ING[k].replaces || []));
+  return found.filter(k => !replaced.has(k));
+}
+
+const FRACTIONS = {"½": 0.5, "¼": 0.25, "¾": 0.75, "⅓": 1 / 3, "⅔": 2 / 3};
+const NUM = "\\d+\\s+\\d+\\s*/\\s*\\d+|\\d+(?:[.,]\\d+)?(?:\\s*/\\s*\\d+)?|\\d*\\s*[½¼¾⅓⅔]";
+const LINE_RE = new RegExp(`^\\s*(?:ca\\.?\\s*)?(${NUM})(?:\\s*[-–]\\s*(${NUM}))?\\s*([a-zæøå]+\\.?)?(?=\\s|$)\\s*(.*)$`, "i");
+
+function parseNumber(text) {
+  text = text.trim().replace(/,/g, ".");
+  const parts = text.split(/\s+/);
+  if (parts.length === 2 && parts[1].includes("/")) return Number(parts[0]) + parseNumber(parts[1]);
+  text = text.replace(/\s/g, "");
+  const last = text.slice(-1);
+  if (last in FRACTIONS) return FRACTIONS[last] + (text.length > 1 ? Number(text.slice(0, -1)) : 0);
+  if (text.includes("/")) { const [a, b] = text.split("/").map(Number); return b ? a / b : 0; }
+  return Number(text);
+}
+
+// [mængde, enhed, navn]; mængde 0 betyder efter smag
+function parseLine(line) {
+  line = line.replace(/\([^)]*\)/g, " ").replace(/\s+/g, " ").replace(/^[ \-•*\t]+|[ \-•*\t]+$/g, "");
+  const m = line.match(LINE_RE);
+  if (!m) return [0, "", line];
+  let amount = parseNumber(m[1]);
+  if (m[2]) amount = (amount + parseNumber(m[2])) / 2;
+  let unit = (m[3] || "").toLowerCase().replace(/\.+$/, ""), rest = m[4];
+  if (Object.hasOwn(planData.units, unit)) {
+    const [u, factor] = planData.units[unit];
+    unit = u; amount *= factor;
+  } else {
+    rest = `${m[3] || ""} ${rest}`.trim();
+    unit = "stk";
+  }
+  return [unit ? amount : 0, unit, rest.replace(/^[ ,.]+|[ ,.]+$/g, "")];
+}
+
+function hasAny(text, words) { const toks = tokens(text); return words.some(w => hasWord(toks, w)); }
+
+function dietFlag(text) {
+  const w = planData.words;
+  if (hasAny(text, w.veggie)) return "";
+  return hasAny(text, w.pork) ? "pork" : hasAny(text, w.fish) ? "fish" : hasAny(text, w.meat) ? "meat" : "";
+}
+
+function makeItem(amount, unit, name, keys) {
+  return {amount, unit, name, keys, main: false, side: false, prices: Object.fromEntries(keys.map(k => [k, ING[k].price]))};
+}
+
+function itemGrams(i) {
+  return i.unit === "g" ? i.amount : i.unit === "dl" ? i.amount * 100 : i.amount * ING[i.keys[0]].price[1];
+}
+
+// En ret ud fra en egen opskrift, som recipe_from_lines i mealplan.py. Kød
+// og varer, der ikke kan genkendes, kommer med uden pris.
+const LIQUIDS = new Set(["maelk", "floede"]);
+
+function recipeFromLines(d) {
+  const scale = 4 / Math.max(1, Math.min(12, Number(d.persons) || 4));
+  // flags: kød eller fisk i fx bouillon; meat: kød eller fisk, der skal købes
+  const items = [], pantry = [], unknown = [], flags = [], meat = [];
+  for (const line of d.lines) {
+    let [amount, unit, text] = parseLine(line);
+    if (!text) continue;
+    const keys = lineKeys(text);
+    if (!keys.length) {
+      const flag = dietFlag(text), staple = hasAny(text, planData.words.pantry);
+      if (flag && !flags.includes(flag)) flags.push(flag);
+      if (flag && !staple) meat.push(flag);
+      (staple || !amount ? pantry : unknown).push(text);
+      continue;
+    }
+    amount *= scale;
+    if (unit === "stk" && !ING[keys[0]].price[1]) { amount *= planData.piece_g; unit = "g"; }
+    if (unit === "g" && LIQUIDS.has(keys[0])) { amount /= 100; unit = "dl"; }  // "2 spsk mælk" er 0,3 dl
+    if (!amount) { pantry.push(text); continue; }
+    items.push(makeItem(Math.round(amount * 100) / 100, unit, text.slice(0, 80), keys));
+  }
+  if (!items.length) return {recipe: null, why: "Ingen af ingredienserne kan findes i tilbudsaviserne"};
+  for (const text of unknown) items.push(makeItem(0, "", text.slice(0, 80), []));
+  // Hovedingredienser: de dyreste, med kød og fisk vægtet tre gange
+  const value = (i) => i.keys.length ? itemGrams(i) * ING[i.keys[0]].price[0] * (MEAT.has(i.keys[0]) ? 3 : 1) : 0;
+  const top = Math.max(...items.map(value));
+  for (const i of items) i.main = value(i) >= 0.6 * top;
+  const keys = new Set(items.flatMap(i => i.keys));
+  const some = (set) => [...keys].some(k => set.has(k));
+  const kind = d.kind || (some(FISH) ? "fisk" : some(CHICKEN) ? "kylling" : some(BEEF) ? "okse" : some(PORK) ? "gris"
+    : meat.includes("fish") ? "fisk" : meat.includes("pork") ? "gris" : meat.length ? "andet" : "vegetar");
+  const veg = items.filter(i => i.keys.length && ING[i.keys[0]].veg).reduce((s, i) => s + itemGrams(i), 0) / 4;
+  if (veg < planData.min_veg) items.push({...planData.side});
+  const vegAll = items.filter(i => i.keys.length && ING[i.keys[0]].veg).reduce((s, i) => s + itemGrams(i), 0) / 4;
+  return {recipe: {id: d.id, name: d.name, kind, minutes: Number(d.minutes) || 0, items, veg_g: Math.round(vegAll),
+    pantry, method: d.method || "", source: d.url || "", flags, own: true}, why: ""};
+}
+// </matcher>
+
+function ownList() { return store.get("myrecipes", []); }
+function allRecipes() {
+  return [...planData.recipes, ...ownList().map(d => recipeFromLines(d).recipe).filter(Boolean)];
+}
+
+function savePlan() {
+  store.set("mealplan", {ids: plan.ids, count: plan.count, persons: plan.persons, diet: plan.diet, focus: plan.focus,
+    store: plan.store, start: plan.start, have: [...plan.have], double: [...plan.double]});
+}
+
+function haveItem(item) { return item.keys.some(k => plan.have.has(k)); }
+
+// Retten tilpasset kosten: ingredienser, kosten udelukker, fjernes (fx
+// bacon i kartoffelsuppe for en vegetar). null hvis retten ikke passer.
+function dietRecipe(r) {
+  const flags = new Set(r.flags || []);
+  if ((plan.diet === "nopork" && flags.has("pork")) || (plan.diet === "nofish" && flags.has("fish")) ||
+      (plan.diet === "vegetar" && flags.size)) return null;
+  const banned = {nopork: PORK, nofish: FISH, vegetar: MEAT}[plan.diet];
+  if (!banned) return r;
+  if ((plan.diet === "nopork" && r.kind === "gris") || (plan.diet === "nofish" && r.kind === "fisk") ||
+      (plan.diet === "vegetar" && r.kind !== "vegetar")) return null;
+  const items = r.items.map(i => ({...i, keys: i.keys.filter(k => !banned.has(k))}))
+    .filter(i => i.keys.length || !r.items.find(o => o.name === i.name).keys.length);
+  return items.some(i => i.main) ? {...r, items} : null;
+}
+
+// Tilbud der kan bruges i madplanen, efter ingrediens. Billigste pr. kg
+// eller liter først; stykpriser til sidst efter pris.
+function planUsable(o) {
+  return o.ingredients && state.stores.has(o.dealer) && !(state.hideMember && o.member);
+}
+
+// Tilbuddets pris pr. kg som ingrediensen k, eller null hvis den ikke kendes
+function offerKg(o, k) {
+  if (!o.unit_price) return null;
+  if (o.unit === "kg" || o.unit === "l") return o.unit_price;
+  const pieceG = ING[k] && ING[k].price[1];
+  return o.unit === "stk" && pieceG ? o.unit_price * 1000 / pieceG : null;
+}
+
+// Et tilbud bruges kun, når det er billigere end basisvaren uden tilbud. En
+// stor rabat på et dyrt mærke er ikke nok.
+function beatsBasis(o, k) {
+  const kg = offerKg(o, k);
+  return kg !== null && !!ING[k] && kg < ING[k].price[0];
+}
+
+// Gælder tilbuddet på dagen? Dagen regnes fra kl. 12
+function validOn(o, day) {
+  return (!o.run_from || new Date(o.run_from) <= day) && (!o.run_till || new Date(o.run_till) >= day);
+}
+
+// Kun tilbud, der gælder på mindst én af madplanens dage
+function ingredientIndex() {
+  const index = new Map();
+  const first = startDate(), last = addDays(first, plan.count - 1);
+  for (const o of state.offers) {
+    if (!planUsable(o) || (plan.store && o.dealer !== plan.store)) continue;
+    if ((o.run_from && new Date(o.run_from) > last) || (o.run_till && new Date(o.run_till) < first)) continue;
+    for (const k of o.ingredients) {
+      if (!beatsBasis(o, k)) continue;
+      if (!index.has(k)) index.set(k, []);
+      index.get(k).push(o);
+    }
+  }
+  for (const list of index.values()) list.sort((a, b) => perKg(a) - perKg(b) || a.price - b.price);
+  return index;
+}
+
+// Billigste tilbud på varen; helst fra butikken med hovedingrediensen, så
+// en ret kan købes ind ét sted
+const FITS = new Map();
+function fits(item, o) {
+  const id = `${item.name}|${o.id}`;
+  if (!FITS.has(id)) FITS.set(id, item.keys.some(k => o.ingredients.includes(k) && offerFits(item.name, o.heading, k)));
+  return FITS.get(id);
+}
+
+function bestOffer(item, index, dealer, day = null) {
+  const found = [...new Set(item.keys.flatMap(k => index.get(k) || []))].filter(o => (!day || validOn(o, day)) && fits(item, o));
+  const there = dealer ? found.filter(o => o.dealer === dealer) : [];
+  const pool = there.length ? there : found;
+  // Billigst for de hele pakker, retten skal bruge, så en kæmpepakke til
+  // lav kilopris ikke vælges til 400 g; derefter billigst pr. kg
+  const pay = (o) => item.amount && item.keys.length ? packPay(item, o) : 0;
+  pool.sort((a, b) => pay(a) - pay(b) || perKg(a) - perKg(b) || a.price - b.price);
+  return pool[0] || null;
+}
+
+// Alle retter, bedste først. En ret kan komme på planen af sig selv, når en
+// hovedingrediens er på tilbud eller er noget, man har derhjemme.
+function rankRecipes() {
+  const index = ingredientIndex();
+  plan.index = index;
+  const ranked = [];
+  for (const base of allRecipes()) {
+    const r = dietRecipe(base);
+    if (!r) continue;
+    const mainItems = r.items.filter(i => i.main);
+    const mains = mainItems.filter(i => !haveItem(i)).map(i => bestOffer(i, index)).filter(Boolean);
+    const main = mains.length ? mains.reduce((a, b) => (b.score > a.score ? b : a)) : null;
+    const items = r.items.map(item => {
+      if (haveItem(item)) return {item, offer: null, have: true};
+      const offer = main && item.main && fits(item, main) ? main
+        : bestOffer(item, index, main && main.dealer);
+      return {item, offer, have: false};
+    });
+    const fridge = items.filter(y => y.have && !y.item.side).length;
+    const entry = {recipe: r, items, main, fridge};
+    entry.eligible = mainItems.some(haveItem) || (!!main && offerDish(entry));
+    ranked.push({...entry, score: recipeScore(entry)});
+  }
+  return ranked.sort((a, b) => b.score - a.score);
+}
+
+// Point for en ret: billig pr. person, stor besparelse i forhold til
+// basisvaren, meget grønt, og at den bruger det, man har derhjemme.
+// "Billigst" lægger mest vægt på prisen.
+function recipeScore(entry) {
+  const clamp = (x) => Math.max(0, Math.min(1, x));
+  const cost = dishCost(entry), normal = dishNormalCost(entry);
+  const perPerson = cost / plan.persons;
+  const cheap = clamp((32 - perPerson) / 24);  // 8 kr pr. person = fuld score, 32 kr = ingen
+  const saving = normal ? clamp((1 - cost / normal) / 0.5) : 0;  // 50 % sparet = fuld score
+  const green = clamp(entry.recipe.veg_g / 250);
+  const fridge = 30 * clamp(entry.fridge / 2);  // to ting fra køleskabet = fuld bonus
+  // Point fra, når hovedtilbuddet er en pakke langt større end retten bruger
+  const waste = entry.items.filter(y => y.item.main && y.offer && y.offer === entry.main && y.item.amount)
+    .reduce((s, y) => s + packPay(y.item, y.offer) - itemCost(y.item, y.offer).cost, 0);
+  // Jo flere af rettens varer på tilbud, jo bedre
+  const cover = 25 * clamp((offerStats(entry).ratio - 0.5) / 0.5);
+  return fridge + cover - 20 * clamp(waste / 100) + (plan.focus === "cheap" ? 70 * cheap + 15 * saving + 15 * green : 35 * cheap + 35 * saving + 30 * green);
+}
+
+// Bærer tilbuddene retten? Tilbehøret og det, man har derhjemme, tæller ikke.
+function offerStats(entry) {
+  // Alle rettens varer tæller med, også dem uden kendt pris
+  const all = entry.items.filter(y => !y.have && !y.item.side);
+  const lines = all.filter(y => y.item.keys.length && y.item.amount);
+  const on = all.filter(y => y.offer);
+  const costs = lines.map(y => itemCost(y.item, y.offer));
+  const cost = costs.reduce((s, c) => s + c.cost, 0), normal = costs.reduce((s, c) => s + c.normal, 0);
+  const offerCost = lines.reduce((s, y, i) => s + (y.offer ? costs[i].cost : 0), 0);
+  return {on: on.length, lines: all.length, ratio: all.length ? on.length / all.length : 0,
+    share: cost ? offerCost / cost : 0, saving: normal ? 1 - cost / normal : 0};
+}
+
+function offerDish(entry) {
+  const st = offerStats(entry);
+  return st.on >= Math.min(OFFER_MIN_ITEMS, st.lines) && st.ratio >= OFFER_MIN_RATIO
+    && st.share >= OFFER_MIN_SHARE && st.saving >= OFFER_MIN_SAVING;
+}
+
+// Hvornår retterne sidst var på en madplan (tilbudshenter.seen)
+function markSeen(entries) {
+  const seen = store.get("seen", {}), now = isoDay(today());
+  const cutoff = isoDay(addDays(today(), -SEEN_DAYS));
+  for (const x of entries) seen[x.recipe.id] = now;
+  store.set("seen", Object.fromEntries(Object.entries(seen).filter(([, d]) => d >= cutoff)));
+}
+
+function seenPenalty(x) {
+  const d = (plan.seen || {})[x.recipe.id];
+  if (!d) return 0;
+  const days = (today() - new Date(d + "T12:00:00")) / 864e5;
+  return days >= SEEN_DAYS ? 0 : SEEN_PENALTY * (1 - Math.max(0, days) / SEEN_DAYS);
+}
+
+// Vælger n retter efter kostrådene: fisk hver uge (to gange ved 6-7 retter),
+// en grøntsagsret ved 4 eller flere retter, højst halvdelen med rødt kød,
+// højst to af samme slags og ikke det samme hovedtilbud to gange. Er der
+// for få, fyldes op uden de krav og til sidst med retter, der er byttet væk.
+function choosePlan(ranked, keep, n) {
+  // En gemt ret, der ikke længere er en tilbudsret, skiftes ud; egne retter bliver
+  const chosen = keep.map(id => ranked.find(x => x.recipe.id === id)).filter(x => x && (x.eligible || x.recipe.own));
+  const usable = ranked.filter(x => x.eligible);
+  const pool = usable.filter(x => !chosen.includes(x) && !plan.skipped.has(x.recipe.id));
+  const count = (pred) => chosen.filter(pred).length;
+  const red = (x) => RED.has(x.recipe.kind);
+  const fits = (x) => count(c => c.recipe.kind === x.recipe.kind) < PLAN_MAX_PER_KIND &&
+    !(x.main && chosen.some(c => c.main && c.main.id === x.main.id)) &&
+    (!red(x) || count(red) < Math.max(1, Math.floor(n / 2)));
+  // Den næste ret er den med flest point; en ret, der bruger resten af en
+  // pakke fra en anden ret, får lidt ekstra
+  const pick = (pred) => {
+    let best = null, bestScore = -Infinity;
+    for (const x of pool) {
+      if (chosen.includes(x) || !pred(x)) continue;
+      const v = x.score + shareBonus(x, chosen) - seenPenalty(x);
+      if (v > bestScore) { best = x; bestScore = v; }
+    }
+    return best;
+  };
+  const wanted = [["fisk", n >= 6 ? 2 : 1], ["vegetar", n >= 4 ? 1 : 0]];
+  for (const [kind, k] of wanted) {
+    while (chosen.length < n && count(c => c.recipe.kind === kind) < k) {
+      const x = pick(x => x.recipe.kind === kind && fits(x));
+      if (!x) break;
+      chosen.push(x);
+    }
+  }
+  while (chosen.length < n) {
+    const x = pick(fits);
+    if (!x) break;
+    chosen.push(x);
+  }
+  for (const x of [...pool, ...usable]) {
+    if (chosen.length >= n) break;
+    if (!chosen.includes(x)) chosen.push(x);
+  }
+  // Beholdte retter står, hvor de stod; nye kommer efter i pointorden
+  const kept = chosen.slice(0, keep.length), added = chosen.slice(keep.length).sort((a, b) => b.score - a.score);
+  return [...kept, ...added].slice(0, n);
+}
+
+// -- Dage ---------------------------------------------------------------
+function isoDay(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }
+function today() { const d = new Date(); d.setHours(12, 0, 0, 0); return d; }
+function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function startDate() { const d = new Date(plan.start + "T12:00:00"); return isNaN(d) || d < today() ? today() : d; }
+function dayName(d) { return `${WEEKDAYS[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}`; }
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// Antal retter: en dobbelt portion dækker to dage
+function dishCount() { return Math.max(1, plan.count - plan.ids.filter(id => plan.double.has(id)).length); }
+
+// Lange retter (over 45 minutter) i weekenden og hurtige på hverdage
+function arrange(entries) {
+  const weekend = entries.map((_, i) => [0, 5, 6].includes(addDays(startDate(), i).getDay()));
+  const slow = entries.filter(x => x.recipe.minutes > 45).sort((a, b) => b.recipe.minutes - a.recipe.minutes);
+  const result = entries.map(() => null);
+  weekend.forEach((w, i) => { if (w && slow.length) result[i] = slow.shift(); });
+  const rest = entries.filter(x => !result.includes(x)).sort((a, b) => a.recipe.minutes - b.recipe.minutes);
+  // Hurtige først til hverdagene; resten fylder ud
+  const order = result.map(x => x || rest.shift());
+  // En ret, hvis hovedtilbud først starter senere i perioden, rykkes til en dag,
+  // hvor det gælder, og en ret, hvis tilbud slutter i dag, kommer i dag
+  const out = [], n = order.length;
+  for (let i = 0; i < n; i++) {
+    const day = addDays(startDate(), i);
+    const last = order.findIndex(x => x.main && validOn(x.main, day) && !validOn(x.main, addDays(day, 1)));
+    const k = last >= 0 ? last : order.findIndex(x => !x.main || validOn(x.main, day));
+    out.push(order.splice(k >= 0 ? k : 0, 1)[0]);
+  }
+  return out;
+}
+
+// Tilbud, der ikke gælder på rettens dag, byttes med et, der gør (eller basisvaren)
+function fitDay(e) {
+  const mainOk = e.main && validOn(e.main, e.day);
+  const items = e.items.map(y => {
+    if (!y.offer || y.have || validOn(y.offer, e.day)) return y;
+    return {...y, offer: bestOffer(y.item, plan.index, mainOk ? e.main.dealer : null, e.day)};
+  });
+  return {...e, items};
+}
+
+function planEntries() {
+  const ranked = rankRecipes();
+  const fresh = !plan.ids.length;
+  let entries = choosePlan(ranked, plan.ids, dishCount());
+  if (fresh) entries = arrange(entries);
+  plan.ids = entries.map(x => x.recipe.id);
+  markSeen(entries);
+  plan.double = new Set([...plan.double].filter(id => plan.ids.includes(id)));
+  savePlan();
+  let day = 0;
+  const result = entries.map(x => {
+    const mult = plan.double.has(x.recipe.id) ? 2 : 1;
+    const e = fitDay({...x, mult, day: addDays(startDate(), day)});
+    day += mult;
+    return e;
+  });
+  buyPacks(result);
+  return result;
+}
+
+// -- Mængder og priser ---------------------------------------------------
+// Mængder er til 4 personer. Gram rundes til 50 g, resten til hele eller halve.
+function scaledAmount(item, mult = 1) {
+  const x = item.amount * plan.persons * mult / 4;
+  if (item.unit === "g") return x >= 100 ? Math.round(x / 50) * 50 : Math.max(10, Math.round(x / 10) * 10);
+  if (item.unit === "dl") return Math.max(0.5, Math.round(x * 2) / 2);
+  return Math.max(1, Math.round(x));
+}
+
+function amountText(n, unit) {
+  if (unit === "g") return n >= 1000 ? `${(n / 1000).toLocaleString("da-DK")} kg` : `${n} g`;
+  if (unit === "dl") return `${n.toLocaleString("da-DK")} dl`;
+  if (unit === "stk") return String(n);
+  if (unit === "dåse") return `${n} ${n === 1 ? "dåse" : "dåser"}`;
+  return `${n} ${unit}`;
+}
+
+function scaled(item, mult = 1) { return item.amount ? amountText(scaledAmount(item, mult), item.unit) : ""; }
+
+// Hvad den mængde, retten bruger, koster: med tilbuddets pris pr. kg, liter
+// eller stk, ellers med basisvarens pris. Pakken kan koste mere.
+function itemCost(item, offer, mult = 1) {
+  if (!item.keys.length || !item.amount) return {cost: 0, normal: 0, estimate: true, unknown: !item.keys.length};
+  // Basispris og vægt pr. stk for den ingrediens, tilbuddet er
+  const key = (offer && item.keys.find(k => offer.ingredients.includes(k))) || item.keys[0];
+  const [priceKg, pieceG] = item.prices[key];
+  const n = scaledAmount(item, mult);
+  const kg = item.unit === "g" ? n / 1000 : item.unit === "dl" ? n / 10 : n * pieceG / 1000;
+  const pieces = item.unit === "g" || item.unit === "dl" ? (pieceG ? kg * 1000 / pieceG : null) : n;
+  const normal = kg * priceKg;
+  let cost = null;
+  if (offer && offer.unit_price) {
+    if (offer.unit === "kg" || offer.unit === "l") cost = kg * offer.unit_price;
+    else if (offer.unit === "stk" && pieces !== null) cost = pieces * offer.unit_price;
+  }
+  // En pris langt fra det normale skyldes som regel en fejl i mængden
+  if (cost === null || cost > normal * 3 || cost < normal / 5) return {cost: normal, normal, estimate: true};
+  return {cost, normal, estimate: false};
+}
+
+// Hvor meget af tilbuddet retten bruger: kg eller liter ud af pakker på
+// size kg (fx 0,4), eller stk. size er null, når pakkens størrelse ikke kendes.
+function packNeed(item, offer, mult = 1) {
+  const key = item.keys.find(k => offer.ingredients.includes(k)) || item.keys[0];
+  const pieceG = item.prices[key][1];
+  const n = scaledAmount(item, mult);
+  const kg = item.unit === "g" ? n / 1000 : item.unit === "dl" ? n / 10 : n * pieceG / 1000;
+  if (offer.unit === "stk" && offer.unit_price) {
+    const pieces = item.unit === "g" || item.unit === "dl" ? (pieceG ? kg * 1000 / pieceG : 1) : n;
+    // Flere stk i en pakke (fx 8 æg til 16 kr): der købes hele pakker
+    const perPack = offer.price ? Math.max(1, Math.round(offer.price / offer.unit_price)) : 1;
+    return {need: pieces, size: perPack, price: offer.price || offer.unit_price, stk: perPack === 1, key, pieces: true, kg, pieceG};
+  }
+  const size = (offer.unit === "kg" || offer.unit === "l") && offer.amount ? offer.amount : null;
+  // "2 dåser tun", og tilbuddet er én dåse (140 g mod normalt 185 g): 2 pakker
+  if (size && item.unit !== "g" && item.unit !== "dl" && pieceG && size >= pieceG / 2000 && size <= pieceG * 1.6 / 1000)
+    return {need: n, size: 1, price: offer.price, stk: false, key, pieces: true, kg, pieceG};
+  return {need: kg, size, price: offer.price, stk: false, key, kg, pieceG};
+}
+
+// Det samme for en vare uden tilbud: hele pakker af basisvaren (ING[k].pack
+// gram eller ml) til basisprisen, fx et net løg eller en bakke æg
+function basisNeed(item, mult = 1) {
+  const key = item.keys[0];
+  const pieceG = item.prices[key][1];
+  const n = scaledAmount(item, mult);
+  const kg = item.unit === "g" ? n / 1000 : item.unit === "dl" ? n / 10 : n * pieceG / 1000;
+  const size = (ING[key].pack || pieceG) / 1000;
+  return {need: kg, size, price: item.prices[key][0] * size, stk: false, key, kg, pieceG};
+}
+
+function basisPackText(p, count, item) {
+  const g = Math.round(count * p.size * 1000);
+  if (LITER_KEYS.has(p.key)) return g >= 1000 ? `${(g / 1000).toLocaleString("da-DK")} l` : `${g / 10} cl`;
+  if (item.unit !== "g" && p.pieceG === p.size * 1000) return `${count} stk`;
+  return amountText(g, "g");
+}
+
+// Hele pakker gennem ugen, dag for dag: er der nok tilbage i pakken fra en
+// tidligere ret, købes den ikke igen. Sætter y.buy ({count, price, stk, text})
+// eller y.rest (den ret, pakken blev købt til). Varer uden tilbud købes som
+// basisvaren.
+function buyPacks(entries) {
+  const left = new Map(), byKey = new Map();
+  for (const x of entries) {
+    x.items.forEach((y, j) => {
+      y.buy = null; y.rest = null;
+      if (y.have || !y.item.keys.length || !y.item.amount) return;
+      const p = y.offer ? packNeed(y.item, y.offer, x.mult) : basisNeed(y.item, x.mult);
+      const id = y.offer ? y.offer.id : `basis:${p.key}`;
+      let l = left.get(id);
+      // Er der nok tilbage af samme vare fra en anden pakke (fx et net løg
+      // eller æbler fra en anden butik), bruges den i stedet for at købe en ny.
+      // Resten sammenlignes i kg, så stk og kg kan blandes.
+      const other = byKey.get(p.key);
+      if ((!l || (p.size && l.amount < p.need * 0.9)) && other && other !== l && p.size && p.kg
+          && other.amount * other.unitKg >= p.kg * 0.9 && (!other.offer || fits(y.item, other.offer))) {
+        other.amount = Math.max(0, other.amount - p.kg / other.unitKg);
+        y = x.items[j] = {...y, offer: other.offer};
+        y.rest = other.entry === x ? "samme ret" : other.from;
+        return;
+      }
+      if (l && (!p.size || l.amount >= p.need * 0.9)) {
+        if (p.size) l.amount = Math.max(0, l.amount - p.need);
+        y.rest = l.entry === x ? "samme ret" : l.from;
+        return;
+      }
+      const have = l ? l.amount : 0;
+      const count = p.size ? Math.max(1, Math.ceil((p.need - have) / p.size - 0.1)) : 1;
+      y.buy = {count, price: count * p.price, stk: p.stk, text: y.offer ? "" : basisPackText(p, count, y.item)};
+      const rest = {amount: p.size ? Math.max(0, have + count * p.size - p.need) : 0,
+        from: `${x.recipe.name}, ${dayName(x.day)}`, entry: x, offer: y.offer,
+        unitKg: p.pieces ? (p.pieceG || 0) / 1000 : 1};
+      left.set(id, rest);
+      if (p.size && rest.unitKg) byKey.set(p.key, rest);
+    });
+  }
+}
+
+// Prisen for de hele pakker af tilbuddet, én ret skal bruge
+function packPay(item, offer, mult = 1) {
+  const p = packNeed(item, offer, mult);
+  return (p.size ? Math.max(1, Math.ceil(p.need / p.size - 0.1)) : 1) * p.price;
+}
+
+function packText(buy) { return buy.text ? buy.text : buy.stk ? `${buy.count} stk` : `${buy.count} ${buy.count === 1 ? "pakke" : "pakker"}`; }
+
+// Point til en ret, der kan bruge resten af en pakke, som en anden ret i
+// planen køber (fx resten af posen løg eller pakken med fløde)
+function shareBonus(x, chosen) {
+  let n = 0;
+  for (const y of x.items) {
+    if (!y.offer || y.have || y.item.side) continue;
+    for (const c of chosen) {
+      const z = c.items.find(z => z.offer && z.offer.id === y.offer.id && !z.have);
+      if (!z || !z.item.amount) continue;
+      const p = packNeed(z.item, z.offer);
+      if (!p.size || p.need < p.size * 0.75) { n++; break; }
+    }
+  }
+  return 10 * Math.min(2, n);
+}
+
+// Små beløb med én decimal, så 1,4 kr pr. person ikke bliver til 1 kr
+function krSmall(n) { return n < 10 ? n.toLocaleString("da-DK", {maximumFractionDigits: 1}) + " kr" : kr(n); }
+
+// Det, man har derhjemme, koster ikke noget og tæller ikke med i besparelsen
+function lineCost(y, mult) { return y.have ? {cost: 0, normal: 0, estimate: false} : itemCost(y.item, y.offer, mult); }
+function dishCost(entry) { return entry.items.reduce((s, y) => s + lineCost(y, entry.mult || 1).cost, 0); }
+// Det, du betaler i butikken for en linje: hele pakker, og intet for resten
+// af en pakke fra en tidligere ret
+function linePay(y, c) { return y.have || c.unknown ? 0 : y.buy ? y.buy.price : y.rest ? 0 : c.cost; }
+function dishPay(entry) { return entry.items.reduce((s, y) => s + linePay(y, lineCost(y, entry.mult || 1)), 0); }
+function dishNormalCost(entry) { return entry.items.reduce((s, y) => s + lineCost(y, entry.mult || 1).normal, 0); }
+
+function kr(n) { return Math.round(n).toLocaleString("da-DK") + " kr"; }
+
+function itemText(item, mult) { return [scaled(item, mult), item.name].filter(Boolean).join(" "); }
+
+// Nævner tilbuddet flere varer ("Xtra! pasta eller Coop hakkede tomater"),
+// vises den vare, retten bruger, og de andre i parentes
+function offerName(o, key) {
+  const names = o.ingredient_names || {};
+  if (!key || !names[key]) return o.heading;
+  const others = [...new Set(Object.values(names))].filter(n => n !== names[key]);
+  return `${names[key]} (samme tilbud: ${others.join(", ")})`;
+}
+
+function offerLine(o, key = null) {
+  return `${o.dealer}: ${offerName(o, key)} · ${o.price_text}` + (o.unit_price_text ? ` (${o.unit_price_text})` : "")
+    + (o.discount_text ? ` · ${o.discount_text}` : "") + (period(o) === "later" ? ` · ${startText(o).toLowerCase()}` : "")
+    + (o.member ? ` · ${o.member}` : "");
+}
+
+function host(url) { try { return new URL(url).hostname.replace(/^www\./, ""); } catch (e) { return ""; } }
+
+function joinDa(list) { return list.length < 2 ? list.join("") : `${list.slice(0, -1).join(", ")} og ${list[list.length - 1]}`; }
+
+// -- Visning ------------------------------------------------------------
+function renderHave() {
+  const keys = [...plan.have].filter(k => ING[k]);
+  $("have-count").textContent = keys.length ? `(${keys.length})` : "";
+  $("have-chips").innerHTML = keys.map(k =>
+    `<button class="chip on" data-unhave="${esc(k)}" title="Fjern">${esc(ING[k].name)} ×</button>`).join("")
+    + (keys.length ? ` <button class="link" id="btn-have-clear">Ryd</button>` : "");
+}
+
+function renderPlan() {
+  if (!planData) return;
+  renderHave();
+  const entries = planEntries();
+  plan.entries = entries;
+  if (!entries.length) {
+    $("plan-body").innerHTML = `<p class="hint" style="margin-top:14px">Ingen retter passer til ugens tilbud i dine butikker.
+      Prøv at vælge flere butikker eller en anden kost.</p>`;
+    $("plan-sum").textContent = "";
+    $("btn-plan-list").disabled = true;
+    return;
+  }
+  $("btn-plan-list").disabled = false;
+  $("plan-body").innerHTML = planTotal(entries) + entries.map((x, i) => {
+    const r = x.recipe;
+    const onOffer = x.items.filter(y => y.offer).length, have = x.items.filter(y => y.have).length;
+    const cost = dishCost(x), normal = dishNormalCost(x), pay = dishPay(x);
+    const days = x.mult === 2 ? `${cap(dayName(x.day))} og ${dayName(addDays(x.day, 1))}` : cap(dayName(x.day));
+    const source = r.own ? "Egen opskrift" : r.source ? `Fra ${host(r.source)}` : "";
+    const how = r.method ? `<details><summary>Sådan gør du</summary><p>${esc(r.method)}</p>
+        ${r.source ? `<p><a href="${esc(r.source)}" target="_blank" rel="noopener">Se opskriften hos ${esc(host(r.source))}</a></p>` : ""}</details>`
+      : r.source ? `<p class="pantry"><a href="${esc(r.source)}" target="_blank" rel="noopener">Se fremgangsmåden hos ${esc(host(r.source))}</a></p>` : "";
+    return `<article class="dish">
+      <div class="day">${esc(days)}</div>
+      <div class="dish-head"><h3>${esc(r.name)}</h3>
+        <span class="price-tag">ca. ${kr(pay)}</span></div>
+      <div class="sub">${Math.abs(pay - cost) >= 1 ? `Retten bruger for ca. ${kr(cost)} · ` : ""}${kr(cost / plan.persons / x.mult)} pr. person · ${esc(KIND_NAMES[r.kind] || r.kind)}
+        ${r.minutes ? ` · ${r.minutes} min` : ""} · ${r.veg_g} g grønt pr. person · ${onOffer} af ${x.items.length} varer på tilbud${onOffer ? ` (${Math.round(offerStats(x).share * 100)} % af prisen)` : ""}
+        ${have ? ` · ${have} har du` : ""}${source ? ` · ${esc(source)}` : ""}
+        ${normal - cost >= 5 ? ` · <b class="save">sparer ca. ${kr(normal - cost)}</b>` : ""}</div>
+      ${x.mult === 2 ? `<div class="leftover">Dobbelt portion: lav det hele ${esc(WEEKDAYS[x.day.getDay()])}, og gem halvdelen til ${esc(WEEKDAYS[addDays(x.day, 1).getDay()])}.</div>` : ""}
+      <ul>${x.items.map((y, j) => {
+        const c = lineCost(y, x.mult);
+        const src = y.have ? "har du derhjemme" : y.offer ? offerLine(y.offer, y.item.keys.find(k => y.offer.ingredients.includes(k)))
+          : y.item.keys.length ? `ikke på tilbud, ${basisText(y.item.keys[0])}` : "pris ukendt";
+        return `<li class="${y.offer ? "on" : ""}${y.have ? " have" : ""}">
+        <span class="what">${esc(itemText(y.item, x.mult))}</span>
+        <span class="src">${y.offer && !y.have
+          ? `<button class="offer" data-plan-offer="${esc(y.offer.id)}" title="Se tilbuddet">${esc(src)} ›</button>` : esc(src)}</span>
+        <span class="cost">${c.unknown ? "" : y.rest && !y.have ? "rest" : `${c.estimate && y.offer && !y.buy ? "ca. " : ""}${kr(linePay(y, c))}`}
+          ${y.item.keys.length ? `<button class="link" data-have="${i}:${j}">${y.have ? "har ikke" : "har jeg"}</button>` : ""}</span>
+        ${buyLine(y, c, x.mult)}</li>`;
+      }).join("")}</ul>
+      ${r.pantry.length ? `<div class="pantry">Har du derhjemme: ${esc(r.pantry.join(", "))}</div>` : ""}
+      ${how}
+      <div class="dish-actions">
+        <button class="btn small" data-swap="${i}">Byt ret</button>
+        <button class="btn small" data-double="${i}">${x.mult === 2 ? "Kun én dag" : "Dobbelt portion"}</button>
+        <button class="btn small" data-move="${i}:-1" ${i ? "" : "disabled"} title="Byt med dagen før">↑</button>
+        <button class="btn small" data-move="${i}:1" ${i < entries.length - 1 ? "" : "disabled"} title="Byt med dagen efter">↓</button>
+        <button class="btn small" data-drop="${i}">Fjern</button>
+        <button class="btn small" data-to-week="${i}">${inWeek(r.id, weekOf(x.day)) ? "✓ I" : "Gem i"} uge ${weekOf(x.day).week}</button>
+      </div>
+    </article>`;
+  }).join("");
+  const total = entries.reduce((s, x) => s + dishPay(x), 0);
+  $("plan-sum").innerHTML = `Du betaler ca. <b>${kr(total)}</b> for ugen`;
+}
+
+// Den samlede pris for hele madplanen, øverst over retterne: det, du betaler
+// i butikken for hele pakker, og det, retterne bruger af dem
+function planTotal(entries) {
+  const pay = entries.reduce((s, x) => s + dishPay(x), 0);
+  const used = entries.reduce((s, x) => s + dishCost(x), 0);
+  const saved = entries.reduce((s, x) => s + dishNormalCost(x), 0) - used;
+  const days = entries.reduce((s, x) => s + x.mult, 0);
+  const lines = entries.flatMap(x => x.items.map(y => ({y, c: lineCost(y, x.mult)})));
+  const have = lines.filter(l => l.y.have).length, unknown = lines.filter(l => !l.y.have && l.c.unknown).length;
+  const ends = entries.flatMap(x => [x.day, addDays(x.day, x.mult - 1)]).sort((a, b) => a - b);
+  const first = ends[0], last = ends[ends.length - 1];
+  const details = [
+    `${esc(cap(dayName(first)))} til ${esc(dayName(last))} · ${entries.length} retter til ${days} dage`,
+    `Retterne bruger for ca. ${kr(used)}: ${kr(used / days)} pr. dag og ${kr(used / days / plan.persons)} pr. person pr. dag`,
+  ];
+  if (pay - used >= 1) details.push(`Resten af pakkerne, ca. ${kr(pay - used)}, kan bruges senere`);
+  if (saved >= 5) details.push(`<span class="save">sparer ca. ${kr(saved)} med ugens tilbud</span>`);
+  const left = [have && `${have} ${have === 1 ? "vare" : "varer"}, du har derhjemme`,
+    unknown && `${unknown} ${unknown === 1 ? "vare" : "varer"} uden kendt pris`].filter(Boolean);
+  if (left.length) details.push(`Ikke regnet med: ${left.join(" og ")}`);
+  return `<div class="plan-total" id="plan-total">
+    <div><div class="label">Du betaler for ugen</div><div class="sum">ca. ${kr(pay)}</div></div>
+    <div class="details">${details.join("<br>")}</div></div>`;
+}
+
+async function openPlan() {
+  const saved = store.get("mealplan", {});
+  plan.ids = saved.ids || [];
+  plan.count = saved.count || 5;
+  plan.persons = saved.persons || 4;
+  plan.diet = saved.diet || "";
+  plan.focus = saved.focus || "";
+  plan.have = new Set(saved.have || []);
+  plan.double = new Set(saved.double || []);
+  // Om aftenen (fra kl. 17) starter en ny plan i morgen, når aftensmaden for i dag er på plads
+  const first = new Date().getHours() >= 17 ? addDays(today(), 1) : today();
+  plan.start = saved.start && new Date(saved.start + "T12:00:00") >= first ? saved.start : isoDay(first);
+  plan.skipped = new Set();
+  plan.seen = store.get("seen", {});
+  const stores = [...new Set(state.offers.filter(planUsable).map(o => o.dealer))].sort((a, b) => a.localeCompare(b, "da"));
+  plan.store = stores.includes(saved.store) ? saved.store : "";
+  $("plan-store").innerHTML = `<option value="">Alle mine butikker</option>` +
+    stores.map(st => `<option ${st === plan.store ? "selected" : ""}>${esc(st)}</option>`).join("");
+  $("plan-count").innerHTML = [1, 2, 3, 4, 5, 6, 7].map(n => `<option ${n === plan.count ? "selected" : ""}>${n}</option>`).join("");
+  $("plan-persons").innerHTML = [1, 2, 3, 4, 5, 6, 8].map(n => `<option ${n === plan.persons ? "selected" : ""}>${n}</option>`).join("");
+  $("plan-start").innerHTML = [0, 1, 2, 3, 4, 5, 6].map(n => {
+    const d = addDays(today(), n);
+    const label = n === 0 ? `I dag (${WEEKDAYS[d.getDay()]})` : n === 1 ? `I morgen (${WEEKDAYS[d.getDay()]})` : cap(dayName(d));
+    return `<option value="${isoDay(d)}" ${isoDay(d) === plan.start ? "selected" : ""}>${esc(label)}</option>`;
+  }).join("");
+  $("plan-diet").value = plan.diet;
+  $("plan-focus").value = plan.focus;
+  $("plan-body").innerHTML = `<p class="hint" style="margin-top:14px">Finder retter…</p>`;
+  $("plan-dlg").showModal();
+  try {
+    await loadPlanData();
+    $("have-list").innerHTML = planData.ingredients.map(i => `<option value="${esc(i.name)}">`).join("");
+    renderPlan();
+  } catch (e) { $("plan-body").innerHTML = `<p class="hint" style="color:var(--error)">${esc(e.message)}</p>`; }
+}
+
+function newPlan() {
+  // Nye retter i stedet for de nuværende, så længe der er nogen
+  for (const id of plan.ids) plan.skipped.add(id);
+  plan.ids = [];
+  plan.double = new Set();
+  renderPlan();
+}
+
+// "kylling, broccoli" -> ingredienser. Navnet fra listen, en genkendt vare
+// eller det eneste navn, der indeholder ordet.
+function haveKeys(text) {
+  const keys = [], unknown = [];
+  for (const word of text.split(",").map(s => s.trim()).filter(Boolean)) {
+    const t = word.toLowerCase();
+    const exact = planData.ingredients.find(i => i.name.toLowerCase() === t);
+    const found = exact ? [exact.key] : lineKeys(word);
+    const partial = planData.ingredients.filter(i => i.name.toLowerCase().includes(t));
+    if (found.length) keys.push(...found);
+    else if (partial.length) keys.push(...partial.map(i => i.key));
+    else unknown.push(word);
+  }
+  return {keys, unknown};
+}
+
+function addHave(text) {
+  const {keys, unknown} = haveKeys(text);
+  for (const k of keys) plan.have.add(k);
+  if (unknown.length) toast(`Kender ikke ${joinDa(unknown.map(w => `"${w}"`))}. Vælg fra listen.`);
+  if (!keys.length) return;
+  // Ny madplan, hvor retter med det, man har, kommer først
+  plan.ids = []; plan.double = new Set();
+  renderPlan();
+}
+
+// Lægger tilbuddene og de varer, der ikke er på tilbud, på indkøbslisten.
+// Samme vare i flere retter lægges sammen, og noten siger, hvor meget der
+// skal bruges til hvilke retter. Det, man har derhjemme, kommer ikke med.
+async function planToList() {
+  const entries = plan.entries || [];
+  const offers = new Map(), extra = new Map();
+  for (const x of entries) {
+    for (const y of x.items) {
+      if (y.have) continue;
+      const target = y.offer ? offers : extra;
+      const key = y.offer ? y.offer.id : `${y.item.side ? "side" : y.item.keys[0] || y.item.name}`;
+      const e = target.get(key) || {offer: y.offer, item: y.item, dishes: [], amounts: new Map(),
+        pieceG: y.item.keys.length ? y.item.prices[y.item.keys[0]][1] : 0, buy: null};
+      if (!e.dishes.includes(x.recipe.name)) e.dishes.push(x.recipe.name);
+      // Hele pakker, som madplanen har regnet ud (buyPacks)
+      if (y.buy) e.buy = e.buy ? {...e.buy, count: e.buy.count + y.buy.count} : {...y.buy};
+      if (y.item.amount) e.amounts.set(y.item.unit, (e.amounts.get(y.item.unit) || 0) + scaledAmount(y.item, x.mult));
+      target.set(key, e);
+    }
+  }
+  // Gram og stk af samme vare lægges sammen i gram
+  for (const e of [...offers.values(), ...extra.values()]) {
+    if (e.amounts.has("g") && e.amounts.has("stk") && e.pieceG) {
+      e.amounts.set("g", e.amounts.get("g") + e.amounts.get("stk") * e.pieceG);
+      e.amounts.delete("stk");
+    }
+  }
+  const amounts = (e) => [...e.amounts].map(([unit, n]) => {
+    const a = amountText(Math.round(n * 10) / 10, unit);
+    return unit === "stk" ? `${a} stk` : a;
+  }).join(" + ");
+  const note = (e) => (e.buy && e.buy.count > 1 && !e.buy.stk ? `${packText(e.buy)} · ` : "")
+    + [amounts(e), `til ${joinDa(e.dishes)}`].filter(Boolean).join(" ");
+  const texts = [...extra.values()].map(e => {
+    const name = e.item.side ? "Grønt tilbehør (råkost, salat eller broccoli)" : cap(e.item.name);
+    const a = amounts(e);
+    return {text: name + (a ? ` (${a})` : ""), note: `til ${joinDa(e.dishes)}`,
+      category: e.item.keys.length ? ING[e.item.keys[0]].dept : "andet"};
+  }).filter(t => !state.list.some(i => i.heading === t.text));
+  const btn = $("btn-plan-list");
+  btn.disabled = true;
+  try {
+    for (const e of offers.values()) {
+      state.list = (await api("/api/list", {action: "add", id: e.offer.id, note: note(e), count: e.buy ? e.buy.count : 1})).items;
+    }
+    for (const t of texts) state.list = (await api("/api/list", {action: "add_text", ...t})).items;
+    toast(offers.size || texts.length
+      ? `${offers.size} tilbud og ${texts.length} andre varer er lagt på indkøbslisten`
+      : "Varerne er allerede på indkøbslisten");
+  } catch (e) { toast(e.message); }
+  finally { btn.disabled = false; }
+  renderListCount();
+}
+
+// Ny ret på samme plads; en dobbelt portion forbliver dobbelt
+function swapDish(i) {
+  const id = plan.ids[i];
+  plan.skipped.add(id);
+  const keep = plan.ids.filter(x => x !== id);
+  const next = choosePlan(rankRecipes(), keep, keep.length + 1).find(x => !keep.includes(x.recipe.id) && x.recipe.id !== id);
+  if (!next) { toast("Der er ikke flere retter at bytte med"); plan.skipped.delete(id); return; }
+  plan.ids[i] = next.recipe.id;
+  if (plan.double.delete(id)) plan.double.add(next.recipe.id);
+}
+
+function toggleDouble(i) {
+  const id = plan.ids[i];
+  if (plan.double.has(id)) {
+    plan.double.delete(id);
+    return;
+  }
+  if (plan.count < 2) { toast("En dobbelt portion dækker to dage. Vælg mindst 2 dage."); return; }
+  plan.double.add(id);
+  // Dagene er der stadig: den sidste ret uden dobbelt portion udgår
+  while (plan.ids.length + plan.double.size > plan.count) {
+    const last = [...plan.ids].reverse().find(x => !plan.double.has(x));
+    if (!last) { plan.double.delete(id); toast("Der er ikke dage nok til flere dobbelte portioner"); return; }
+    plan.ids = plan.ids.filter(x => x !== last);
+  }
+}
+
+$("btn-plan").addEventListener("click", openPlan);
+$("btn-plan-close").addEventListener("click", () => $("plan-dlg").close());
+$("btn-plan-new").addEventListener("click", newPlan);
+$("btn-plan-list").addEventListener("click", planToList);
+$("plan-count").addEventListener("change", e => {
+  plan.count = Number(e.target.value);
+  // Fjern dobbelte portioner bagfra, til der er dage nok
+  while (2 * plan.double.size > plan.count) plan.double.delete([...plan.ids].reverse().find(x => plan.double.has(x)));
+  plan.ids = plan.ids.slice(0, dishCount());
+  renderPlan();
+});
+$("plan-persons").addEventListener("change", e => { plan.persons = Number(e.target.value); renderPlan(); });
+$("plan-start").addEventListener("change", e => { plan.start = e.target.value; renderPlan(); });
+// Ny kost eller butik giver en ny madplan
+for (const [id, key] of [["plan-focus", "focus"], ["plan-diet", "diet"], ["plan-store", "store"]]) {
+  $(id).addEventListener("change", e => {
+    plan[key] = e.target.value; plan.ids = []; plan.double = new Set(); plan.skipped = new Set(); renderPlan();
+  });
+}
+$("have-form").addEventListener("submit", e => {
+  e.preventDefault();
+  const text = $("have-input").value.trim();
+  if (text) { $("have-input").value = ""; addHave(text); }
+});
+$("plan-have").addEventListener("click", e => {
+  if (e.target.dataset.unhave) { plan.have.delete(e.target.dataset.unhave); renderPlan(); }
+  else if (e.target.id === "btn-have-clear") { plan.have = new Set(); renderPlan(); }
+});
+$("plan-body").addEventListener("click", e => {
+  const d = e.target.dataset;
+  if (d.swap !== undefined) swapDish(Number(d.swap));
+  else if (d.double !== undefined) toggleDouble(Number(d.double));
+  else if (d.move !== undefined) {
+    const [i, step] = d.move.split(":").map(Number);
+    [plan.ids[i], plan.ids[i + step]] = [plan.ids[i + step], plan.ids[i]];
+  } else if (d.drop !== undefined) {
+    const id = plan.ids[Number(d.drop)];
+    plan.count = Math.max(1, plan.count - (plan.double.has(id) ? 2 : 1));
+    plan.double.delete(id);
+    plan.ids = plan.ids.filter(x => x !== id);
+    $("plan-count").value = plan.count;
+  } else if (d.toWeek !== undefined) {
+    const x = plan.entries[Number(d.toWeek)], w = weekOf(x.day);
+    if (inWeek(x.recipe.id, w)) { toast(`${x.recipe.name} er allerede i uge ${w.week}`); return; }
+    setWeek(w, [...weekIds(w), x.recipe.id]);
+    toast(`${x.recipe.name} er gemt i uge ${w.week}`);
+  } else if (e.target.closest("[data-plan-offer]")) {
+    openPlanOffer(e.target.closest("[data-plan-offer]").dataset.planOffer);
+    return;
+  } else if (d.have !== undefined) {
+    const [i, j] = d.have.split(":").map(Number);
+    const y = plan.entries[i].items[j];
+    if (y.have) for (const k of y.item.keys) plan.have.delete(k);
+    else plan.have.add((y.offer && y.item.keys.find(k => y.offer.ingredients.includes(k))) || y.item.keys[0]);
+  } else return;
+  renderPlan();
+});
+
+// Under hver vare: hvad den koster i butikken, og hvad retten bruger pr. person
+function buyLine(y, c, mult) {
+  if (y.have || c.unknown || !c.cost) return "";
+  const parts = [
+    y.buy ? `Du køber ${packText(y.buy)} til ${money(y.buy.price)}` : y.rest === "samme ret" ? "Samme pakke som ovenfor" : y.rest ? `Resten af pakken fra ${y.rest}` : "",
+    `retten bruger for ${krSmall(c.cost)}, ${krSmall(c.cost / plan.persons / mult)} pr. person`,
+  ].filter(Boolean);
+  return `<span class="buy">${esc(parts.join(" · "))}</span>`;
+}
+
+// Tilbuddene i madplanen, i den rækkefølge de står, og hvad de bruges til
+function openPlanOffer(id) {
+  const offers = new Map(), uses = new Map();
+  for (const x of plan.entries || []) {
+    for (const y of x.items) {
+      if (!y.offer || y.have) continue;
+      offers.set(y.offer.id, y.offer);
+      if (!uses.has(y.offer.id)) uses.set(y.offer.id, []);
+      uses.get(y.offer.id).push(`${[scaled(y.item, x.mult), "til " + x.recipe.name].filter(Boolean).join(" ")}, ${dayName(x.day)}`);
+    }
+  }
+  openOffer(id, [...offers.values()], uses);
+}
+
+// -- Ugeplan -------------------------------------------------------------
+// Retter, man selv vælger til en uge, i den rækkefølge man har lyst til
+// at spise dem. Gemmes i browseren under tilbudshenter.weeks som
+// {"2026-W42": [ret-id, ...]}. Ugerne har ISO-ugenumre som i kalenderen.
+// <weeks>
+const MONTHS = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
+// ISO-ugen for en dato: ugen med torsdagen afgør året, og uge 1 er ugen med 4. januar
+function weekOf(d) {
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  const year = t.getUTCFullYear();
+  const week = Math.ceil(((t - Date.UTC(year, 0, 1)) / 86400000 + 1) / 7);
+  const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1 - day, 12);
+  return {year, week, key: `${year}-W${String(week).padStart(2, "0")}`, monday};
+}
+function weekDates(w) {
+  const a = w.monday, b = new Date(a.getFullYear(), a.getMonth(), a.getDate() + 6, 12);
+  return a.getMonth() === b.getMonth() ? `${a.getDate()}.–${b.getDate()}. ${MONTHS[b.getMonth()]}`
+    : `${a.getDate()}. ${MONTHS[a.getMonth()]} – ${b.getDate()}. ${MONTHS[b.getMonth()]}`;
+}
+// Ugens retter, også dem i flere uger; gamle uger (over fire uger siden) ryddes væk
+function cleanWeeks(weeks, now) {
+  const first = weekOf(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 28)).key;
+  return Object.fromEntries(Object.entries(weeks).filter(([k, ids]) => k >= first && ids.length));
+}
+// </weeks>
+const WEEKS_AHEAD = 12, WEEK_PAGE = 50;
+const week = {offset: 0, q: "", kind: "", limit: WEEK_PAGE};
+function shownWeek() { const d = today(); return weekOf(addDays(d, 7 * week.offset)); }
+function allWeeks() { return store.get("weeks", {}); }
+function weekIds(w) { return allWeeks()[w.key] || []; }
+function inWeek(id, w) { return weekIds(w).includes(id); }
+function setWeek(w, ids) { store.set("weeks", cleanWeeks({...allWeeks(), [w.key]: ids}, today())); }
+// Andre uger, retten står i, fx "uge 44"
+function otherWeeks(id, w) {
+  return Object.entries(allWeeks()).filter(([k, ids]) => k !== w.key && ids.includes(id))
+    .map(([k]) => "uge " + Number(k.split("-W")[1]));
+}
+function recipeSub(r) {
+  return [KIND_NAMES[r.kind] || r.kind, r.minutes ? `${r.minutes} min` : "", r.own ? "egen opskrift" : r.source ? host(r.source) : ""]
+    .filter(Boolean).join(" · ");
+}
+function weekPersons() { return Number(store.get("weekpersons", 0)) || store.get("mealplan", {}).persons || 4; }
+function recipeDetails(r, persons) {
+  const old = plan.persons;
+  plan.persons = persons;  // itemText skalerer efter madplanens personer
+  const items = r.items.filter(i => !i.side).map(i => `<li>${esc(itemText(i, 1))}</li>`).join("");
+  plan.persons = old;
+  return `<ul>${items}</ul>${r.pantry.length ? `<div class="sub">Har du derhjemme: ${esc(r.pantry.join(", "))}</div>` : ""}
+    ${r.source ? `<a href="${esc(r.source)}" target="_blank" rel="noopener">Se opskriften hos ${esc(host(r.source))}</a>` : ""}`;
+}
+
+function renderWeek(recipes = true) {
+  const w = shownWeek(), persons = weekPersons();
+  const byId = new Map(allRecipes().map(r => [r.id, r]));
+  const ids = weekIds(w).filter(id => byId.has(id));
+  $("week-title").textContent = `Uge ${w.week}`;
+  $("week-dates").textContent = `${week.offset === 0 ? "Denne uge" : week.offset === 1 ? "Næste uge" : `Om ${week.offset} uger`} · ${weekDates(w)}`;
+  $("btn-week-prev").disabled = week.offset <= 0;
+  $("btn-week-next").disabled = week.offset >= WEEKS_AHEAD;
+  $("week-chosen").innerHTML = ids.length ? ids.map((id, i) => {
+    const r = byId.get(id);
+    return `<div class="week-dish"><span class="no">${i + 1}</span>
+      <div class="what"><details><summary>${esc(r.name)}<div class="sub">${esc(recipeSub(r))}</div></summary>${recipeDetails(r, persons)}</details></div>
+      <div class="dish-actions">
+        <button class="btn small" data-week-move="${i}:-1" ${i ? "" : "disabled"} title="Tidligere i ugen" aria-label="Flyt op">↑</button>
+        <button class="btn small" data-week-move="${i}:1" ${i < ids.length - 1 ? "" : "disabled"} title="Senere i ugen" aria-label="Flyt ned">↓</button>
+        <button class="btn small" data-week-drop="${esc(id)}" title="Fjern fra ugen" aria-label="Fjern">✕</button>
+      </div></div>`;
+  }).join("") : `<p class="hint" style="margin-top:10px">Ingen retter i uge ${w.week} endnu. Vælg dem i listen herunder.
+    Bagefter kan du sætte dem i den rækkefølge, du har lyst til at spise dem.</p>`;
+  $("week-sum").textContent = ids.length ? `${ids.length} ${ids.length === 1 ? "ret" : "retter"} i uge ${w.week}` : "";
+  $("btn-week-list").disabled = !ids.length;
+  if (recipes) renderWeekRecipes();
+}
+
+// 'Cheesy' lakselasagne sorteres under C
+function sortName(r) { return r.name.replace(/^[^\p{L}\p{N}]+/u, ""); }
+function renderWeekRecipes() {
+  const w = shownWeek(), chosen = new Set(weekIds(w)), persons = weekPersons();
+  const q = tokens(week.q);
+  const list = allRecipes().filter(r => (!week.kind || (week.kind === "own" ? r.own : r.kind === week.kind)) &&
+    q.every(t => tokens(r.name + " " + r.items.map(i => i.name).join(" ")).some(x => x.startsWith(t))))
+    .sort((a, b) => (b.own || false) - (a.own || false) || sortName(a).localeCompare(sortName(b), "da"));
+  $("week-count").textContent = `(${list.length.toLocaleString("da-DK")})`;
+  $("week-recipes").innerHTML = list.slice(0, week.limit).map(r => {
+    const other = otherWeeks(r.id, w), on = chosen.has(r.id);
+    return `<div class="week-recipe"><div class="what"><details><summary>${esc(r.name)}
+      <div class="sub">${esc(recipeSub(r))}${other.length ? ` · <b>i ${esc(joinDa(other))}</b>` : ""}</div></summary>${recipeDetails(r, persons)}</details></div>
+      <button class="btn small add${on ? " on" : ""}" data-week-add="${esc(r.id)}">${on ? "✓ I" : "+"} uge ${w.week}</button></div>`;
+  }).join("") || `<p class="hint">Ingen opskrifter passer til søgningen.</p>`;
+  $("btn-week-more").hidden = list.length <= week.limit;
+}
+
+async function openWeek() {
+  week.limit = WEEK_PAGE;
+  const persons = weekPersons();
+  $("week-persons").innerHTML = [1, 2, 3, 4, 5, 6, 8].map(n => `<option ${n === persons ? "selected" : ""}>${n}</option>`).join("");
+  $("week-chosen").innerHTML = `<p class="hint" style="margin-top:14px">Henter opskrifterne…</p>`;
+  $("week-recipes").innerHTML = "";
+  if ($("plan-dlg").open) $("plan-dlg").close();
+  $("week-dlg").showModal();
+  try { await loadPlanData(); renderWeek(); }
+  catch (e) { $("week-chosen").innerHTML = `<p class="hint" style="color:var(--error)">${esc(e.message)}</p>`; }
+}
+
+// Ugens ingredienser på indkøbslisten, lagt sammen pr. vare
+async function weekToList() {
+  const w = shownWeek(), byId = new Map(allRecipes().map(r => [r.id, r]));
+  const recipes = weekIds(w).map(id => byId.get(id)).filter(Boolean);
+  const old = plan.persons;
+  plan.persons = weekPersons();
+  const lines = new Map();
+  for (const r of recipes) {
+    for (const item of r.items) {
+      const key = item.side ? "side" : item.keys[0] || item.name;
+      const e = lines.get(key) || {item, dishes: [], amounts: new Map()};
+      if (!e.dishes.includes(r.name)) e.dishes.push(r.name);
+      if (item.amount) e.amounts.set(item.unit, (e.amounts.get(item.unit) || 0) + scaledAmount(item));
+      lines.set(key, e);
+    }
+  }
+  plan.persons = old;
+  const texts = [...lines.values()].map(e => {
+    const a = [...e.amounts].map(([unit, n]) => { const t = amountText(Math.round(n * 10) / 10, unit); return unit === "stk" ? `${t} stk` : t; }).join(" + ");
+    const name = e.item.side ? "Grønt tilbehør (råkost, salat eller broccoli)" : cap(e.item.name);
+    return {text: name + (a ? ` (${a})` : ""), note: `til ${joinDa(e.dishes)} (uge ${w.week})`,
+      category: e.item.keys.length ? ING[e.item.keys[0]].dept : "andet"};
+  }).filter(t => !state.list.some(i => i.heading === t.text));
+  const btn = $("btn-week-list");
+  btn.disabled = true;
+  try {
+    for (const t of texts) state.list = (await api("/api/list", {action: "add_text", ...t})).items;
+    toast(texts.length ? `${texts.length} varer fra uge ${w.week} er lagt på indkøbslisten` : "Varerne er allerede på indkøbslisten");
+  } catch (e) { toast(e.message); }
+  finally { btn.disabled = false; }
+  renderListCount();
+}
+
+$("btn-week").addEventListener("click", openWeek);
+$("btn-plan-week").addEventListener("click", openWeek);
+$("btn-week-close").addEventListener("click", () => $("week-dlg").close());
+$("btn-week-prev").addEventListener("click", () => { week.offset = Math.max(0, week.offset - 1); renderWeek(); });
+$("btn-week-next").addEventListener("click", () => { week.offset = Math.min(WEEKS_AHEAD, week.offset + 1); renderWeek(); });
+$("btn-week-more").addEventListener("click", () => { week.limit += WEEK_PAGE; renderWeekRecipes(); });
+$("btn-week-list").addEventListener("click", weekToList);
+$("week-search").addEventListener("input", e => { week.q = e.target.value; week.limit = WEEK_PAGE; renderWeekRecipes(); });
+$("week-kind").addEventListener("change", e => { week.kind = e.target.value; week.limit = WEEK_PAGE; renderWeekRecipes(); });
+$("week-persons").addEventListener("change", e => { store.set("weekpersons", Number(e.target.value)); renderWeek(); });
+$("week-dlg").addEventListener("click", e => {
+  const b = e.target.closest("[data-week-add], [data-week-move], [data-week-drop]");
+  if (!b) return;
+  const w = shownWeek(), ids = weekIds(w), d = b.dataset;
+  if (d.weekAdd !== undefined) {
+    // Kun knappen skifter, så listen bliver stående, mens man bladrer
+    const on = !ids.includes(d.weekAdd);
+    setWeek(w, on ? [...ids, d.weekAdd] : ids.filter(x => x !== d.weekAdd));
+    b.classList.toggle("on", on);
+    b.textContent = `${on ? "✓ I" : "+"} uge ${w.week}`;
+    renderWeek(false);
+    return;
+  } else if (d.weekMove !== undefined) {
+    const [i, step] = d.weekMove.split(":").map(Number);
+    [ids[i], ids[i + step]] = [ids[i + step], ids[i]];
+    setWeek(w, ids);
+  } else setWeek(w, ids.filter(x => x !== d.weekDrop));
+  renderWeek(d.weekDrop !== undefined);
+});
+
+// -- Egne opskrifter ----------------------------------------------------
+let editing = null;
+
+function formRecipe() {
+  return {
+    id: editing || `egen-${Date.now()}`, name: $("r-name").value.trim(), persons: Number($("r-persons").value) || 4,
+    minutes: Number($("r-minutes").value) || 0, kind: $("r-kind").value, url: $("r-url").value.trim(),
+    lines: $("r-lines").value.split("\n").map(s => s.trim()).filter(Boolean), method: $("r-method").value.trim(),
+  };
+}
+
+// Viser, hvad hver linje bliver til
+function renderPreview() {
+  const d = formRecipe();
+  if (!d.lines.length) { $("r-preview").innerHTML = ""; return; }
+  const rows = d.lines.map(line => {
+    const [amount, unit, text] = parseLine(line);
+    const keys = text ? lineKeys(text) : [];
+    if (keys.length) return `<li class="ok">${esc(line)} <span class="sub">→ ${esc(keys.map(k => ING[k].name).join(" eller "))}</span></li>`;
+    if (hasAny(text, planData.words.pantry) || !amount) return `<li>${esc(line)} <span class="sub">→ regnes for at være derhjemme</span></li>`;
+    return `<li class="unknown">${esc(line)} <span class="sub">→ kendes ikke i tilbudsaviserne, kommer med uden pris</span></li>`;
+  });
+  const {recipe, why} = recipeFromLines(d);
+  $("r-preview").innerHTML = `<ul class="preview">${rows.join("")}</ul>` + (recipe
+    ? `<p class="hint">${esc(KIND_NAMES[recipe.kind])} · hovedingrediens: ${esc(recipe.items.filter(i => i.main).map(i => i.name).join(", "))}. Retten kommer på madplanen, når den er på tilbud.</p>`
+    : `<p class="hint" style="color:var(--error)">${esc(why)}</p>`);
+}
+
+function resetRecipeForm(d) {
+  editing = d ? d.id : null;
+  $("recipe-form-title").textContent = d ? "Ret opskrift" : "Ny opskrift";
+  $("r-name").value = d ? d.name : "";
+  $("r-persons").value = d ? d.persons : 4;
+  $("r-minutes").value = d ? d.minutes : 30;
+  $("r-kind").value = d ? d.kind : "";
+  $("r-url").value = d ? d.url || "" : "";
+  $("r-lines").value = d ? d.lines.join("\n") : "";
+  $("r-method").value = d ? d.method : "";
+  $("btn-recipe-cancel").hidden = !d;
+  renderPreview();
+}
+
+function renderRecipes() {
+  const list = ownList();
+  $("recipes-list").innerHTML = list.length ? list.map((d, i) => {
+    const {recipe} = recipeFromLines(d);
+    const known = recipe ? recipe.items.filter(x => x.keys.length && !x.side).length : 0;
+    return `<div class="own-recipe"><div class="what"><b>${esc(d.name)}</b>
+        <div class="sub">${recipe ? esc(KIND_NAMES[recipe.kind]) : "Kan ikke bruges"} · ${known} af ${d.lines.length} ingredienser kendes
+        ${d.url ? ` · <a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(host(d.url))}</a>` : ""}</div></div>
+      <div class="dish-actions">
+        ${recipe ? `<button class="btn small" data-own-plan="${i}">Sæt på madplanen</button>` : ""}
+        <button class="btn small" data-own-edit="${i}">Ret</button>
+        <button class="btn small" data-own-del="${i}">Slet</button>
+      </div></div>`;
+  }).join("") : `<p class="hint">Du har ingen egne opskrifter endnu. Tilføj dem herunder, så kommer de på madplanen,
+    når ingredienserne er på tilbud.</p>`;
+}
+
+function openRecipes() {
+  $("recipe-import-box").hidden = STATIC;
+  $("recipe-import-hint").textContent = STATIC
+    ? "Kopiér ingredienslisten fra en madside ind herunder, én ingrediens pr. linje."
+    : "Indsæt et link til en opskrift, så hentes navn, ingredienser og fremgangsmåde fra madsiden.";
+  renderRecipes();
+  resetRecipeForm();
+  $("recipes-dlg").showModal();
+}
+
+async function importRecipe() {
+  const url = $("r-url").value.trim();
+  if (!url) { toast("Indsæt et link til opskriften"); return; }
+  const btn = $("btn-recipe-import");
+  btn.disabled = true; btn.textContent = "Henter…";
+  try {
+    const {recipe} = await api("/api/import_recipe", {url});
+    resetRecipeForm({id: editing, name: recipe.name, persons: recipe.persons, minutes: recipe.minutes, kind: "",
+      url: recipe.url, lines: recipe.ingredients, method: recipe.method});
+    editing = null;
+  } catch (e) { toast(e.message); }
+  finally { btn.disabled = false; btn.textContent = "Hent"; }
+}
+
+$("btn-plan-recipes").addEventListener("click", openRecipes);
+$("btn-plan-basis").addEventListener("click", openBasis);
+$("btn-basis-close").addEventListener("click", () => $("basis-dlg").close());
+$("basis-search").addEventListener("input", renderBasis);
+$("basis-list").addEventListener("change", e => {
+  const k = e.target.dataset.basis;
+  if (!k) return;
+  setBasis(k, e.target.value);
+  renderBasis();
+});
+$("basis-list").addEventListener("click", e => {
+  const k = e.target.dataset.basisReset;
+  if (!k) return;
+  setBasis(k, "");
+  renderBasis();
+});
+$("btn-basis-reset").addEventListener("click", () => {
+  store.set("basis", {});
+  applyBasis();
+  renderBasis();
+  render();
+  if ($("plan-dlg").open) renderPlan();
+});
+$("btn-recipes-close").addEventListener("click", () => { $("recipes-dlg").close(); renderPlan(); });
+$("btn-recipe-import").addEventListener("click", importRecipe);
+$("btn-recipe-cancel").addEventListener("click", () => resetRecipeForm());
+$("r-lines").addEventListener("input", renderPreview);
+$("r-kind").addEventListener("change", renderPreview);
+$("recipe-form").addEventListener("submit", e => {
+  e.preventDefault();
+  const d = formRecipe();
+  if (!d.name) { toast("Giv opskriften et navn"); return; }
+  const {recipe, why} = recipeFromLines(d);
+  if (!recipe) { toast(why); return; }
+  const list = ownList();
+  const i = list.findIndex(x => x.id === d.id);
+  if (i >= 0) list[i] = d; else list.push(d);
+  store.set("myrecipes", list);
+  toast(`${d.name} er gemt`);
+  renderRecipes();
+  resetRecipeForm();
+});
+$("recipes-list").addEventListener("click", e => {
+  const d = e.target.dataset, list = ownList();
+  if (d.ownEdit !== undefined) { resetRecipeForm(list[Number(d.ownEdit)]); $("r-name").focus(); }
+  else if (d.ownDel !== undefined) {
+    const r = list[Number(d.ownDel)];
+    if (!confirm(`Slet ${r.name}?`)) return;
+    store.set("myrecipes", list.filter(x => x !== r));
+    plan.ids = plan.ids.filter(id => id !== r.id);
+    renderRecipes();
+  } else if (d.ownPlan !== undefined) {
+    const id = list[Number(d.ownPlan)].id;
+    if (!plan.ids.includes(id)) {
+      // En dag mere, eller i stedet for den sidste ret, hvis ugen er fuld
+      if (plan.ids.length >= dishCount()) {
+        if (plan.count < 7) plan.count += 1;
+        else plan.ids.splice(plan.ids.findLastIndex(x => !plan.double.has(x)), 1);
+      }
+      plan.ids.push(id);
+      $("plan-count").value = plan.count;
+    }
+    $("recipes-dlg").close();
+    renderPlan();
+  }
+});
+
+// -- Indstillinger ------------------------------------------------------
+function openSettings() {
+  const s = state.settings;
+  $("s-lat").value = s.latitude; $("s-lng").value = s.longitude; $("s-radius").value = s.radius_km;
+  if (STATIC) {
+    state.loc = {latitude: s.latitude, longitude: s.longitude, place: s.place || ""};
+    $("s-place").value = s.place || "";
+    const radius = $("s-place-radius");
+    if (![...radius.options].some(o => Number(o.value) === s.radius_km)) {
+      radius.add(new Option(`Inden for ${km(s.radius_km)}`, s.radius_km));
+    }
+    radius.value = String(s.radius_km);
+    renderPlace();
+  }
+  $("s-excl-catalogs").value = s.exclude_catalogs.join(", ");
+  $("s-min-discount").value = s.min_discount_pct;
+  $("s-max-price").value = s.max_price ?? "";
+  $("s-exclude-words").value = s.exclude_keywords.join(", ");
+  $("s-favorites").value = s.favorites.join(", ");
+  $("s-known-only").checked = s.only_known_discount;
+  const chosen = new Set(s.categories);
+  $("s-cats").innerHTML = state.categories.map(c =>
+    `<label class="check"><input type="checkbox" value="${esc(c.key)}" ${!chosen.size || chosen.has(c.key) ? "checked" : ""}> ${esc(c.name)}</label>`).join("");
+  state.catalogList = null;
+  $("store-list").innerHTML = s.stores.length
+    ? `<p class="hint">Valgte butikker: ${esc(s.stores.join(", "))}</p>` : `<p class="hint">Alle butikker er valgt.</p>`;
+  $("settings").showModal();
+  if (STATIC) loadStores();  // Butikkerne ligger allerede i data.json
+}
+
+async function loadStores() {
+  const btn = $("btn-load-stores");
+  btn.disabled = true; btn.textContent = "Henter butikker…";
+  try {
+    const data = await api("/api/catalogs");
+    state.catalogList = data.stores;
+    renderStores();
+    btn.hidden = true;
+  } catch (e) {
+    $("store-list").innerHTML = `<p class="hint" style="color:var(--error)">Kunne ikke hente butikker: ${esc(e.message)}</p>`;
+  } finally { btn.disabled = false; btn.textContent = STATIC ? "Vælg butikker og aviser" : "Vis butikker i mit område"; }
+}
+
+// Afstanden til kædens nærmeste butik ud fra den placering, der er valgt i dialogen
+function distanceTag(name) {
+  if (!STATIC) return "";
+  const d = nearestKm(name, state.loc), radius = Number($("s-place-radius").value);
+  if (d === null) return "";
+  return d <= radius ? `<span class="dist">· nærmeste butik ${km(d)}</span>`
+    : `<span class="dist far">· ingen butik inden for ${km(radius)} (nærmeste ${km(d)})</span>`;
+}
+
+function renderPlace() {
+  const loc = state.loc, radius = Number($("s-place-radius").value);
+  if (!loc || loc.latitude == null) {
+    $("s-place-status").textContent = "Ingen placering valgt. Du ser tilbud fra alle de valgte kæder.";
+  } else {
+    const near = siteData.stores
+      .map(st => ({name: st.name, d: nearestKm(st.name, loc)}))
+      .filter(x => x.d !== null && x.d <= radius && storeSelected(x.name, {stores: state.catalogList
+        ? state.catalogList.filter(c => c.selected).map(c => c.name) : state.settings.stores}))
+      .sort((a, b) => a.d - b.d);
+    $("s-place-status").innerHTML = `<b>${esc(loc.place)}</b>: ` + (near.length
+      ? `${near.length} af dine kæder har en butik inden for ${km(radius)}: ` + near.map(x => `${esc(x.name)} (${km(x.d)})`).join(", ")
+      : `ingen af dine kæder har en butik inden for ${km(radius)}. Prøv en større afstand.`);
+  }
+  if (state.catalogList) renderStores();
+}
+
+function renderStores() {
+  const words = splitList($("s-excl-catalogs").value);
+  $("store-list").innerHTML = state.catalogList.map((s, i) => `
+    <div class="store">
+      <label class="check"><input type="checkbox" data-store="${i}" ${s.selected ? "checked" : ""}> <b>${esc(s.name)}</b> ${distanceTag(s.name)}</label>
+      <div class="store-catalogs" ${s.selected ? "" : "hidden"}>
+        ${s.catalogs.map(c => `<label class="check"><input type="checkbox" data-catalog="${esc(c.label)}" data-dealer="${esc(s.name)}" ${catalogExcluded(s.name, c.label, words) ? "" : "checked"}>
+          ${esc(c.label)} <span class="period">${esc(c.period)}</span></label>`).join("")}
+      </div>
+    </div>`).join("");
+}
+
+function toggleCatalog(dealer, label, on) {
+  let words = splitList($("s-excl-catalogs").value);
+  if (on) words = words.filter(w => !catalogExcluded(dealer, label, [w]));
+  else if (!catalogExcluded(dealer, label, words)) words.push(`${dealer}: ${label}`);
+  $("s-excl-catalogs").value = words.join(", ");
+  renderStores();
+}
+
+async function saveSettings() {
+  const s = state.settings;
+  const cats = [...$("s-cats").querySelectorAll("input")];
+  const chosenCats = cats.filter(c => c.checked).map(c => c.value);
+  const body = {
+    ...(STATIC
+      ? {latitude: state.loc.latitude, longitude: state.loc.longitude, place: state.loc.place, radius_km: $("s-place-radius").value}
+      : {latitude: $("s-lat").value, longitude: $("s-lng").value, radius_km: $("s-radius").value}),
+    exclude_catalogs: splitList($("s-excl-catalogs").value),
+    categories: chosenCats.length === cats.length ? [] : chosenCats,
+    min_discount_pct: $("s-min-discount").value || 0,
+    max_price: $("s-max-price").value,
+    exclude_keywords: splitList($("s-exclude-words").value),
+    favorites: splitList($("s-favorites").value),
+    only_known_discount: $("s-known-only").checked,
+  };
+  if (state.catalogList) {
+    const chosen = state.catalogList.filter(st => st.selected).map(st => st.name);
+    body.stores = chosen.length === state.catalogList.length ? [] : chosen;
+  }
+  const storesChanged = JSON.stringify(body.stores ?? s.stores) !== JSON.stringify(s.stores)
+    || JSON.stringify(body.exclude_catalogs) !== JSON.stringify(s.exclude_catalogs)
+    || ["latitude", "longitude", "radius_km"].some(k => Number(body[k]) !== s[k]);
+  try {
+    await api("/api/settings", body);
+    await refreshState();
+    // Nye standardvalg i indstillingerne slår igennem i filtrene
+    resetCats();
+    state.knownOnly = state.settings.only_known_discount;
+    await loadOffers();
+    saveFilters();
+    if (storesChanged && !STATIC) {
+      showMessage(`<div class="grow">Indstillingerne er gemt. Hent tilbud for at få aviser fra dine nye valg med.</div>
+        <button class="btn primary small" onclick="startScan()">Hent nu</button>`);
+    } else toast("Indstillingerne er gemt");
+  } catch (e) { showMessage(`<div class="grow">Kunne ikke gemme: ${esc(e.message)}</div>`, "error"); }
+}
+
+// -- Hændelser ----------------------------------------------------------
+$("btn-scan").addEventListener("click", () => startScan(false));
+$("btn-settings").addEventListener("click", openSettings);
+$("btn-list").addEventListener("click", openList);
+$("btn-list-close").addEventListener("click", () => $("list-dlg").close());
+$("btn-list-print").addEventListener("click", printList);
+$("btn-list-copy").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(listText()); toast("Listen er kopieret"); }
+  catch (e) { toast("Kunne ikke kopiere listen"); }
+});
+$("btn-list-clear-checked").addEventListener("click", () => changeList({action: "clear", only_checked: true}));
+$("btn-list-clear").addEventListener("click", () => { if (confirm("Tøm hele indkøbslisten?")) changeList({action: "clear"}); });
+$("add-own").addEventListener("submit", e => {
+  e.preventDefault();
+  const text = $("own-text").value.trim();
+  if (text) { changeList({action: "add_text", text}); $("own-text").value = ""; }
+});
+$("list-body").addEventListener("click", e => {
+  const id = e.target.dataset.remove;
+  if (id) changeList({action: "remove", id});
+  const open = e.target.closest("[data-open]");
+  if (open) openOffer(open.dataset.open, listOffers());
+});
+$("list-body").addEventListener("change", e => {
+  const id = e.target.dataset.check;
+  if (id) changeList({action: "check", id, checked: e.target.checked});
+});
+$("grid").addEventListener("click", e => {
+  const fold = e.target.closest("[data-fold]");
+  if (fold) { setFolded([fold.dataset.fold], !isFolded(fold.dataset.fold)); render(); return; }
+  const only = e.target.closest("[data-only-store]");
+  if (only) { state.stores = new Set([only.dataset.onlyStore]); state.limit = PAGE; saveFilters(); render(); window.scrollTo({top: $("filters").offsetTop}); return; }
+  if (e.target.closest("a")) return;
+  const b = e.target.closest("[data-list]");
+  if (b) {
+    const id = b.dataset.list;
+    changeList(onList(id) ? {action: "remove", id} : {action: "add", id});
+    return;
+  }
+  const c = e.target.closest("[data-offer]");
+  if (c) openOffer(c.dataset.offer);
+});
+$("grid").addEventListener("keydown", e => {
+  const c = e.target.closest && e.target.closest("[data-offer]");
+  if (c && e.target === c && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openOffer(c.dataset.offer); }
+});
+$("btn-offer-close").addEventListener("click", () => $("offer-dlg").close());
+$("btn-offer-prev").addEventListener("click", () => stepOffer(-1));
+$("btn-offer-next").addEventListener("click", () => stepOffer(1));
+$("offer-dlg").addEventListener("click", e => {
+  if (e.target === $("offer-dlg")) { $("offer-dlg").close(); return; }  // klik uden for vinduet
+  const b = e.target.closest("[data-list]");
+  if (b) {
+    const id = b.dataset.list;
+    changeList(onList(id) ? {action: "remove", id} : {action: "add", id});
+    return;
+  }
+  const t = e.target.closest("[data-view]");
+  if (t) { offerView.mode = t.dataset.view; renderOffer(); }
+});
+$("offer-dlg").addEventListener("keydown", e => {
+  if (e.target.matches && e.target.matches("input, select, textarea")) return;
+  if (e.key === "ArrowLeft") { e.preventDefault(); stepOffer(-1); }
+  else if (e.key === "ArrowRight") { e.preventDefault(); stepOffer(1); }
+});
+// Stryg til siden for at bladre på telefonen
+$("od-body").addEventListener("touchstart", e => {
+  const t = e.touches[0]; offerView.touch = {x: t.clientX, y: t.clientY};
+}, {passive: true});
+$("od-body").addEventListener("touchend", e => {
+  const start = offerView.touch; offerView.touch = null;
+  if (!start || offerView.mode === "page") return;
+  const t = e.changedTouches[0], dx = t.clientX - start.x, dy = t.clientY - start.y;
+  if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) stepOffer(dx < 0 ? 1 : -1);
+}, {passive: true});
+$("btn-load-stores").addEventListener("click", loadStores);
+$("btn-more").addEventListener("click", () => { state.limit += PAGE; render(); });
+$("btn-fold-all").addEventListener("click", e => {
+  setFolded(JSON.parse(e.target.dataset.keys || "[]"), !!e.target.dataset.fold); render();
+});
+$("search").addEventListener("input", e => { state.q = e.target.value; state.limit = PAGE; render(); });
+$("sort").addEventListener("change", e => { state.sort = e.target.value; savePrefs(); render(); });
+$("known-only").addEventListener("change", e => { state.knownOnly = e.target.checked; saveFilters(); render(); });
+$("filter-menu").addEventListener("toggle", saveFilters);
+$("hide-member").addEventListener("change", e => { state.hideMember = e.target.checked; savePrefs(); render(); });
+$("basics-only").addEventListener("change", e => {
+  state.basics.on = e.target.checked; saveBasics(); state.limit = PAGE; render();
+  if (state.basics.on && !state.basics.items.length) {
+    $("filter-menu").open = true;
+    $("basics").scrollIntoView({block: "center"});
+    $("basics-input").focus();
+    toast("Skriv dine basisvarer, fx mælk, smør og kaffe");
+  }
+});
+$("basics-form").addEventListener("submit", e => {
+  e.preventDefault();
+  addBasics($("basics-input").value);
+  $("basics-input").value = "";
+});
+$("basics-chips").addEventListener("click", e => {
+  const b = e.target.closest("[data-basic]");
+  if (!b) return;
+  state.basics.items = state.basics.items.filter(w => w !== b.dataset.basic);
+  saveBasics(); renderBasics(); render();
+});
+$("btn-basics-clear").addEventListener("click", () => {
+  state.basics.items = []; saveBasics(); renderBasics(); render();
+});
+$("filters").addEventListener("click", e => {
+  const c = e.target.closest(".chip[data-kind]");
+  if (c) {
+    const set = state[c.dataset.kind];
+    set.has(c.dataset.value) ? set.delete(c.dataset.value) : set.add(c.dataset.value);
+    state.limit = PAGE; saveFilters(); render(); return;
+  }
+  if (e.target.dataset.all === "stores") state.stores = new Set(state.offers.map(o => o.dealer));
+  else if (e.target.dataset.all === "cats") state.cats = new Set(state.categories.map(c => c.key));
+  else if (e.target.dataset.reset === "cats") resetCats();
+  else return;
+  saveFilters(); render();
+});
+$("store-list").addEventListener("change", e => {
+  const t = e.target;
+  if (t.dataset.store !== undefined) {
+    state.catalogList[Number(t.dataset.store)].selected = t.checked;
+    renderStores();
+  } else if (t.dataset.catalog !== undefined) toggleCatalog(t.dataset.dealer, t.dataset.catalog, t.checked);
+});
+$("s-excl-catalogs").addEventListener("change", () => { if (state.catalogList) renderStores(); });
+$("s-place").addEventListener("change", e => {
+  if (!e.target.value.trim()) { state.loc = {latitude: null, longitude: null, place: ""}; renderPlace(); return; }
+  const found = findPlace(e.target.value);
+  if (found) { state.loc = found; e.target.value = found.place; renderPlace(); }
+  else $("s-place-status").innerHTML = `<span style="color:var(--error)">Kunne ikke finde "${esc(e.target.value)}". Skriv et dansk postnummer eller en by.</span>`;
+});
+$("s-place-radius").addEventListener("change", renderPlace);
+$("btn-place-clear").addEventListener("click", () => {
+  state.loc = {latitude: null, longitude: null, place: ""}; $("s-place").value = ""; renderPlace();
+});
+$("btn-geo").addEventListener("click", async () => {
+  const btn = $("btn-geo");
+  btn.disabled = true; btn.textContent = "Finder din placering…";
+  try {
+    state.loc = await currentPosition();
+    $("s-place").value = state.loc.place;
+    renderPlace();
+  } catch (e) { $("s-place-status").innerHTML = `<span style="color:var(--error)">${esc(e.message)}</span>`; }
+  finally { btn.disabled = false; btn.textContent = "📍 Brug min placering"; }
+});
+
+// Første besøg på den statiske side: spørg hvor man handler
+async function useMyLocation() {
+  showMessage(`<div class="grow">Finder din placering…</div>`);
+  try {
+    const loc = await currentPosition();
+    await api("/api/settings", {latitude: loc.latitude, longitude: loc.longitude, place: loc.place});
+    await refreshState();
+    await loadOffers();
+    showMessage("");
+    toast(`Viser butikker inden for ${km(state.settings.radius_km)} af ${loc.place}`);
+  } catch (e) {
+    showMessage(`<div class="grow">${esc(e.message)}</div><button class="btn small" onclick="openSettings()">Skriv postnummer</button>`, "warn");
+  }
+}
+$("settings-form").addEventListener("submit", e => {
+  if (e.submitter && e.submitter.value === "save") { e.preventDefault(); if ($("settings-form").reportValidity()) { $("settings").close(); saveSettings(); } }
+});
+
+(async function init() {
+  if (STATIC) {
+    // Aviserne hentes af GitHub, og placeringen er fast for siden
+    $("btn-scan").hidden = true;
+    $("s-location").hidden = true;
+    $("s-place-box").hidden = false;
+    for (const id of ["s-lat", "s-lng", "s-radius"]) $(id).required = false;
+    $("btn-load-stores").textContent = "Vælg butikker og aviser";
+  }
+  loadPrefs();
+  loadBasics();
+  loadFolded();
+  // En notifikation om et tilbud åbner siden med søgningen, fx ?q=kaffe
+  const q = new URLSearchParams(location.search).get("q");
+  if (q) { state.q = q; $("search").value = q; }
+  try {
+    const s = await refreshState();
+    await loadList();
+    await loadOffers();
+    // Madplanens ingredienser bruges også til at sortere indkøbslisten
+    // og til basispriserne ved tilbuddene
+    loadPlanData().then(render).catch(() => {});
+    // Første gang: hent tilbud med det samme
+    if (!STATIC && !s.last_scan && !s.scan.running) startScan();
+    if (STATIC) {
+      $("place-list").innerHTML = siteData.places.map(p => `<option value="${esc(placeName(p))}">`).join("");
+      if (s.settings.latitude == null && siteData.places.length) {
+        showMessage(`<div class="grow"><b>Hvor handler du?</b> Vælg din placering, så du kun ser tilbud fra butikker i nærheden.</div>
+          <button class="btn primary small" onclick="useMyLocation()">📍 Brug min placering</button>
+          <button class="btn small" onclick="openSettings()">Skriv postnummer</button>`);
+      }
+    }
+  } catch (e) {
+    showMessage(`<div class="grow">Kunne ikke starte: ${esc(e.message)}</div>`, "error");
+  }
+})();
+</script>
+</body>
+</html>
