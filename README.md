@@ -370,6 +370,12 @@ plan giver nye retter.
   ganges med i prisen. Krydderier, olie og mel regnes som noget, man
   har derhjemme. Indkøbslisten er sorteret efter afdeling i butikken.
 
+Under **På tilbud** vælger du, hvor mange af rettens varer der skal være på
+tilbud: mindst halvdelen (standard), mindst 3 af 4 eller alle. Krydderier,
+olie og det, du har derhjemme, tæller ikke med, og en vare uden kendt pris
+tæller som ikke på tilbud. Uanset valget skal rettens hovedingredienser,
+fx kødet, altid være på tilbud eller noget, du har derhjemme.
+
 Madplanen huskes i browseren, ligesom indkøbslisten.
 
 ### Ugeplan
@@ -380,7 +386,8 @@ Danmark), og du bladrer fra denne uge og op til 12 uger frem. Søg efter en
 ret eller ingrediens, vælg slags, og tryk **+ uge 42** for at gemme retten
 i ugen. Retterne i ugen sættes i den rækkefølge, du har lyst til at spise
 dem, med ↑ og ↓. **Læg på indkøbslisten** lægger ugens ingredienser på
-listen, lagt sammen pr. vare til det valgte antal personer. I madplanen
+listen, lagt sammen pr. vare til det valgte antal personer. Tryk på en ret i ugen for at åbne opskriften og lægge
+netop dens ingredienser på listen. I madplanen
 kan en ret gemmes i sin uge med **Gem i uge 42**. Ugeplanen huskes i
 browseren; uger, der er mere end fire uger gamle, ryddes væk.
 

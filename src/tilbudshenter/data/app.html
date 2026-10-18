@@ -231,6 +231,7 @@ details.have .hint { margin-top: 6px; }
 .week-recipe summary .sub, .week-dish summary .sub { font-weight: 400; }
 .week-recipe ul, .week-dish ul { margin: 6px 0 0; padding-left: 18px; font-size: 13px; }
 .week-recipe a, .week-dish a { color: var(--accent); font-size: 13px; }
+.week-dish .method, .week-recipe .method { font-size: 14px; margin: 6px 0; white-space: pre-line; }
 .week-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 4px; align-items: center; }
 .week-tools h3 { margin: 0; font-size: 16px; flex: 1 1 100%; }
 .week-tools .search { flex: 1 1 200px; }
@@ -470,6 +471,11 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
           <option value="vegetar">Vegetar</option>
         </select></label>
         <label class="field">Butik <select id="plan-store"></select></label>
+        <label class="field">På tilbud <select id="plan-ratio">
+          <option value="0.5">Mindst halvdelen af varerne</option>
+          <option value="0.75">Mindst 3 af 4 varer</option>
+          <option value="1">Alle varer</option>
+        </select></label>
         <button class="btn small" id="btn-plan-new">Ny madplan</button>
       </div>
       <details class="have" id="plan-have">
@@ -1704,7 +1710,7 @@ function printList() {
 // tilbud har en liste "ingredients" med de ingredienser, det kan bruges
 // som. Valgene huskes i browseren under tilbudshenter.mealplan og egne
 // opskrifter under tilbudshenter.myrecipes.
-const plan = {ids: [], count: 5, persons: 4, diet: "", focus: "", store: "", start: "",
+const plan = {ids: [], count: 5, persons: 4, diet: "", focus: "", store: "", start: "", ratio: 0.5,
   skipped: new Set(), have: new Set(), double: new Set()};
 let planData = null, ING = {};
 const KIND_NAMES = {okse: "Okse", gris: "Gris", kylling: "Kylling", fisk: "Fisk", vegetar: "Vegetar", andet: "Andet kød"};
@@ -1952,7 +1958,7 @@ function allRecipes() {
 }
 
 function savePlan() {
-  store.set("mealplan", {ids: plan.ids, count: plan.count, persons: plan.persons, diet: plan.diet, focus: plan.focus,
+  store.set("mealplan", {ids: plan.ids, count: plan.count, persons: plan.persons, diet: plan.diet, focus: plan.focus, ratio: plan.ratio,
     store: plan.store, start: plan.start, have: [...plan.have], double: [...plan.double]});
 }
 
@@ -2056,7 +2062,10 @@ function rankRecipes() {
     });
     const fridge = items.filter(y => y.have && !y.item.side).length;
     const entry = {recipe: r, items, main, fridge};
-    entry.eligible = mainItems.some(haveItem) || (!!main && offerDish(entry));
+    // Alle hovedingredienser skal være på tilbud eller derhjemme: en ret med
+    // rumpsteak er ikke en tilbudsret, fordi kartoflerne er på tilbud
+    const mainsOk = items.every(y => !y.item.main || y.have || y.offer);
+    entry.eligible = mainsOk && (mainItems.some(haveItem) || (!!main && offerDish(entry)));
     ranked.push({...entry, score: recipeScore(entry)});
   }
   return ranked.sort((a, b) => b.score - a.score);
@@ -2094,9 +2103,18 @@ function offerStats(entry) {
     share: cost ? offerCost / cost : 0, saving: normal ? 1 - cost / normal : 0};
 }
 
+// En ret på sin dag: hovedingredienserne er på tilbud (eller derhjemme), og
+// tilbuddene bærer retten
+function dayOk(e) {
+  if (!e.items.every(y => !y.item.main || y.have || y.offer)) return false;
+  return e.items.some(y => y.item.main && y.have) || offerDish(e);
+}
+
 function offerDish(entry) {
   const st = offerStats(entry);
-  return st.on >= Math.min(OFFER_MIN_ITEMS, st.lines) && st.ratio >= OFFER_MIN_RATIO
+  // Brugeren vælger, hvor stor en del af varerne der skal være på tilbud;
+  // varer uden kendt pris er ikke på tilbud, og det, man har, tæller ikke
+  return st.on >= Math.min(OFFER_MIN_ITEMS, st.lines) && st.ratio >= Math.max(OFFER_MIN_RATIO, plan.ratio) - 1e-9
     && st.share >= OFFER_MIN_SHARE && st.saving >= OFFER_MIN_SAVING;
 }
 
@@ -2209,17 +2227,34 @@ function planEntries() {
   const fresh = !plan.ids.length;
   let entries = choosePlan(ranked, plan.ids, dishCount());
   if (fresh) entries = arrange(entries);
-  plan.ids = entries.map(x => x.recipe.id);
-  markSeen(entries);
+  let day = 0;
+  const picked = [];
+  for (const x of entries) {
+    const mult = plan.double.has(x.recipe.id) ? 2 : 1;
+    let e = fitDay({...x, mult, day: addDays(startDate(), day)});
+    // Et tilbud, der er slut på rettens dag, kan gøre, at retten ikke
+    // længere er en tilbudsret; så tager en anden ret, der er det, dagen
+    // (helst en, der ikke lige er byttet væk); findes ingen, udgår dagen
+    if (!x.recipe.own && !dayOk(e)) {
+      const used = new Set([...entries, ...picked].map(y => y.recipe.id));
+      const free = ranked.filter(c => c.eligible && !used.has(c.recipe.id));
+      let found = null;
+      for (const c of [...free.filter(c => !plan.skipped.has(c.recipe.id)), ...free.filter(c => plan.skipped.has(c.recipe.id))]) {
+        const ce = fitDay({...c, mult, day: e.day});
+        if (dayOk(ce)) { found = ce; break; }
+      }
+      if (plan.double.delete(x.recipe.id) && found) plan.double.add(found.recipe.id);
+      if (!found) continue;
+      e = found;
+    }
+    day += mult;
+    picked.push(e);
+  }
+  const result = picked;
+  plan.ids = result.map(x => x.recipe.id);
+  markSeen(result);
   plan.double = new Set([...plan.double].filter(id => plan.ids.includes(id)));
   savePlan();
-  let day = 0;
-  const result = entries.map(x => {
-    const mult = plan.double.has(x.recipe.id) ? 2 : 1;
-    const e = fitDay({...x, mult, day: addDays(startDate(), day)});
-    day += mult;
-    return e;
-  });
   buyPacks(result);
   return result;
 }
@@ -2418,7 +2453,7 @@ function renderPlan() {
   plan.entries = entries;
   if (!entries.length) {
     $("plan-body").innerHTML = `<p class="hint" style="margin-top:14px">Ingen retter passer til ugens tilbud i dine butikker.
-      Prøv at vælge flere butikker eller en anden kost.</p>`;
+      Prøv at vælge flere butikker, en anden kost${plan.ratio > 0.5 ? " eller færre varer på tilbud" : ""}.</p>`;
     $("plan-sum").textContent = "";
     $("btn-plan-list").disabled = true;
     return;
@@ -2427,6 +2462,7 @@ function renderPlan() {
   $("plan-body").innerHTML = planTotal(entries) + entries.map((x, i) => {
     const r = x.recipe;
     const onOffer = x.items.filter(y => y.offer).length, have = x.items.filter(y => y.have).length;
+    const unknown = x.items.filter(y => !y.have && !y.offer && !y.item.keys.length).length;
     const cost = dishCost(x), normal = dishNormalCost(x), pay = dishPay(x);
     const days = x.mult === 2 ? `${cap(dayName(x.day))} og ${dayName(addDays(x.day, 1))}` : cap(dayName(x.day));
     const source = r.own ? "Egen opskrift" : r.source ? `Fra ${host(r.source)}` : "";
@@ -2439,7 +2475,7 @@ function renderPlan() {
         <span class="price-tag">ca. ${kr(pay)}</span></div>
       <div class="sub">${Math.abs(pay - cost) >= 1 ? `Retten bruger for ca. ${kr(cost)} · ` : ""}${kr(cost / plan.persons / x.mult)} pr. person · ${esc(KIND_NAMES[r.kind] || r.kind)}
         ${r.minutes ? ` · ${r.minutes} min` : ""} · ${r.veg_g} g grønt pr. person · ${onOffer} af ${x.items.length} varer på tilbud${onOffer ? ` (${Math.round(offerStats(x).share * 100)} % af prisen)` : ""}
-        ${have ? ` · ${have} har du` : ""}${source ? ` · ${esc(source)}` : ""}
+        ${have ? ` · ${have} har du` : ""}${unknown ? ` · ${unknown} ${unknown === 1 ? "vare" : "varer"} uden kendt pris er ikke regnet med` : ""}${source ? ` · ${esc(source)}` : ""}
         ${normal - cost >= 5 ? ` · <b class="save">sparer ca. ${kr(normal - cost)}</b>` : ""}</div>
       ${x.mult === 2 ? `<div class="leftover">Dobbelt portion: lav det hele ${esc(WEEKDAYS[x.day.getDay()])}, og gem halvdelen til ${esc(WEEKDAYS[addDays(x.day, 1).getDay()])}.</div>` : ""}
       <ul>${x.items.map((y, j) => {
@@ -2502,6 +2538,7 @@ async function openPlan() {
   plan.persons = saved.persons || 4;
   plan.diet = saved.diet || "";
   plan.focus = saved.focus || "";
+  plan.ratio = [0.5, 0.75, 1].includes(saved.ratio) ? saved.ratio : 0.5;
   plan.have = new Set(saved.have || []);
   plan.double = new Set(saved.double || []);
   // Om aftenen (fra kl. 17) starter en ny plan i morgen, når aftensmaden for i dag er på plads
@@ -2522,6 +2559,7 @@ async function openPlan() {
   }).join("");
   $("plan-diet").value = plan.diet;
   $("plan-focus").value = plan.focus;
+  $("plan-ratio").value = String(plan.ratio);
   $("plan-body").innerHTML = `<p class="hint" style="margin-top:14px">Finder retter…</p>`;
   $("plan-dlg").showModal();
   try {
@@ -2659,6 +2697,9 @@ $("plan-count").addEventListener("change", e => {
 });
 $("plan-persons").addEventListener("change", e => { plan.persons = Number(e.target.value); renderPlan(); });
 $("plan-start").addEventListener("change", e => { plan.start = e.target.value; renderPlan(); });
+$("plan-ratio").addEventListener("change", e => {
+  plan.ratio = Number(e.target.value); plan.ids = []; plan.double = new Set(); plan.skipped = new Set(); renderPlan();
+});
 // Ny kost eller butik giver en ny madplan
 for (const [id, key] of [["plan-focus", "focus"], ["plan-diet", "diet"], ["plan-store", "store"]]) {
   $(id).addEventListener("change", e => {
@@ -2778,6 +2819,7 @@ function recipeDetails(r, persons) {
   const items = r.items.filter(i => !i.side).map(i => `<li>${esc(itemText(i, 1))}</li>`).join("");
   plan.persons = old;
   return `<ul>${items}</ul>${r.pantry.length ? `<div class="sub">Har du derhjemme: ${esc(r.pantry.join(", "))}</div>` : ""}
+    ${r.method ? `<p class="method">${esc(r.method)}</p>` : ""}
     ${r.source ? `<a href="${esc(r.source)}" target="_blank" rel="noopener">Se opskriften hos ${esc(host(r.source))}</a>` : ""}`;
 }
 
@@ -2792,7 +2834,8 @@ function renderWeek(recipes = true) {
   $("week-chosen").innerHTML = ids.length ? ids.map((id, i) => {
     const r = byId.get(id);
     return `<div class="week-dish"><span class="no">${i + 1}</span>
-      <div class="what"><details><summary>${esc(r.name)}<div class="sub">${esc(recipeSub(r))}</div></summary>${recipeDetails(r, persons)}</details></div>
+      <div class="what"><details><summary>${esc(r.name)}<div class="sub">${esc(recipeSub(r))}</div></summary>${recipeDetails(r, persons)}
+        <div><button class="btn small" data-week-list="${esc(id)}" style="margin-top:8px">Læg ingredienserne på indkøbslisten</button></div></details></div>
       <div class="dish-actions">
         <button class="btn small" data-week-move="${i}:-1" ${i ? "" : "disabled"} title="Tidligere i ugen" aria-label="Flyt op">↑</button>
         <button class="btn small" data-week-move="${i}:1" ${i < ids.length - 1 ? "" : "disabled"} title="Senere i ugen" aria-label="Flyt ned">↓</button>
@@ -2836,9 +2879,10 @@ async function openWeek() {
 }
 
 // Ugens ingredienser på indkøbslisten, lagt sammen pr. vare
-async function weekToList() {
+// Hele ugen, eller kun én ret (id), og så med knappen, der blev trykket på
+async function weekToList(id = null, btn = $("btn-week-list")) {
   const w = shownWeek(), byId = new Map(allRecipes().map(r => [r.id, r]));
-  const recipes = weekIds(w).map(id => byId.get(id)).filter(Boolean);
+  const recipes = (id ? [id] : weekIds(w)).map(id => byId.get(id)).filter(Boolean);
   const old = plan.persons;
   plan.persons = weekPersons();
   const lines = new Map();
@@ -2858,11 +2902,11 @@ async function weekToList() {
     return {text: name + (a ? ` (${a})` : ""), note: `til ${joinDa(e.dishes)} (uge ${w.week})`,
       category: e.item.keys.length ? ING[e.item.keys[0]].dept : "andet"};
   }).filter(t => !state.list.some(i => i.heading === t.text));
-  const btn = $("btn-week-list");
   btn.disabled = true;
   try {
     for (const t of texts) state.list = (await api("/api/list", {action: "add_text", ...t})).items;
-    toast(texts.length ? `${texts.length} varer fra uge ${w.week} er lagt på indkøbslisten` : "Varerne er allerede på indkøbslisten");
+    const from = id ? recipes[0].name : `uge ${w.week}`;
+    toast(texts.length ? `${texts.length} varer til ${from} er lagt på indkøbslisten` : "Varerne er allerede på indkøbslisten");
   } catch (e) { toast(e.message); }
   finally { btn.disabled = false; }
   renderListCount();
@@ -2874,11 +2918,13 @@ $("btn-week-close").addEventListener("click", () => $("week-dlg").close());
 $("btn-week-prev").addEventListener("click", () => { week.offset = Math.max(0, week.offset - 1); renderWeek(); });
 $("btn-week-next").addEventListener("click", () => { week.offset = Math.min(WEEKS_AHEAD, week.offset + 1); renderWeek(); });
 $("btn-week-more").addEventListener("click", () => { week.limit += WEEK_PAGE; renderWeekRecipes(); });
-$("btn-week-list").addEventListener("click", weekToList);
+$("btn-week-list").addEventListener("click", () => weekToList());
 $("week-search").addEventListener("input", e => { week.q = e.target.value; week.limit = WEEK_PAGE; renderWeekRecipes(); });
 $("week-kind").addEventListener("change", e => { week.kind = e.target.value; week.limit = WEEK_PAGE; renderWeekRecipes(); });
 $("week-persons").addEventListener("change", e => { store.set("weekpersons", Number(e.target.value)); renderWeek(); });
 $("week-dlg").addEventListener("click", e => {
+  const one = e.target.closest("[data-week-list]");
+  if (one) { weekToList(one.dataset.weekList, one); return; }
   const b = e.target.closest("[data-week-add], [data-week-move], [data-week-drop]");
   if (!b) return;
   const w = shownWeek(), ids = weekIds(w), d = b.dataset;

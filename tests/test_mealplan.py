@@ -197,3 +197,30 @@ def test_recipe_lines_with_more_meat():
     assert recipe and not why
     lam, _ = recipe_from_lines("l", "Lam", ["800 g lammekølle", "1 kg kartofler", "2 løg"])
     assert lam.kind == "okse"
+
+
+def test_steak_in_recipe_is_beef():
+    from tilbudshenter.mealplan import recipe_from_lines
+
+    # "Rumpsteak" uden mængde var en ukendt vare, og retten blev en "vegetarret" på tilbud
+    name = "Lynstegt rumpsteak i estragonsauce"
+    lines = ["300 g Rumpsteak", "500 g små kartofler", "1,5 dl madlavningsfløde", "1 gulerod", "1 stk Estragon"]
+    recipe, _ = recipe_from_lines("x", name, lines)
+    assert recipe.kind == "okse"
+    assert [i.keys for i in recipe.items if i.main] == [["boef"]]
+    assert line_keys("oksesteak") == ["boef"]
+    assert line_keys("tunsteak") == [] and line_keys("steaksauce") == []
+    # Uden mængde kan kødet ikke prissættes, og så bruges retten ikke
+    assert recipe_from_lines("x", name, ["Rumpsteak", *lines[1:]])[0] is None
+
+
+def test_meat_in_name_needs_meat_in_ingredients():
+    from tilbudshenter.mealplan import recipe_from_lines
+
+    veg = ["400 g pasta", "1 broccoli", "100 g revet ost"]
+    assert recipe_from_lines("x", "Pasta med frikadeller", veg + ["8 færdige frikadeller"])[0] is None
+    assert recipe_from_lines("x", "Steak med ovnbagte gulerødder", ["1 kg gulerødder", "1 løg", "4 steaks"])[0] is None
+    # Ikke kød: grøntsagsbøffer, "uden kød" og engelsk "and"
+    for name in ["Mac and cheese", "Pasta med aubergine - nem pastaret uden kød", "Grøntsagsbøf med brun sovs"]:
+        recipe, why = recipe_from_lines("x", name, veg)
+        assert recipe and recipe.kind == "vegetar", (name, why)
