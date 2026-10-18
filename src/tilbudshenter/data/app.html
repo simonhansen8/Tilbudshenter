@@ -231,6 +231,7 @@ details.have .hint { margin-top: 6px; }
 .week-recipe summary .sub, .week-dish summary .sub { font-weight: 400; }
 .week-recipe ul, .week-dish ul { margin: 6px 0 0; padding-left: 18px; font-size: 13px; }
 .week-recipe a, .week-dish a { color: var(--accent); font-size: 13px; }
+.week-pick { margin-top: 8px; padding: 6px 8px; font-size: 13px; max-width: 100%; }
 .week-dish .method, .week-recipe .method { font-size: 14px; margin: 6px 0; white-space: pre-line; }
 .week-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 4px; align-items: center; }
 .week-tools h3 { margin: 0; font-size: 16px; flex: 1 1 100%; }
@@ -2820,7 +2821,19 @@ function recipeDetails(r, persons) {
   plan.persons = old;
   return `<ul>${items}</ul>${r.pantry.length ? `<div class="sub">Har du derhjemme: ${esc(r.pantry.join(", "))}</div>` : ""}
     ${r.method ? `<p class="method">${esc(r.method)}</p>` : ""}
-    ${r.source ? `<a href="${esc(r.source)}" target="_blank" rel="noopener">Se opskriften hos ${esc(host(r.source))}</a>` : ""}`;
+    ${r.source ? `<a href="${esc(r.source)}" target="_blank" rel="noopener">Se opskriften hos ${esc(host(r.source))}</a>` : ""}
+    ${weekPicker(r.id)}`;
+}
+// Vælg retten til en anden uge end den, der vises; ✓ ved uger, den allerede er i
+function weekPicker(id) {
+  const shown = shownWeek().key;
+  const weeks = [];
+  for (let n = 0; n <= WEEKS_AHEAD; n++) {
+    const w = weekOf(addDays(today(), 7 * n));
+    if (w.key !== shown) weeks.push(`<option value="${n}">${inWeek(id, w) ? "✓ " : ""}Uge ${w.week} (${esc(weekDates(w))})</option>`);
+  }
+  return `<div><select class="week-pick" data-week-copy="${esc(id)}" aria-label="Vælg til en anden uge">
+    <option value="">Vælg også til en anden uge…</option>${weeks.join("")}</select></div>`;
 }
 
 function renderWeek(recipes = true) {
@@ -2922,6 +2935,17 @@ $("btn-week-list").addEventListener("click", () => weekToList());
 $("week-search").addEventListener("input", e => { week.q = e.target.value; week.limit = WEEK_PAGE; renderWeekRecipes(); });
 $("week-kind").addEventListener("change", e => { week.kind = e.target.value; week.limit = WEEK_PAGE; renderWeekRecipes(); });
 $("week-persons").addEventListener("change", e => { store.set("weekpersons", Number(e.target.value)); renderWeek(); });
+$("week-dlg").addEventListener("change", e => {
+  const sel = e.target.closest("[data-week-copy]");
+  if (!sel || sel.value === "") return;
+  const id = sel.dataset.weekCopy, w = weekOf(addDays(today(), 7 * Number(sel.value)));
+  const r = allRecipes().find(x => x.id === id);
+  if (inWeek(id, w)) toast(`${r ? r.name : "Retten"} er allerede i uge ${w.week}`);
+  else { setWeek(w, [...weekIds(w), id]); toast(`${r ? r.name : "Retten"} er også valgt til uge ${w.week}`); }
+  sel.selectedIndex = 0;
+  // Opdater ✓ i valget og "i uge 44" i listen uden at lukke den åbne opskrift
+  sel.outerHTML = weekPicker(id).replace(/^<div>|<\/div>$/g, "");
+});
 $("week-dlg").addEventListener("click", e => {
   const one = e.target.closest("[data-week-list]");
   if (one) { weekToList(one.dataset.weekList, one); return; }
