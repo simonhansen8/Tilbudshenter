@@ -501,7 +501,8 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
       <button class="btn small" id="btn-basis-close">Luk</button>
     </div>
     <div class="dlg-body">
-      <p class="hint">Basisprisen er den almindelige hyldepris uden tilbud på en almindelig udgave af varen. Koster varen typisk mere på tilbud i aviserne, bruges det i stedet. Et tilbud bruges kun i
+      <p class="hint">Basisprisen er den rigtige hyldepris uden tilbud i REMA 1000 på den billigste almindelige (ikke økologiske) udgave af varen. Den hentes fra REMA 1000's webshop
+        med hver opdatering; hold musen over butikken for at se varen. Har REMA 1000 ikke varen, er prisen anslået. Et tilbud bruges kun i
         madplanen, når det er billigere, og varer uden tilbud regnes til basisprisen. Ret en pris, hvis du kender en bedre. Dine priser gemmes i browseren.</p>
       <input class="search" id="basis-search" type="search" placeholder="Find vare, fx bacon" style="width:100%;margin-top:4px">
       <div id="basis-list"></div>
@@ -1370,10 +1371,12 @@ function normalPrice(o) {
       const per = n => money(n).replace(/ kr$/, ` kr/${o.unit}`);
       const pct = Math.round((1 - ratio) * 100);
       const cmp = pct > 0 ? `${pct} % billigere` : pct < 0 ? `${-pct} % dyrere` : "samme pris";
-      return {kind: "basis", cheaper: pct > 0, short: `Basispris ca. ${per(basis)} · ${cmp}`,
-        long: `Avisen oplyser ingen normalpris. Basisprisen for almindelig ${ing.name} er ca. ${per(basis)}, og tilbuddet koster ${per(o.unit_price)}, `
-          + (pct ? `${cmp} end basisprisen.` : "det samme som basisprisen.")
-          + " Basisprisen er anslået og kan rettes under Madplan → Basispriser."};
+      const real = !!(ing.src && ing.price[0] === ing.base);
+      return {kind: "basis", cheaper: pct > 0, short: `Basispris ${real ? "" : "ca. "}${per(basis)} · ${cmp}`,
+        long: `Avisen oplyser ingen normalpris. Basisprisen for almindelig ${ing.name} er ${real ? "" : "ca. "}${per(basis)}`
+          + (real ? ` (${ing.src.store}: ${ing.src.product}, ${ing.src.pack}, ${money(ing.src.shelf)} uden tilbud)` : "")
+          + `, og tilbuddet koster ${per(o.unit_price)}, ` + (pct ? `${cmp} end basisprisen.` : "det samme som basisprisen.")
+          + (real ? "" : " Basisprisen er anslået.") + " Den kan rettes under Madplan → Basispriser."};
     }
   }
   return {kind: null, cheaper: null, short: "Normalpris ukendt",
@@ -1735,7 +1738,15 @@ async function loadPlanData() {
 // browseren under tilbudshenter.basis som {ingrediens: kr pr. kg}.
 const LITER_KEYS = new Set(["maelk", "floede"]);
 function basisUnit(k) { return LITER_KEYS.has(k) ? "kr/l" : "kr/kg"; }
-function basisText(k) { return `basispris ${ING[k].price[0].toLocaleString("da-DK")} ${basisUnit(k)}`; }
+// Er basisprisen den rigtige hyldepris fra en webshop (og ikke rettet af brugeren)?
+function realBasis(k) { return !!(ING[k].src && ING[k].price[0] === ING[k].base); }
+function basisSource(k) {
+  const s = ING[k].src;
+  return `${s.store}: ${s.product}, ${s.pack}, ${money(s.shelf)}`;
+}
+function basisText(k) {
+  return `basispris ${ING[k].price[0].toLocaleString("da-DK")} ${basisUnit(k)}` + (realBasis(k) ? ` i ${ING[k].src.store}` : "");
+}
 function applyBasis() {
   const custom = store.get("basis", {});
   for (const [k, ing] of Object.entries(ING)) {
@@ -1757,9 +1768,10 @@ function renderBasis() {
     const changed = Number(custom[i.key]) > 0;
     return head + `<div class="basis-row${changed ? " changed" : ""}">
       <span class="n">${esc(cap(i.name))}</span>
-      <input type="number" min="1" step="1" inputmode="decimal" data-basis="${esc(i.key)}" value="${ING[i.key].price[0]}" aria-label="Basispris for ${esc(i.name)}">
+      <input type="number" min="1" step="any" inputmode="decimal" data-basis="${esc(i.key)}" value="${ING[i.key].price[0]}" aria-label="Basispris for ${esc(i.name)}">
       <span class="u">${basisUnit(i.key)}</span>
-      <span class="std">${changed ? `<button class="link" data-basis-reset="${esc(i.key)}">standard ${ING[i.key].base}</button>` : `standard`}</span>
+      <span class="std">${changed ? `<button class="link" data-basis-reset="${esc(i.key)}">standard ${ING[i.key].base.toLocaleString("da-DK")}</button>`
+        : i.src ? `<span title="${esc(basisSource(i.key))}">${esc(i.src.store)}</span>` : `anslået`}</span>
     </div>`;
   }).join("") || `<p class="hint">Ingen varer passer til søgningen.</p>`;
   const n = Object.keys(custom).length;

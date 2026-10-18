@@ -201,6 +201,7 @@ SITE_HISTORY_DAYS = 183
 
 def cmd_site(args: argparse.Namespace) -> int:
     from .pages import CountrySource, build_site, site_config
+    from . import shelf
 
     cfg = site_config()
     source = make_source(cfg, args.demo)
@@ -224,6 +225,13 @@ def cmd_site(args: argparse.Namespace) -> int:
     print(f"{len(result.new_catalogs)} nye aviser ({result.offers_fetched} tilbud), "
           f"{len(result.known_catalogs)} kendte.")
     stores = country.store_locations(cfg) if country else {}
+    if not args.demo:
+        # Normalpriser på varer uden tilbud til madplanen; ved en fejl bruges de sidste
+        prices, error = shelf.refresh(shelf.path_for(cfg.database), now, force=True)
+        if error:
+            print(f"Advarsel: kunne ikke hente normalpriser ({error}); bruger {len(prices)} gemte.", file=sys.stderr)
+        else:
+            print(f"{len(prices)} normalpriser fra REMA 1000.")
     data = build_site(cfg, args.out, now, stores)
     print(f"Siden er bygget i {args.out}: {len(data['offers'])} tilbud fra {len(data['stores'])} kæder, "
           f"{sum(len(s) for s in stores.values())} butikker og {len(data['places'])} postnumre.")
