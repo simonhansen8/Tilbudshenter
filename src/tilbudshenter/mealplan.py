@@ -1145,9 +1145,11 @@ def load_imported(path=None) -> list[dict]:
             text = resources.files("tilbudshenter.data").joinpath("opskrifter.json").read_text(encoding="utf-8")
         else:
             text = path.read_text(encoding="utf-8")
-        return json.loads(text).get("recipes", [])
-    except (FileNotFoundError, json.JSONDecodeError):
+    except FileNotFoundError:
         return []
+    # En ødelagt fil (fx en halvt flettet fra GitHub) skal stoppe byggeriet i
+    # stedet for at give en side uden opskrifter og links til madsiderne
+    return json.loads(text).get("recipes", [])
 
 
 @lru_cache(maxsize=1)
