@@ -22,13 +22,14 @@ import re
 import time
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
-from itertools import zip_longest
 from datetime import datetime, timezone
+from itertools import zip_longest
 from pathlib import Path
 from urllib.parse import quote, urlparse, urlsplit, urlunsplit
 
 from .comparison import _has_word, _tokens
 from .mealplan import recipe_from_lines
+from .oversaet import danish, is_english
 
 log = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ SITEMAP_LIMIT = 2500
 # Højst så mange nye sider pr. kørsel, så siden stadig bygges hurtigt;
 # resten hentes de næste gange. Madsiderne hentes samtidig, men hver
 # madside kun én side ad gangen.
-NEW_PER_RUN = 1500
+NEW_PER_RUN = 3000
 PER_SITE_PER_RUN = 150
 # Sitemaps og sider, der ikke er opskrifter
 SKIP_SITEMAPS = ("category", "categories", "kategori", "tag", "author", "forfatter", "page-sitemap", "attachment",
@@ -255,6 +256,16 @@ def is_dinner(recipe: dict) -> bool:
     return not (any(_has_word(cats, w) for w in SIDE_CATEGORIES) and not any(_has_word(cats, w) for w in MAIN_CATEGORIES))
 
 
+def _why_not(recipe: dict) -> str:
+    """Hvorfor en hentet opskrift ikke kan bruges, eller "" hvis den kan."""
+    da, why = danish(recipe)
+    if da is None:
+        return why
+    if not is_dinner(da):
+        return "ikke aftensmad"
+    return recipe_from_lines("", da["name"], da["ingredients"], da.get("persons") or 4)[1]
+
+
 def sitemap_urls(xml: str) -> list[str]:
     return [htmllib.unescape(u.strip()) for u in re.findall(r"<loc>\s*(.*?)\s*</loc>", xml, re.DOTALL)]
 
@@ -434,9 +445,7 @@ def update(list_path: Path, json_path: Path = DEFAULT_JSON, fetcher=None, delay:
         if url in known:
             # Reglerne for aftensmad og varerne kan være blevet skærpet siden
             r = known[url]
-            why = "" if is_dinner(r) else "ikke aftensmad"
-            if not why:
-                why = recipe_from_lines("", r["name"], r["ingredients"], r.get("persons") or 4)[1]
+            why = _why_not(r)
             if why:
                 skipped[url] = why
             else:
@@ -451,12 +460,13 @@ def update(list_path: Path, json_path: Path = DEFAULT_JSON, fetcher=None, delay:
             continue
         found = extract_recipe(page, url)
         why = "ingen opskrift på siden"
-        if found and not is_dinner(found):
-            why = "ikke aftensmad"
-        elif found:
+        if found:
             found.pop("method")
-            recipe, why = recipe_from_lines("", found["name"], found["ingredients"], found["persons"])
-            if recipe:
+            if is_english(page):
+                # Gemmes på engelsk og oversættes, når den bruges (se oversaet.py)
+                found["lang"] = "en"
+            why = _why_not(found)
+            if not why:
                 recipes.append({**found, "fetched": datetime.now(timezone.utc).date().isoformat()})
                 added += 1
                 continue
