@@ -59,9 +59,11 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "poelser": ("pølser", [["pølser"]], ["cocktail", "salami", "spege", "rulle", "leverpostej", "vegansk"]),
     "chorizo": ("chorizo", [["chorizo"]], ["chips", "snack", "pizza", "skiver"]),
     "boef": ("bøf", [["bøf "], ["bøffer"], ["oksebøf"], ["entrecote"], ["ribeye"], ["culotte"], ["flanksteak"], ["flatsteak"],
-                     ["oksefilet"], ["tykstegsbøf"]], ["hakke", "burger", "kylling", "kalkun", "lam", "lammekød", "gris", "vegansk", "plantebaseret",
-                                   "laks", "fisk", "veggie", "vegetar", "grønt", "grønsag"]),
-    "okse_tern": ("oksekød i tern", [["okse", "tern"], ["gullasch"], ["oksegryde"], ["oksekødsstrimler"], ["oksestrimler"],
+                     ["oksefilet"], ["tykstegsbøf"], ["rumpsteak"], ["rump", "steak"], ["okse", "steak"], ["steak"], ["tournedos"], ["picanha"]],
+             ["hakke", "burger", "kylling", "kalkun", "lam", "lammekød", "gris", "svin", "vegansk", "plantebaseret",
+              "laks", "fisk", "tun", "veggie", "vegetar", "grønt", "grønsag", "sauce", "krydderi", "house", "pommes",
+              "fritter", "kartof", "frites", "sandwich", "bacon"]),
+    "okse_tern": ("oksekød i tern", [["okse", "tern"], ["gullasch"], ["gulasch"], ["oksegryde"], ["oksekødsstrimler"], ["oksestrimler"],
                                      ["okse", "strimler"]],
                   ["kylling", "gris"]),
     "oksesteg": ("oksesteg (tyndsteg, inderlår, klump, tykkam eller bov)",
@@ -1005,7 +1007,8 @@ PORK_WORDS = ["skinke", "bacon", "pancetta", "chorizo", "salami", "svin", "gris"
 FISH_WORDS = ["fisk", "laks", "torsk", "tun ", "rejer", "makrel", "sild", "ansjos", "muslinger", "hummer",
               "krabbe", "blæksprutte", "rødspætte", "kuller", "sej ", "skaldyr", "kammusling", "tang "]
 MEAT_WORDS = ["kød", "okse", "kalv", "lam", "kylling", "kalkun", "and ", "andebryst", "gås", "vildt", "hjort",
-              "rådyr", "kanin", "bøf", "frikadelle", "høne", "hønse", "lever", "kebab", "gyros"]
+              "rådyr", "kanin", "bøf", "frikadelle", "høne", "hønse", "lever", "kebab", "gyros", "steak", "tournedos", "gulasch", "gullasch",
+              "entrecote", "culotte", "ribeye", "picanha"]
 _KIND_KEYS = [
     ("fisk", ["laksefilet", "roeget_laks", "hvid_fisk", "fiskefrikadeller", "tun", "rejer"]),
     # And og kalkun er fjerkræ ligesom kylling; kalv og lam er rødt kød ligesom okse
@@ -1034,6 +1037,17 @@ def diet_flag(text: str) -> str:
         if _has_any(text, words):
             return flag
     return ""
+
+
+# Navne, der lyder af kød uden at være det: "linsebøf", "uden kød" og
+# engelske navne som "Mac and cheese", hvor "and" ikke er en and
+_VEGGIE_NAME = re.compile(r"(grøntsags|grønsags|linse|bønne|kikærte|rødbede|squash|svampe|kartoffel)bøf|uden kød|\band\b",
+                          re.IGNORECASE)
+
+
+def _meat_in_name(name: str) -> bool:
+    """Om rettens navn nævner kød eller fisk, man skal købe."""
+    return bool(diet_flag(_VEGGIE_NAME.sub(" ", name)))
 
 
 def _before_til(name: str) -> str:
@@ -1113,6 +1127,10 @@ def recipe_from_lines(
         i.main = value(i) >= 0.6 * top
     keys = {k for i in items for k in i.keys}
     kind = next((kind for kind, ks in _KIND_KEYS if keys & set(ks)), "vegetar")
+    # "Lynstegt rumpsteak ..." uden kendt kød i ingredienserne: kødet kan
+    # ikke prissættes, og retten må ikke ligne en vegetarret på tilbud
+    if kind == "vegetar" and not flags and _meat_in_name(name):
+        return None, f"kød eller fisk i navnet, men ikke i ingredienserne: {name}"
     rid = rid or "egen-" + hashlib.sha1(name.encode()).hexdigest()[:8]
     return Recipe(rid, name.strip()[:80], kind, int(minutes or 0), items, pantry, method, source, flags), ""
 
