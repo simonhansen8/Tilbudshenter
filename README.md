@@ -394,7 +394,7 @@ bruger Tilbudshenter til at hente opskrifter automatisk:
    `sitemap: https://www.valdemarsro.dk/`) i `opskrifter.txt` (én pr. linje;
    se eksemplerne i filen). For en madside findes sitemappet i dens
    robots.txt, og op til 2500 opskrifter hentes.
-2. Hver gang siden bygges, henter GitHub op til 1500 nye sider, højst 150
+2. Hver gang siden bygges, henter GitHub op til 3000 nye sider, højst 150
    fra hver madside. Madsiderne hentes samtidig, men hver madside kun én
    side ad gangen med et sekunds pause. Opskrifterne gemmes i
    `src/tilbudshenter/data/opskrifter.json` og lægger dem ind i madplanen.
@@ -404,6 +404,15 @@ Kun navn, antal personer, tid og ingredienser gemmes; madplanen linker til
 madsiden for fremgangsmåden. Opskrifter med kød eller fisk, som ikke kan
 genkendes i aviserne, eller med for mange ukendte varer, springes over, da
 de ikke kan prissættes.
+
+Opskrifter fra engelske madsider (fx BBC Good Food og RecipeTin Eats) gemmes
+på engelsk og oversættes til dansk, når de bruges: navnet ("Chicken and leek
+pie" bliver "Tærte med kylling og porrer"), mængderne (cups til dl, oz og lb
+til g, tbsp til spsk) og ingredienserne, så de kan findes i tilbudsaviserne.
+Oversættelsen er en ordliste i `src/tilbudshenter/oversaet.py`; en opskrift,
+hvis navn ikke kan oversættes helt, springes over, og det samme gør en
+opskrift med kød eller fisk, ordlisten ikke kender. Fremgangsmåden står på
+engelsk på madsiden.
 
 ## Udvikling
 

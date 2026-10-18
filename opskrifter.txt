@@ -9,7 +9,7 @@
 #   sitemap: https://www.eksempel.dk/sitemap.xml /opskrift/
 #   sitemap: https://www.eksempel.dk/
 #
-# Siden henter op til 1500 nye sider, hver gang den bygges, højst 150 fra hver
+# Siden henter op til 3000 nye sider, hver gang den bygges, højst 150 fra hver
 # madside. Kun navn, antal personer, tid og ingredienser gemmes; madplanen
 # linker til madsiden for fremgangsmåden. Kager, desserter og opskrifter med
 # kød eller fisk, som ikke kan genkendes i tilbudsaviserne, springes over.
@@ -24,6 +24,31 @@ sitemap: https://www.hellofresh.dk/ /recipes/
 sitemap: https://www.louisesmadblog.dk/
 sitemap: https://www.danishcrown.com/ /opskrifter/
 sitemap: https://www.opskrifter.dk/ /opskrift/
+# Engelske madsider: opskrifterne oversættes til dansk (navn, mængder og
+# ingredienser), når de bruges. Opskrifter, hvis navn ikke kan oversættes,
+# springes over. Se src/tilbudshenter/oversaet.py
+sitemap: https://www.bbcgoodfood.com/ /recipes/
+sitemap: https://www.recipetineats.com/
+sitemap: https://www.bbc.co.uk/ /food/recipes/
+sitemap: https://www.jamieoliver.com/ /recipes/
+sitemap: https://www.olivemagazine.com/ /recipes/
+sitemap: https://www.deliciousmagazine.co.uk/ /recipes/
+sitemap: https://www.sainsburysmagazine.co.uk/ /recipes/
+sitemap: https://www.goodto.com/ /recipes/
+sitemap: https://www.mob.co.uk/ /recipes/
+sitemap: https://www.hellofresh.co.uk/ /recipes/
+sitemap: https://www.hellofresh.com/ /recipes/
+sitemap: https://www.taste.com.au/ /recipes/
+sitemap: https://www.budgetbytes.com/
+sitemap: https://www.onceuponachef.com/ /recipes/
+sitemap: https://www.skinnytaste.com/
+sitemap: https://www.loveandlemons.com/
+sitemap: https://cookieandkate.com/
+sitemap: https://pinchofyum.com/
+sitemap: https://www.delish.com/ /recipe
+# Engelske, der ikke kan hentes: Allrecipes, Simply Recipes, Kitchen Sanctuary,
+# Nigella, Tesco Real Food, The Woks of Life, Inspired Taste, Serious Eats og The Kitchn
+
 # Afprøvet, men giver ingen brugbare opskrifter: Spis Bedre, Isabellas og
 # Femina (opskriften står ikke som schema.org/Recipe), nemlig.com (ingen mængder),
 # Vores Mad, Retnemt og Madklubben
