@@ -1,12 +1,22 @@
-# Midlertidig: tester webshops fra GitHub Actions
+# Midlertidig: henter REMA 1000's sortiment fra GitHub Actions
 name: Probe
 on:
   push:
     branches: [claude/normalpris-t2wky6]
-    paths: [".github/probe/**", ".github/workflows/probe.yml"]
+    paths: [".github/probe/probe.py", ".github/workflows/probe.yml"]
+permissions:
+  contents: write
 jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
       - run: python3 .github/probe/probe.py
+      - run: |
+          git add .github/probe/rema.json
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -q -m "Midlertidig: REMA-priser"
+          git push -q origin HEAD:claude/normalpris-t2wky6
