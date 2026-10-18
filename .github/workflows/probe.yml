@@ -1,0 +1,12 @@
+# Midlertidig: tester webshops fra GitHub Actions
+name: Probe
+on:
+  push:
+    branches: [claude/normalpris-t2wky6]
+    paths: [".github/probe/**", ".github/workflows/probe.yml"]
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 .github/probe/probe.py
