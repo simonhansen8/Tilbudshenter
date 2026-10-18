@@ -42,7 +42,12 @@ jobs:
             git -c user.name="github-actions[bot]" \
                 -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
                 commit -q -m "Opskrifter hentet fra madsiderne" -- src/tilbudshenter/data/opskrifter.json
-            git pull -q --rebase origin main && git push -q origin HEAD:main || echo "Kunne ikke gemme opskrifterne i main"
+            # Kan de nye opskrifter ikke flettes med main, bygges siden med dem
+            # alligevel; en halvt flettet fil uden opskrifter må aldrig udgives
+            if ! { git pull -q --rebase origin main && git push -q origin HEAD:main; }; then
+              git rebase --abort 2>/dev/null || true
+              echo "Kunne ikke gemme opskrifterne i main"
+            fi
           fi
 
       - name: Hent prishistorikken fra sidste kørsel

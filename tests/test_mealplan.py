@@ -225,3 +225,14 @@ def test_meat_in_name_needs_meat_in_ingredients():
     for name in ["Mac and cheese", "Pasta med aubergine - nem pastaret uden kød", "Grøntsagsbøf med brun sovs"]:
         recipe, why = recipe_from_lines("x", name, veg)
         assert recipe and recipe.kind == "vegetar", (name, why)
+
+
+def test_broken_recipe_file_stops_the_build(tmp_path):
+    import pytest
+
+    # En halvt flettet fil gav en side uden de hentede opskrifter og deres links
+    path = tmp_path / "opskrifter.json"
+    path.write_text('{"recipes": [\n<<<<<<< HEAD\n]}', encoding="utf-8")
+    with pytest.raises(json.JSONDecodeError):
+        load_imported(path)
+    assert load_imported(tmp_path / "findes-ikke.json") == []
