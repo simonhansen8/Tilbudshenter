@@ -232,8 +232,12 @@ def market_prices(offers) -> dict[str, float]:
     return {k: statistics.median(v) for k, v in per_key.items() if len(v) >= MARKET_MIN_OFFERS}
 
 
-def basis_price(key: str, market: dict[str, float] | None = None) -> float:
-    """Basisprisen i kr pr. kg, hævet til det typiske tilbud, hvis det er dyrere."""
+def basis_price(key: str, market: dict[str, float] | None = None, shelf: dict[str, dict] | None = None) -> float:
+    """Basisprisen i kr pr. kg: den rigtige hyldepris fra en webshop, når den
+    kendes (``shelf`` er shelf.basis_prices), ellers den anslåede pris, hævet
+    til det typiske tilbud, hvis det er dyrere."""
+    if shelf and key in shelf:
+        return float(shelf[key]["price"])
     base = NORMAL_PRICES[key][0]
     typical = (market or {}).get(key)
     return float(round(max(base, min(typical, base * MARKET_MAX_FACTOR)))) if typical else float(base)
@@ -1141,22 +1145,25 @@ def imported_recipes() -> tuple[Recipe, ...]:
     return tuple(result)
 
 
-def ingredients_payload(market: dict[str, float] | None = None) -> list[dict]:
-    """Ingredienserne med mønstre, så browseren kan læse egne opskrifter."""
+def ingredients_payload(market: dict[str, float] | None = None, shelf: dict[str, dict] | None = None) -> list[dict]:
+    """Ingredienserne med mønstre, så browseren kan læse egne opskrifter.
+    ``src`` siger, hvor en rigtig hyldepris kommer fra; uden den er prisen anslået."""
+    shelf = shelf or {}
     return [
         {"key": k, "name": name, "patterns": patterns, "exclude": exclude,
-         "price": [basis_price(k, market), NORMAL_PRICES[k][1]],
+         "price": [basis_price(k, market, shelf), NORMAL_PRICES[k][1]],
+         **({"src": {f: shelf[k][f] for f in ("store", "product", "pack", "shelf")}} if k in shelf else {}),
          "pack": basis_pack_g(k), "veg": k in VEGETABLES, "dept": department(k), "replaces": REPLACES.get(k, [])}
         for k, (name, patterns, exclude) in INGREDIENTS.items()
     ]
 
 
-def plan_payload(market: dict[str, float] | None = None) -> dict:
+def plan_payload(market: dict[str, float] | None = None, shelf: dict[str, dict] | None = None) -> dict:
     """Alt, madplanen i browseren skal bruge. ``market`` er market_prices for
-    tilbuddene i prishistorikken."""
+    tilbuddene i prishistorikken, ``shelf`` de rigtige hyldepriser."""
     return {
         "recipes": recipes_payload(),
-        "ingredients": ingredients_payload(market),
+        "ingredients": ingredients_payload(market, shelf),
         "side": _item_payload(SIDE),
         "words": {"not_raw": _NOT_RAW, "not_raw_heading": _NOT_RAW_HEADING, "pantry": PANTRY_WORDS,
                   "flavor": FLAVOR_WORDS, "flavor_ok": {k: list(_flavor_ok(k)) for k in INGREDIENTS if _flavor_ok(k)},

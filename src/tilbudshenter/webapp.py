@@ -22,6 +22,7 @@ from .cli import best_offers, load_app_config, make_source
 from .config import Config, example_config, save_config
 from .mealplan import ingredient_keys, ingredient_names, market_prices, offer_basis_key, plan_payload
 from .opskrifter import extract_recipe, fetch
+from . import shelf
 from .models import Catalog, Offer
 from .report import discount_text, kr, period_text, unit_price_text, write_reports
 from .scanner import scan
@@ -62,8 +63,11 @@ class App:
 
     def plan(self) -> dict:
         """Madplanens data med basispriser, der følger prishistorikken."""
-        with Storage(self.config().database) as storage:
-            return plan_payload(market_prices(storage.unit_prices()))
+        cfg = self.config()
+        with Storage(cfg.database) as storage:
+            market = market_prices(storage.unit_prices())
+        prices, _ = shelf.load(shelf.path_for(cfg.database))
+        return plan_payload(market, shelf.basis_prices(prices))
 
     # -- Status ---------------------------------------------------------
     def state(self) -> dict:
@@ -208,6 +212,11 @@ class App:
                               force=force, now=now, progress=progress)
                 offers = best_offers(cfg, storage, categorizer, now)
             write_reports(offers, categorizer, cfg.output_dir, cfg.formats, now)
+            # Normalpriser på varer uden tilbud; en fejl her stopper ikke hentningen
+            if not self.demo:
+                with self._lock:
+                    self._scan.update(message="Henter normalpriser fra REMA 1000…")
+                shelf.refresh(shelf.path_for(cfg.database), now)
             summary = {
                 "new_catalogs": len(result.new_catalogs),
                 "known_catalogs": len(result.known_catalogs),

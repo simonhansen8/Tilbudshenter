@@ -111,3 +111,13 @@ def test_far_from_basis_is_not_the_same_product(unit_price):
 def test_unknown():
     n = normal(price=10, unit="l", unit_price=6.67)
     assert n["kind"] is None and n["cheaper"] is None
+
+
+def test_real_basis_price_names_the_store():
+    # Med en rigtig hyldepris fra webshoppen står der ikke "ca.", og varen nævnes
+    code = ('(() => { ING.maelk.src = {store: "REMA 1000", product: "Skummetmælk", pack: "1 ltr.", shelf: 9.95};'
+            ' ING.maelk.price[0] = ING.maelk.base = 9.95;'
+            ' return normalPrice({price: 8, unit: "l", unit_price: 8, basis_key: "maelk"}); })()')
+    n = run_js(code)
+    assert n["short"] == "Basispris 9,95 kr/l · 20 % billigere"
+    assert "REMA 1000: Skummetmælk, 1 ltr., 9,95 kr" in n["long"] and "anslået" not in n["long"]

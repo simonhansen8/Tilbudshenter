@@ -51,6 +51,7 @@ jobs:
           if git fetch --depth 1 origin gh-pages; then
             git show origin/gh-pages:tilbud.db > side/tilbud.db || rm -f side/tilbud.db
             git show origin/gh-pages:notifikationer.json > side/notifikationer.json || rm -f side/notifikationer.json
+            git show origin/gh-pages:normalpriser.json > side/normalpriser.json || rm -f side/normalpriser.json
           fi
 
       - name: Hent tilbud og byg siden

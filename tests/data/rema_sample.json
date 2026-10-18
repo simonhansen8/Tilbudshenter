@@ -1,0 +1,302 @@
+[
+{
+"dealer": "REMA 1000",
+"name": "FRUGTCOCKTAIL",
+"underline": "410 ML. / REMA 1000",
+"price": 9.17,
+"unit": "l",
+"unit_price": 22.37,
+"department": "Kolonial",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "KATTEMAD KYLLING",
+"underline": "415 GR. / REMA 1000",
+"price": 7.31,
+"unit": "kg",
+"unit_price": 17.61,
+"department": "Husholdning",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "LETMÆLK 1,5% FEDT",
+"underline": "1 LTR. / REMA 1000",
+"price": 10.95,
+"unit": "l",
+"unit_price": 10.95,
+"department": "Mejeri",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "SKUMMETMÆLK",
+"underline": "1 LTR. / REMA 1000",
+"price": 9.95,
+"unit": "l",
+"unit_price": 9.95,
+"department": "Mejeri",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "SQUASH ORANGE",
+"underline": "50 CL. / HARBOE",
+"price": 4.08,
+"unit": "l",
+"unit_price": 8.16,
+"department": "Drikkevarer",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "SQUASH ORANGE",
+"underline": "3 LTR. / NUL SUKKER, 6 PAK",
+"price": 24.48,
+"unit": "l",
+"unit_price": 8.16,
+"department": "Drikkevarer",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "SQUASH ORANGE",
+"underline": "1.5 LTR. / HARBOE",
+"price": 6.42,
+"unit": "l",
+"unit_price": 4.28,
+"department": "Drikkevarer",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "SMØR",
+"underline": "200 GR. / ARLA, ØKOLOGISK",
+"price": 14.95,
+"unit": "kg",
+"unit_price": 74.75,
+"department": "Mejeri",
+"organic": true
+},
+{
+"dealer": "REMA 1000",
+"name": "CITRON",
+"underline": "1000 GR. / CHEASY, YOGHURT",
+"price": 21.95,
+"unit": "kg",
+"unit_price": 21.95,
+"department": "Mejeri",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "LURPAK SMØR",
+"underline": "200 GR. / DANSK SALTET",
+"price": 19.95,
+"unit": "kg",
+"unit_price": 99.75,
+"department": "Mejeri",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "LURPAK SMØR",
+"underline": "200 GR. / DANSK USALTET",
+"price": 27.95,
+"unit": "kg",
+"unit_price": 139.75,
+"department": "Mejeri",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "SMØR",
+"underline": "200 GR. / REMA 1000",
+"price": 7.96,
+"unit": "kg",
+"unit_price": 39.8,
+"department": "Mejeri",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "AGURK",
+"underline": "1 STK. / SPANIEN KL. 1",
+"price": 10.0,
+"unit": "stk",
+"unit_price": 10.0,
+"department": "Frugt & grønt",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "ØKO. AGURK",
+"underline": "1 STK. / SPANIEN KL.1",
+"price": 12.0,
+"unit": "stk",
+"unit_price": 12.0,
+"department": "Frugt & grønt",
+"organic": true
+},
+{
+"dealer": "REMA 1000",
+"name": "RØD PEBER",
+"underline": "1 STK. / HOLLAND KL. 1",
+"price": 9.0,
+"unit": "stk",
+"unit_price": 9.0,
+"department": "Frugt & grønt",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "CHAMPIGNON",
+"underline": "250 GR. / DANMARK. KL. 1",
+"price": 17.0,
+"unit": "kg",
+"unit_price": 68.0,
+"department": "Frugt & grønt",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "CHAMPIGNON",
+"underline": "400 GR. / LAND/KL.: SE VAREN",
+"price": 19.0,
+"unit": "kg",
+"unit_price": 47.5,
+"department": "Frugt & grønt",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "HVIDLØG I NET",
+"underline": "90 GR. / LAND/KL.: SE VAREN",
+"price": 6.0,
+"unit": "kg",
+"unit_price": 66.67,
+"department": "Frugt & grønt",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "HK. OKSEKØD 4-7%",
+"underline": "350 GR. / REMA 1000",
+"price": 39.95,
+"unit": "kg",
+"unit_price": 114.14,
+"department": "Kød, fisk & fjerkræ",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "HK. OKSEKØD 15-18%",
+"underline": "400 GR. / REMA 1000",
+"price": 37.95,
+"unit": "kg",
+"unit_price": 94.88,
+"department": "Kød, fisk & fjerkræ",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "HK. OKSEKØD 4-7%",
+"underline": "350 GR. / FRILAND, ØKOLOGISK",
+"price": 64.95,
+"unit": "kg",
+"unit_price": 185.57,
+"department": "Kød, fisk & fjerkræ",
+"organic": true
+},
+{
+"dealer": "REMA 1000",
+"name": "HK. OKSEKØD, 35% GRØNT",
+"underline": "400 GR. / REMA 1000",
+"price": 29.95,
+"unit": "kg",
+"unit_price": 74.88,
+"department": "Kød, fisk & fjerkræ",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "STEGEFLÆSK I SKIVER",
+"underline": "400 GR. / REMA 1000",
+"price": 29.95,
+"unit": "kg",
+"unit_price": 74.88,
+"department": "Kød, fisk & fjerkræ",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "HEL KYLLING",
+"underline": "1350 GR. / DANSK",
+"price": 49.95,
+"unit": "kg",
+"unit_price": 37.0,
+"department": "Kød, fisk & fjerkræ",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "SKY M/CHAMPIGNON",
+"underline": "200 GR. / REMA 1000",
+"price": 7.95,
+"unit": "kg",
+"unit_price": 39.75,
+"department": "Køl",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "BACONPOSTEJ",
+"underline": "250 GR. / DEN GRØNNE SLAGTER",
+"price": 14.95,
+"unit": "kg",
+"unit_price": 59.8,
+"department": "Køl",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "BACONPOSTEJ",
+"underline": "400 GR. / SLAGTERMESTER ANDERSEN",
+"price": 13.66,
+"unit": "kg",
+"unit_price": 34.15,
+"department": "Køl",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "NAANBRØD, HVIDLØG",
+"underline": "260 GR. / REMA 1000",
+"price": 12.2,
+"unit": "kg",
+"unit_price": 46.92,
+"department": "Brød & Bavinchi",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "KUGLEPENNE",
+"underline": "6 STK. / STAEDTLER",
+"price": 22.95,
+"unit": "stk",
+"unit_price": 3.83,
+"department": "Husholdning",
+"organic": false
+},
+{
+"dealer": "REMA 1000",
+"name": "SPAGHETTI",
+"underline": "1 KG. / REMA 1000",
+"price": 8.95,
+"unit": "kg",
+"unit_price": 8.95,
+"department": "Kolonial",
+"organic": false
+}
+]

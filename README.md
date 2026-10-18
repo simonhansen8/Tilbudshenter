@@ -93,8 +93,8 @@ I appen kan du:
 - vælge mellem tilbud der gælder nu, og dem der starter senere,
 - se hvilke tilbud der kræver Lidl Plus, kædens app eller medlemskab (og skjule dem),
 - se normalprisen ved hvert tilbud, og om tilbuddet faktisk er billigere: butikkens
-  egen normalpris, når avisen oplyser den, ellers basisprisen (den anslåede hyldepris
-  fra madplanen) for almindelige basisvarer som hakket oksekød, mælk og kartofler.
+  egen normalpris, når avisen oplyser den, ellers basisprisen (madplanens hyldepris
+  uden tilbud, se nedenfor) for almindelige basisvarer som hakket oksekød, mælk og kartofler.
   For de fleste andre varer oplyser aviserne ingen normalpris, og så står der
   *Normalpris ukendt*,
 - lægge tilbud og egne varer på en **indkøbsliste**, delt op efter butik og afdeling, som
@@ -318,10 +318,13 @@ plan giver nye retter.
   hovedingrediensen købes, så en ret kan købes ind ét sted. Du kan også
   vælge én bestemt butik.
 - Et tilbud bruges kun, når det er billigere end **basisvaren**: den
-  almindelige hyldepris uden tilbud på en almindelig udgave af varen
-  (`NORMAL_PRICES` i `mealplan.py`, anslået ud fra hyldepriserne i 2026).
-  Koster varen typisk mere på tilbud i aviserne (medianen af mindst 6 tilbud
-  i prishistorikken), bruges det i stedet, dog højst halvanden gang den
+  rigtige hyldepris uden tilbud i REMA 1000 på den billigste almindelige (ikke
+  økologiske) udgave af varen. Hele REMA 1000's sortiment hentes fra deres
+  webshop med hver opdatering og gemmes i `normalpriser.json` (`shelf.py`);
+  svarer webshoppen ikke, bruges de sidst hentede priser. Har REMA 1000 ikke
+  varen, bruges en anslået pris (`NORMAL_PRICES` i `mealplan.py`), og koster
+  varen typisk mere på tilbud i aviserne (medianen af mindst 6 tilbud i
+  prishistorikken), bruges det i stedet, dog højst halvanden gang den
   anslåede pris. En stor rabat på et dyrt mærke er altså ikke nok. Under
   **Basispriser** kan du rette priserne til det, du selv giver; dine priser
   gemmes i browseren.
