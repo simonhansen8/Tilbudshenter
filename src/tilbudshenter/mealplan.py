@@ -36,7 +36,7 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "hakket_kylling": PRODUCT_GROUPS["hakket_kylling"],
     "kyllingebryst": ("kyllingebryst", [["kyllingebryst"], ["kyllingefilet"], ["kylling", "inderfilet"],
                                         ["kyllingeinderfilet"], ["kyllingestrimler"]], ["lage", "kalkun"]),
-    "kyllingelaar": ("kyllingelår", [["kylling", "lår"], ["overlår"], ["underlår"]], ["and", "kalkun"]),
+    "kyllingelaar": ("kyllingelår", [["kylling", "lår"], ["overlår"], ["underlår"], ["kyllingelårfilet"], ["kylling", "lårfilet"]], ["and", "kalkun"]),
     "hel_kylling": ("hel kylling", [["hel", "kylling"], ["helkylling"], ["kylling", "hel "], ["kylling "], ["kyllinger "]],
                     ["grill", "stegt", "lår", "bryst", "filet", "hakket", "pålæg", "kogt", "wings", "tern", "pose", "posen"]),
     "bacon": ("bacon", [["bacon"]], ["leverpostej", "kalkun", "pølse", "ost", "chips"]),
@@ -59,9 +59,10 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "poelser": ("pølser", [["pølser"]], ["cocktail", "salami", "spege", "rulle", "leverpostej", "vegansk"]),
     "chorizo": ("chorizo", [["chorizo"]], ["chips", "snack", "pizza", "skiver"]),
     "boef": ("bøf", [["bøf "], ["bøffer"], ["oksebøf"], ["entrecote"], ["ribeye"], ["culotte"], ["flanksteak"], ["flatsteak"],
-                     ["oksefilet"], ["tykstegsbøf"], ["rumpsteak"], ["rump", "steak"], ["okse", "steak"], ["tournedos"], ["picanha"]],
+                     ["oksefilet"], ["tykstegsbøf"], ["rumpsteak"], ["rump", "steak"], ["okse", "steak"], ["steak"], ["tournedos"], ["picanha"]],
              ["hakke", "burger", "kylling", "kalkun", "lam", "lammekød", "gris", "svin", "vegansk", "plantebaseret",
-              "laks", "fisk", "tun", "veggie", "vegetar", "grønt", "grønsag", "sauce", "krydderi"]),
+              "laks", "fisk", "tun", "veggie", "vegetar", "grønt", "grønsag", "sauce", "krydderi", "house", "pommes",
+              "fritter", "kartof", "frites", "sandwich", "bacon"]),
     "okse_tern": ("oksekød i tern", [["okse", "tern"], ["gullasch"], ["gulasch"], ["oksegryde"], ["oksekødsstrimler"], ["oksestrimler"],
                                      ["okse", "strimler"]],
                   ["kylling", "gris"]),
@@ -1151,8 +1152,13 @@ def load_imported(path=None) -> list[dict]:
 
 @lru_cache(maxsize=1)
 def imported_recipes() -> tuple[Recipe, ...]:
+    from .oversaet import danish
+
     result = []
     for data in load_imported():
+        data, _ = danish(data)  # engelske opskrifter på dansk
+        if data is None:
+            continue
         recipe, _ = recipe_from_lines(
             "web-" + hashlib.sha1(data["url"].encode()).hexdigest()[:10], data["name"], data["ingredients"],
             data.get("persons") or 4, data.get("minutes") or 0, "", data["url"],
