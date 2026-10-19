@@ -285,6 +285,7 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
       <button class="btn primary" id="btn-scan">Hent nye tilbud</button>
       <button class="btn" id="btn-plan">Madplan</button>
       <button class="btn" id="btn-week">Ugeplan</button>
+      <button class="btn" id="btn-week-offers">Opskrifter på tilbud</button>
       <button class="btn" id="btn-list">Indkøbsliste <span id="list-count"></span></button>
       <button class="btn" id="btn-settings">Indstillinger</button>
     </div>
@@ -583,6 +584,9 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
           <option value="">Alle slags</option><option value="okse">Okse</option><option value="gris">Gris</option>
           <option value="kylling">Kylling</option><option value="fisk">Fisk</option><option value="vegetar">Vegetar</option>
           <option value="andet">Andet kød</option><option value="own">Mine opskrifter</option>
+        </select>
+        <select id="week-sort" aria-label="Sortering">
+          <option value="">Alfabetisk</option><option value="offers">Mest på tilbud</option>
         </select>
       </div>
       <div id="week-recipes"></div>
@@ -2802,7 +2806,7 @@ function cleanWeeks(weeks, now) {
 }
 // </weeks>
 const WEEKS_AHEAD = 12, WEEK_PAGE = 50;
-const week = {offset: 0, q: "", kind: "", limit: WEEK_PAGE};
+const week = {offset: 0, q: "", kind: "", sort: "", limit: WEEK_PAGE};
 function shownWeek() { const d = today(); return weekOf(addDays(d, 7 * week.offset)); }
 function allWeeks() { return store.get("weeks", {}); }
 function weekIds(w) { return allWeeks()[w.key] || []; }
@@ -2820,7 +2824,7 @@ function recipeSub(r) {
 function weekPersons() { return Number(store.get("weekpersons", 0)) || store.get("mealplan", {}).persons || 4; }
 // Tilbud i den viste uge fra mine butikker, efter ingrediens som i
 // madplanen; for denne uge kun fra i dag
-const weekOffers = {key: "", index: null};
+const weekOffers = {key: "", index: null, recipes: new Map()};
 function weekIndex() {
   const w = shownWeek(), key = `${w.key}|${state.offers.length}|${[...state.stores].join()}`;
   if (weekOffers.key !== key) {
@@ -2828,6 +2832,7 @@ function weekIndex() {
     const first = new Date(Math.max(start, new Date(new Date().setHours(0, 0, 0, 0))));
     weekOffers.index = ingredientIndex(first, new Date(m.getFullYear(), m.getMonth(), m.getDate() + 6, 23, 59), "");
     weekOffers.key = key;
+    weekOffers.recipes = new Map();
   }
   return weekOffers.index;
 }
@@ -2835,14 +2840,22 @@ function weekIndex() {
 // hovedingrediensen, så retten kan købes ind ét sted
 function recipeOffers(r) {
   const index = weekIndex();
+  if (weekOffers.recipes.has(r.id)) return weekOffers.recipes.get(r.id);
   const items = r.items.filter(i => !i.side);
   const mains = items.filter(i => i.main).map(i => bestOffer(i, index)).filter(Boolean);
   const dealer = mains.length ? mains[0].dealer : null;
-  return items.map(item => ({item, offer: bestOffer(item, index, dealer)}));
+  const lines = items.map(item => ({item, offer: bestOffer(item, index, dealer)}));
+  weekOffers.recipes.set(r.id, lines);
+  return lines;
+}
+// Hvor mange af rettens varer der er på tilbud, og hvor stor en andel
+function offerShare(r) {
+  const lines = recipeOffers(r), on = lines.filter(y => y.offer).length;
+  return {on, all: lines.length, ratio: lines.length ? on / lines.length : 0};
 }
 function offerCount(r) {
-  const n = recipeOffers(r).filter(y => y.offer).length;
-  return n ? ` · <span class="on-offer">${n} ${n === 1 ? "vare" : "varer"} på tilbud</span>` : "";
+  const {on, all} = offerShare(r);
+  return on ? ` · <span class="on-offer">${on} af ${all} varer på tilbud</span>` : "";
 }
 function recipeDetails(r, persons) {
   const old = plan.persons;
@@ -2858,7 +2871,8 @@ function recipeDetails(r, persons) {
   return `<ul>${items}</ul>${none}${r.pantry.length ? `<div class="sub">Har du derhjemme: ${esc(r.pantry.join(", "))}</div>` : ""}
     ${r.method ? `<p class="method">${esc(r.method)}</p>` : ""}
     ${r.source ? `<a href="${esc(r.source)}" target="_blank" rel="noopener">Se opskriften hos ${esc(host(r.source))}</a>` : ""}
-    ${weekPicker(r.id)}`;
+    ${weekPicker(r.id)}
+    <div><button class="btn small" data-week-list="${esc(r.id)}" style="margin-top:8px">Læg ingredienserne på indkøbslisten</button></div>`;
 }
 // Vælg retten til en anden uge end den, der vises; ✓ ved uger, den allerede er i
 function weekPicker(id) {
@@ -2883,8 +2897,7 @@ function renderWeek(recipes = true) {
   $("week-chosen").innerHTML = ids.length ? ids.map((id, i) => {
     const r = byId.get(id);
     return `<div class="week-dish"><span class="no">${i + 1}</span>
-      <div class="what"><details><summary>${esc(r.name)}<div class="sub">${esc(recipeSub(r))}${offerCount(r)}</div></summary>${recipeDetails(r, persons)}
-        <div><button class="btn small" data-week-list="${esc(id)}" style="margin-top:8px">Læg ingredienserne på indkøbslisten</button></div></details></div>
+      <div class="what"><details><summary>${esc(r.name)}<div class="sub">${esc(recipeSub(r))}${offerCount(r)}</div></summary>${recipeDetails(r, persons)}</details></div>
       <div class="dish-actions">
         <button class="btn small" data-week-move="${i}:-1" ${i ? "" : "disabled"} title="Tidligere i ugen" aria-label="Flyt op">↑</button>
         <button class="btn small" data-week-move="${i}:1" ${i < ids.length - 1 ? "" : "disabled"} title="Senere i ugen" aria-label="Flyt ned">↓</button>
@@ -2902,10 +2915,17 @@ function sortName(r) { return r.name.replace(/^[^\p{L}\p{N}]+/u, ""); }
 function renderWeekRecipes() {
   const w = shownWeek(), chosen = new Set(weekIds(w)), persons = weekPersons();
   const q = tokens(week.q);
-  const list = allRecipes().filter(r => (!week.kind || (week.kind === "own" ? r.own : r.kind === week.kind)) &&
+  let list = allRecipes().filter(r => (!week.kind || (week.kind === "own" ? r.own : r.kind === week.kind)) &&
     q.every(t => tokens(r.name + " " + r.items.map(i => i.name).join(" ")).some(x => x.startsWith(t))))
     .sort((a, b) => (b.own || false) - (a.own || false) || sortName(a).localeCompare(sortName(b), "da"));
-  $("week-count").textContent = `(${list.length.toLocaleString("da-DK")})`;
+  // Mest på tilbud: kun retter med varer på tilbud i ugen, størst andel
+  // først, så flest varer på tilbud
+  if (week.sort === "offers") {
+    const share = new Map(list.map(r => [r.id, offerShare(r)]));
+    list = list.filter(r => share.get(r.id).on)
+      .sort((a, b) => share.get(b.id).ratio - share.get(a.id).ratio || share.get(b.id).on - share.get(a.id).on);
+  }
+  $("week-count").textContent = `(${list.length.toLocaleString("da-DK")}${week.sort === "offers" ? " med varer på tilbud" : ""})`;
   $("week-recipes").innerHTML = list.slice(0, week.limit).map(r => {
     const other = otherWeeks(r.id, w), on = chosen.has(r.id);
     return `<div class="week-recipe"><div class="what"><details><summary>${esc(r.name)}
@@ -2970,6 +2990,13 @@ $("btn-week-more").addEventListener("click", () => { week.limit += WEEK_PAGE; re
 $("btn-week-list").addEventListener("click", () => weekToList());
 $("week-search").addEventListener("input", e => { week.q = e.target.value; week.limit = WEEK_PAGE; renderWeekRecipes(); });
 $("week-kind").addEventListener("change", e => { week.kind = e.target.value; week.limit = WEEK_PAGE; renderWeekRecipes(); });
+$("week-sort").addEventListener("change", e => { week.sort = e.target.value; week.limit = WEEK_PAGE; renderWeekRecipes(); });
+// Alle opskrifter med varer på tilbud i denne uge, størst andel først
+$("btn-week-offers").addEventListener("click", async () => {
+  week.offset = 0; week.sort = "offers"; $("week-sort").value = "offers";
+  await openWeek();
+  document.querySelector("#week-dlg .week-tools").scrollIntoView();
+});
 $("week-persons").addEventListener("change", e => { store.set("weekpersons", Number(e.target.value)); renderWeek(); });
 $("week-dlg").addEventListener("change", e => {
   const sel = e.target.closest("[data-week-copy]");
