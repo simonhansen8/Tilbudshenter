@@ -391,10 +391,10 @@ netop dens ingredienser på listen. Under opskriften kan du også vælge
 retten til en anden uge. Under hver vare står det billigste tilbud i ugen
 fra dine butikker (tryk for at se tilbuddet), og ved retten står, hvor
 mange varer der er på tilbud. For de kommende uger vises kun de tilbud,
-der allerede er kendt. Vælg **Mest på tilbud** i stedet for **Alfabetisk**
+der allerede er kendt. Vælg **Størst andel på tilbud** eller **Flest varer på tilbud** i stedet for **Alfabetisk**
 (eller tryk **Opskrifter på tilbud** øverst på siden) for kun at se retter
 med varer på tilbud i ugen, sorteret efter hvor stor en andel af varerne
-der er på tilbud. Hver ret kan åbnes, lægges i en uge og på
+der er på tilbud, eller hvor mange varer der er på tilbud. Hver ret kan åbnes, lægges i en uge og på
 indkøbslisten. I madplanen
 kan en ret gemmes i sin uge med **Gem i uge 42**. Ugeplanen huskes i
 browseren; uger, der er mere end fire uger gamle, ryddes væk.

@@ -586,7 +586,8 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
           <option value="andet">Andet kød</option><option value="own">Mine opskrifter</option>
         </select>
         <select id="week-sort" aria-label="Sortering">
-          <option value="">Alfabetisk</option><option value="offers">Mest på tilbud</option>
+          <option value="">Alfabetisk</option><option value="offers">Størst andel på tilbud</option>
+          <option value="count">Flest varer på tilbud</option>
         </select>
       </div>
       <div id="week-recipes"></div>
@@ -2918,14 +2919,16 @@ function renderWeekRecipes() {
   let list = allRecipes().filter(r => (!week.kind || (week.kind === "own" ? r.own : r.kind === week.kind)) &&
     q.every(t => tokens(r.name + " " + r.items.map(i => i.name).join(" ")).some(x => x.startsWith(t))))
     .sort((a, b) => (b.own || false) - (a.own || false) || sortName(a).localeCompare(sortName(b), "da"));
-  // Mest på tilbud: kun retter med varer på tilbud i ugen, størst andel
-  // først, så flest varer på tilbud
-  if (week.sort === "offers") {
+  // Kun retter med varer på tilbud i ugen: størst andel først (så flest
+  // varer), eller flest varer først (så størst andel)
+  if (week.sort) {
     const share = new Map(list.map(r => [r.id, offerShare(r)]));
+    const ratio = (a, b) => share.get(b.id).ratio - share.get(a.id).ratio;
+    const count = (a, b) => share.get(b.id).on - share.get(a.id).on;
     list = list.filter(r => share.get(r.id).on)
-      .sort((a, b) => share.get(b.id).ratio - share.get(a.id).ratio || share.get(b.id).on - share.get(a.id).on);
+      .sort(week.sort === "count" ? (a, b) => count(a, b) || ratio(a, b) : (a, b) => ratio(a, b) || count(a, b));
   }
-  $("week-count").textContent = `(${list.length.toLocaleString("da-DK")}${week.sort === "offers" ? " med varer på tilbud" : ""})`;
+  $("week-count").textContent = `(${list.length.toLocaleString("da-DK")}${week.sort ? " med varer på tilbud" : ""})`;
   $("week-recipes").innerHTML = list.slice(0, week.limit).map(r => {
     const other = otherWeeks(r.id, w), on = chosen.has(r.id);
     return `<div class="week-recipe"><div class="what"><details><summary>${esc(r.name)}
