@@ -388,7 +388,10 @@ i ugen. Retterne i ugen sættes i den rækkefølge, du har lyst til at spise
 dem, med ↑ og ↓. **Læg på indkøbslisten** lægger ugens ingredienser på
 listen, lagt sammen pr. vare til det valgte antal personer. Tryk på en ret i ugen for at åbne opskriften og lægge
 netop dens ingredienser på listen. Under opskriften kan du også vælge
-retten til en anden uge. I madplanen
+retten til en anden uge. Under hver vare står det billigste tilbud i ugen
+fra dine butikker (tryk for at se tilbuddet), og ved retten står, hvor
+mange varer der er på tilbud. For de kommende uger vises kun de tilbud,
+der allerede er kendt. I madplanen
 kan en ret gemmes i sin uge med **Gem i uge 42**. Ugeplanen huskes i
 browseren; uger, der er mere end fire uger gamle, ryddes væk.
 
