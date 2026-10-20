@@ -395,7 +395,9 @@ der allerede er kendt. Vælg **Størst andel på tilbud** eller **Flest varer p�
 (eller tryk **Opskrifter på tilbud** øverst på siden) for kun at se retter
 med varer på tilbud i ugen, sorteret efter hvor stor en andel af varerne
 der er på tilbud, eller hvor mange varer der er på tilbud. Hver ret kan åbnes, lægges i en uge og på
-indkøbslisten. I madplanen
+indkøbslisten. Ved hver ret står, hvad den koster til ugens antal
+personer, og i den åbne ret står prisen for hver vare: hele pakker af
+tilbuddet eller basisvaren, som i madplanen. I madplanen
 kan en ret gemmes i sin uge med **Gem i uge 42**. Ugeplanen huskes i
 browseren; uger, der er mere end fire uger gamle, ryddes væk.
 

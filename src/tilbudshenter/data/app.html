@@ -236,6 +236,11 @@ details.have .hint { margin-top: 6px; }
 .week-recipe button.offer, .week-dish button.offer { all: unset; cursor: pointer; color: var(--muted); font-size: 12px; text-decoration: underline;
   text-decoration-color: var(--line); text-underline-offset: 2px; }
 .week-recipe button.offer:hover, .week-dish button.offer:focus-visible { color: var(--accent); }
+.week-recipe li .line, .week-dish li .line { display: flex; gap: 8px; justify-content: space-between; }
+.week-recipe li .wk-price, .week-dish li .wk-price { font-size: 13px; font-weight: 600; white-space: nowrap; }
+.week-recipe li .buy, .week-dish li .buy { display: block; color: var(--muted); font-size: 12px; }
+.week-recipe .price-sum, .week-dish .price-sum { margin-top: 6px; }
+.week-recipe summary .wk-price, .week-dish summary .wk-price { font-weight: 600; color: var(--fg); }
 .week-recipe .on-offer, .week-dish .on-offer { color: var(--accent); font-weight: 600; }
 .week-dish .method, .week-recipe .method { font-size: 14px; margin: 6px 0; white-space: pre-line; }
 .week-tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 4px; align-items: center; }
@@ -2858,18 +2863,42 @@ function offerCount(r) {
   const {on, all} = offerShare(r);
   return on ? ` · <span class="on-offer">${on} af ${all} varer på tilbud</span>` : "";
 }
+// Rettens pris til ugens personer som i madplanen: hele pakker af tilbuddet
+// eller basisvaren (pay), og det, retten bruger af dem (cost). Kaldes, mens
+// plan.persons er sat til ugens personer.
+function recipePrice(r) {
+  const entry = {recipe: r, mult: 1, day: today(), items: recipeOffers(r).map(y => ({item: y.item, offer: y.offer, have: false}))};
+  buyPacks([entry]);
+  return {items: entry.items, pay: dishPay(entry), cost: dishCost(entry),
+    unknown: entry.items.filter(y => lineCost(y, 1).unknown).length};
+}
+function priceTag(r) {
+  const old = plan.persons;
+  plan.persons = weekPersons();
+  const p = recipePrice(r), persons = plan.persons;
+  plan.persons = old;
+  return p.pay ? ` · <span class="wk-price">ca. ${kr(p.pay)} til ${persons} ${persons === 1 ? "person" : "personer"}</span>` : "";
+}
 function recipeDetails(r, persons) {
   const old = plan.persons;
   plan.persons = persons;  // itemText skalerer efter madplanens personer
-  const lines = recipeOffers(r);
-  const items = lines.map(({item, offer}) => `<li${offer ? ` class="on"` : ""}>${esc(itemText(item, 1))}${offer
-    ? `<br><button class="offer" data-week-offer="${esc(offer.id)}" data-recipe="${esc(r.id)}" title="Se tilbuddet">${esc(offerLine(offer, item.keys.find(k => offer.ingredients.includes(k))))} ›</button>` : ""}</li>`).join("");
+  const p = recipePrice(r);
+  const items = p.items.map(y => {
+    const {item, offer} = y, c = lineCost(y, 1);
+    const price = c.unknown ? "pris ukendt" : `${c.estimate && offer && !y.buy ? "ca. " : ""}${kr(linePay(y, c))}`;
+    return `<li${offer ? ` class="on"` : ""}><span class="line"><span>${esc(itemText(item, 1))}</span><span class="wk-price">${y.rest ? "rest" : price}</span></span>${offer
+      ? `<button class="offer" data-week-offer="${esc(offer.id)}" data-recipe="${esc(r.id)}" title="Se tilbuddet">${esc(offerLine(offer, item.keys.find(k => offer.ingredients.includes(k))))} ›</button>`
+      : c.unknown ? "" : `<span class="buy">ikke på tilbud, ${esc(basisText(item.keys[0]))}</span>`}${buyLine(y, c, 1)}</li>`;
+  }).join("");
+  const total = p.pay ? `<div class="sub price-sum">Du betaler ca. <b>${kr(p.pay)}</b> til ${persons} ${persons === 1 ? "person" : "personer"}${
+    Math.abs(p.pay - p.cost) >= 1 ? `, og retten bruger for ca. ${kr(p.cost)}` : ""}${
+    p.unknown ? ` · ${p.unknown} ${p.unknown === 1 ? "vare" : "varer"} uden kendt pris er ikke regnet med` : ""}</div>` : "";
   plan.persons = old;
   // Aviserne for de kommende uger kommer først hen ad vejen
   const wk = shownWeek().week;
   const none = !weekIndex().size ? `<div class="sub">Tilbuddene for uge ${wk} er ikke kommet endnu.</div>`
     : week.offset > 0 ? `<div class="sub">Kun de tilbud, der er kendt for uge ${wk} indtil nu.</div>` : "";
-  return `<ul>${items}</ul>${none}${r.pantry.length ? `<div class="sub">Har du derhjemme: ${esc(r.pantry.join(", "))}</div>` : ""}
+  return `<ul>${items}</ul>${total}${none}${r.pantry.length ? `<div class="sub">Har du derhjemme: ${esc(r.pantry.join(", "))}</div>` : ""}
     ${r.method ? `<p class="method">${esc(r.method)}</p>` : ""}
     ${r.source ? `<a href="${esc(r.source)}" target="_blank" rel="noopener">Se opskriften hos ${esc(host(r.source))}</a>` : ""}
     ${weekPicker(r.id)}
@@ -2898,7 +2927,7 @@ function renderWeek(recipes = true) {
   $("week-chosen").innerHTML = ids.length ? ids.map((id, i) => {
     const r = byId.get(id);
     return `<div class="week-dish"><span class="no">${i + 1}</span>
-      <div class="what"><details><summary>${esc(r.name)}<div class="sub">${esc(recipeSub(r))}${offerCount(r)}</div></summary>${recipeDetails(r, persons)}</details></div>
+      <div class="what"><details><summary>${esc(r.name)}<div class="sub">${esc(recipeSub(r))}${offerCount(r)}${priceTag(r)}</div></summary>${recipeDetails(r, persons)}</details></div>
       <div class="dish-actions">
         <button class="btn small" data-week-move="${i}:-1" ${i ? "" : "disabled"} title="Tidligere i ugen" aria-label="Flyt op">↑</button>
         <button class="btn small" data-week-move="${i}:1" ${i < ids.length - 1 ? "" : "disabled"} title="Senere i ugen" aria-label="Flyt ned">↓</button>
@@ -2932,7 +2961,7 @@ function renderWeekRecipes() {
   $("week-recipes").innerHTML = list.slice(0, week.limit).map(r => {
     const other = otherWeeks(r.id, w), on = chosen.has(r.id);
     return `<div class="week-recipe"><div class="what"><details><summary>${esc(r.name)}
-      <div class="sub">${esc(recipeSub(r))}${offerCount(r)}${other.length ? ` · <b>i ${esc(joinDa(other))}</b>` : ""}</div></summary>${recipeDetails(r, persons)}</details></div>
+      <div class="sub">${esc(recipeSub(r))}${offerCount(r)}${priceTag(r)}${other.length ? ` · <b>i ${esc(joinDa(other))}</b>` : ""}</div></summary>${recipeDetails(r, persons)}</details></div>
       <button class="btn small add${on ? " on" : ""}" data-week-add="${esc(r.id)}">${on ? "✓ I" : "+"} uge ${w.week}</button></div>`;
   }).join("") || `<p class="hint">Ingen opskrifter passer til søgningen.</p>`;
   $("btn-week-more").hidden = list.length <= week.limit;
