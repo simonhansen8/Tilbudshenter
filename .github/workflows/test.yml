@@ -13,5 +13,3 @@ jobs:
           python-version: "3.12"
       - run: pip install -e ".[dev]"
       - run: pytest -q
-      - run: python .github/diag/proxies.py
-        continue-on-error: true

@@ -56,3 +56,80 @@ def test_browser_recipe_fields():
     assert chili["name"] == "Chili con carne & ris" and chili["persons"] == 2 and chili["minutes"] == 65
     assert chili["method"] == "Brun kødet. Kog ris."
     assert micro["ingredients"] == ["500 g hakket oksekød", "1 løg"] and micro["minutes"] == 45
+
+
+DR_TEXT = """Title: Lasagne | DR
+
+URL Source: https://www.dr.dk/mad/opskrift/lasagne
+
+**Tidsforbrug:** 1 time, 10 min. **Mængde:** 4 pers.
+
+## Ingredienser
+
+**Kødsauce**
+
+*   •
+
+2 spsk. olivenolie
+
+*   •
+
+500 g hakket oksekød
+
+*   •
+
+1 dåse flåede tomater
+
+**Bechamelsauce**
+
+*   •
+
+0,5 l mælk
+
+## Fremgangsmåde
+
+Tænd ovnen på 200 grader.
+"""
+
+ARLA_TEXT = """Title: Lasagne - Arla
+
+## Ingredienser
+
+ 4 personer 
+
+### Kødsauce
+
+| 25 g Smør |  |
+| --- |
+| 500 g Hakket oksekød |  |
+| 1 Hakket løg (ca. 100 g) |  |
+
+### Mornaysauce
+
+| 6 dl Kogende mælk |  |
+
+## Sådan gør du
+
+Smelt smørret.
+"""
+
+
+def run_text_js(texts: list[str]) -> list:
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("Node er ikke installeret")
+    html = resources.files("tilbudshenter.data").joinpath("app.html").read_text(encoding="utf-8")
+    block = html.split("// <recipe-page>", 1)[1].split("// </recipe-page>", 1)[0]
+    script = f"{block}\nconsole.log(JSON.stringify({json.dumps(texts)}.map(t => extractRecipeText(t, 'https://mad.dk/x'))));\n"
+    out = subprocess.run([node, "-"], input=script, capture_output=True, text=True, encoding="utf-8", check=True)
+    return json.loads(out.stdout)
+
+
+def test_recipe_from_page_text():
+    # Sider uden schema.org/Recipe (fx DR) læses som tekst fra r.jina.ai
+    dr, arla, none = run_text_js([DR_TEXT, ARLA_TEXT, "Title: Forside\n\nIngen opskrift"])
+    assert dr["name"] == "Lasagne" and dr["persons"] == 4
+    assert dr["ingredients"] == ["2 spsk. olivenolie", "500 g hakket oksekød", "1 dåse flåede tomater", "0,5 l mælk"]
+    assert arla["name"] == "Lasagne"
+    assert arla["ingredients"] == ["25 g Smør", "500 g Hakket oksekød", "1 Hakket løg (ca. 100 g)", "6 dl Kogende mælk"]
+    assert none is None
