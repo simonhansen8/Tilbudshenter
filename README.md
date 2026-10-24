@@ -362,8 +362,15 @@ plan giver nye retter.
 - **Mine opskrifter**: tilføj dine egne retter ved at skrive eller kopiere
   ingredienslisten ind. Hver linje som "500 g hakket oksekød" genkendes som
   tilbuddene, og retten kommer på madplanen, når hovedingrediensen er på
-  tilbud, eller når du trykker **Sæt på madplanen**. I appen kan du også
-  indsætte et link til en opskrift. Egne opskrifter gemmes i browseren.
+  tilbud, eller når du trykker **Sæt på madplanen**. Du kan også indsætte
+  et link til en opskrift (også fra **+ Egen opskrift fra link** i
+  ugeplanen): navn, ingredienser og fremgangsmåde hentes fra madsiden, og
+  du ser med det samme, hvilke varer der er på tilbud i ugen, og hvad retten
+  koster. Er opskriften allerede i samlingen, hentes den derfra. På
+  GitHub Pages kan siden ikke selv hente andre sider, så den prøver først
+  direkte og ellers gennem en offentlig proxy (allorigins.win eller
+  corsproxy.io), som kun får adressen på opskriften. Egne opskrifter
+  gemmes i browseren.
 - **Læg på indkøbslisten** lægger tilbuddene og de varer, der ikke er på
   tilbud, på indkøbslisten. Samme vare i flere retter lægges sammen, med en
   note om mængden og retterne, og antallet af pakker står på listen og

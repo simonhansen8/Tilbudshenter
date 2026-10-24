@@ -590,6 +590,7 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
           <option value="kylling">Kylling</option><option value="fisk">Fisk</option><option value="vegetar">Vegetar</option>
           <option value="andet">Andet kød</option><option value="own">Mine opskrifter</option>
         </select>
+        <button class="btn small" id="btn-week-own" type="button">+ Egen opskrift fra link</button>
         <select id="week-sort" aria-label="Sortering">
           <option value="">Alfabetisk</option><option value="offers">Størst andel på tilbud</option>
           <option value="count">Flest varer på tilbud</option>
@@ -2830,7 +2831,8 @@ function recipeSub(r) {
 function weekPersons() { return Number(store.get("weekpersons", 0)) || store.get("mealplan", {}).persons || 4; }
 // Tilbud i den viste uge fra mine butikker, efter ingrediens som i
 // madplanen; for denne uge kun fra i dag
-const weekOffers = {key: "", index: null, recipes: new Map()};
+// Rettens tilbud gemmes pr. opskrift (egne opskrifter laves på ny, når de ændres)
+const weekOffers = {key: "", index: null, recipes: new WeakMap()};
 function weekIndex() {
   const w = shownWeek(), key = `${w.key}|${state.offers.length}|${[...state.stores].join()}`;
   if (weekOffers.key !== key) {
@@ -2838,7 +2840,7 @@ function weekIndex() {
     const first = new Date(Math.max(start, new Date(new Date().setHours(0, 0, 0, 0))));
     weekOffers.index = ingredientIndex(first, new Date(m.getFullYear(), m.getMonth(), m.getDate() + 6, 23, 59), "");
     weekOffers.key = key;
-    weekOffers.recipes = new Map();
+    weekOffers.recipes = new WeakMap();
   }
   return weekOffers.index;
 }
@@ -2846,12 +2848,12 @@ function weekIndex() {
 // hovedingrediensen, så retten kan købes ind ét sted
 function recipeOffers(r) {
   const index = weekIndex();
-  if (weekOffers.recipes.has(r.id)) return weekOffers.recipes.get(r.id);
+  if (weekOffers.recipes.has(r)) return weekOffers.recipes.get(r);
   const items = r.items.filter(i => !i.side);
   const mains = items.filter(i => i.main).map(i => bestOffer(i, index)).filter(Boolean);
   const dealer = mains.length ? mains[0].dealer : null;
   const lines = items.map(item => ({item, offer: bestOffer(item, index, dealer)}));
-  weekOffers.recipes.set(r.id, lines);
+  weekOffers.recipes.set(r, lines);
   return lines;
 }
 // Hvor mange af rettens varer der er på tilbud, og hvor stor en andel
@@ -3022,6 +3024,7 @@ $("btn-week-more").addEventListener("click", () => { week.limit += WEEK_PAGE; re
 $("btn-week-list").addEventListener("click", () => weekToList());
 $("week-search").addEventListener("input", e => { week.q = e.target.value; week.limit = WEEK_PAGE; renderWeekRecipes(); });
 $("week-kind").addEventListener("change", e => { week.kind = e.target.value; week.limit = WEEK_PAGE; renderWeekRecipes(); });
+$("btn-week-own").addEventListener("click", () => { openRecipes(); $("r-url").focus(); });
 $("week-sort").addEventListener("change", e => { week.sort = e.target.value; week.limit = WEEK_PAGE; renderWeekRecipes(); });
 // Alle opskrifter med varer på tilbud i denne uge, størst andel først
 $("btn-week-offers").addEventListener("click", async () => {
@@ -3099,8 +3102,22 @@ function renderPreview() {
   });
   const {recipe, why} = recipeFromLines(d);
   $("r-preview").innerHTML = `<ul class="preview">${rows.join("")}</ul>` + (recipe
-    ? `<p class="hint">${esc(KIND_NAMES[recipe.kind])} · hovedingrediens: ${esc(recipe.items.filter(i => i.main).map(i => i.name).join(", "))}. Retten kommer på madplanen, når den er på tilbud.</p>`
+    ? `<p class="hint">${esc(KIND_NAMES[recipe.kind])} · hovedingrediens: ${esc(recipe.items.filter(i => i.main).map(i => i.name).join(", "))}. Retten kommer på madplanen, når den er på tilbud.</p>
+      ${previewOffers(recipe, Number(d.persons) || 4)}`
     : `<p class="hint" style="color:var(--error)">${esc(why)}</p>`);
+}
+
+// Opskriften omsat til ugens tilbud: hvilke varer er på tilbud hvor, og hvad
+// retten koster med dem
+function previewOffers(r, persons) {
+  const old = plan.persons;
+  plan.persons = persons;
+  const p = recipePrice(r);
+  plan.persons = old;
+  const on = p.items.filter(y => y.offer);
+  const wk = shownWeek().week;
+  return `<p class="hint"><b>Uge ${wk}: ${on.length} af ${p.items.length} varer på tilbud${p.pay ? `, og retten koster ca. ${kr(p.pay)} til ${persons} ${persons === 1 ? "person" : "personer"}` : ""}.</b></p>
+    ${on.length ? `<ul class="preview">${on.map(y => `<li class="ok">${esc(cap(y.item.name))} <span class="sub">→ ${esc(offerLine(y.offer, y.item.keys.find(k => y.offer.ingredients.includes(k))))}</span></li>`).join("")}</ul>` : ""}`;
 }
 
 function resetRecipeForm(d) {
@@ -3135,25 +3152,185 @@ function renderRecipes() {
 }
 
 function openRecipes() {
-  $("recipe-import-box").hidden = STATIC;
-  $("recipe-import-hint").textContent = STATIC
-    ? "Kopiér ingredienslisten fra en madside ind herunder, én ingrediens pr. linje."
-    : "Indsæt et link til en opskrift, så hentes navn, ingredienser og fremgangsmåde fra madsiden.";
+  $("recipe-import-hint").textContent = "Indsæt et link til en opskrift, så hentes navn, ingredienser og fremgangsmåde fra madsiden, "
+    + "og varerne findes i ugens tilbud. Du kan også skrive eller kopiere ingredienserne ind, én pr. linje.";
+  $("btn-recipes-close").textContent = $("week-dlg").open ? "Tilbage til ugeplanen" : "Tilbage til madplanen";
   renderRecipes();
   resetRecipeForm();
   $("recipes-dlg").showModal();
 }
 
+// <recipe-page>
+// Opskriften på en madside, som opskrifter.py's extract_recipe: først
+// schema.org/Recipe som JSON-LD, så som JSON andre steder på siden og til
+// sidst som microdata. Uden DOM, så det kan testes i Node.
+const ENTITIES = {amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", aelig: "æ", oslash: "ø", aring: "å",
+  AElig: "Æ", Oslash: "Ø", Aring: "Å", eacute: "é", egrave: "è", auml: "ä", ouml: "ö", uuml: "ü", frac12: "½",
+  frac14: "¼", frac34: "¾", deg: "°", ndash: "–", mdash: "—", rsquo: "’", lsquo: "‘", ldquo: "“", rdquo: "”",
+  hellip: "…", times: "×"};
+function unescapeHtml(s) {
+  return s.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+\d*);/gi, (m, e) => e[0] === "#"
+    ? String.fromCodePoint(parseInt(e[1] === "x" || e[1] === "X" ? e.slice(2) : e.slice(1), e[1] === "x" || e[1] === "X" ? 16 : 10))
+    : ENTITIES[e] ?? m);
+}
+function pageText(v) {
+  if (Array.isArray(v)) v = v.length ? v[0] : "";
+  if (v && typeof v === "object") v = v.name || v.text || "";
+  const t = unescapeHtml(String(v ?? "").replace(/<[^>]+>/g, " "));
+  return t.replace(/\s+/g, " ").replace(/\s+([.,;:!?])/g, "$1").trim();
+}
+function asList(v) { return Array.isArray(v) ? v : v ? [v] : []; }
+function isoMinutes(v) {
+  const m = String(v || "").trim().match(/^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:\d+S)?)?$/);
+  return m ? (+m[1] || 0) * 1440 + (+m[2] || 0) * 60 + (+m[3] || 0) : 0;
+}
+function yieldPersons(v) {
+  for (const x of Array.isArray(v) ? v : [v]) { const m = String(x ?? "").match(/\d+/); if (m) return Number(m[0]); }
+  return 4;
+}
+function recipeSteps(v) {
+  if (typeof v === "string") return v.split(/\n+/).map(pageText).filter(Boolean);
+  const steps = [];
+  for (const x of Array.isArray(v) ? v : []) {
+    if (x && typeof x === "object" && x.itemListElement) steps.push(...recipeSteps(x.itemListElement));
+    else if (x && (typeof x === "object" || typeof x === "string")) { const t = pageText(x); if (t) steps.push(t); }
+  }
+  return steps;
+}
+function findRecipe(node) {
+  if (Array.isArray(node)) { for (const n of node) { const f = findRecipe(n); if (f) return f; } }
+  else if (node && typeof node === "object") {
+    const t = node["@type"];
+    if (t === "Recipe" || (Array.isArray(t) && t.includes("Recipe"))) return node;
+    for (const k of ["@graph", "mainEntity", "itemListElement"]) if (k in node) { const f = findRecipe(node[k]); if (f) return f; }
+  }
+  return null;
+}
+// Objektet, der begynder ved text[start] ("{"), eller null
+function jsonAt(text, start) {
+  let depth = 0, str = false;
+  for (let i = start; i < text.length && i < start + 500000; i++) {
+    const c = text[i];
+    if (str) { if (c === "\\") i++; else if (c === '"') str = false; }
+    else if (c === '"') str = true;
+    else if (c === "{") depth++;
+    else if (c === "}" && --depth === 0) { try { return JSON.parse(text.slice(start, i + 1)); } catch (e) { return null; } }
+  }
+  return null;
+}
+function recipeNodes(page) {
+  const nodes = [];
+  for (const m of page.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)) {
+    try { const n = findRecipe(JSON.parse(m[1].trim())); if (n) nodes.push(n); } catch (e) { /* ugyldig JSON */ }
+  }
+  // Opskrifter i sidens egne data (fx Arla), også inde i en JavaScript-streng
+  const texts = [page];
+  if (page.includes('\\"recipeIngredient\\"')) texts.push(page.replaceAll('\\"', '"'));
+  for (const text of texts) {
+    for (const m of text.matchAll(/"recipeIngredient"\s*:/g)) {
+      let start = m.index;
+      for (let tries = 0; tries < 300; tries++) {
+        start = text.lastIndexOf("{", start - 1);
+        if (start < 0 || start < m.index - 50000) break;
+        const n = jsonAt(text, start);
+        if (n && "recipeIngredient" in n) { nodes.push(n); break; }
+      }
+    }
+  }
+  const micro = microdataNode(page);
+  if (micro) nodes.push(micro);
+  return nodes;
+}
+function tagAttr(tag, name) {
+  const m = tag.match(new RegExp(`\\b${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, "i"));
+  return m ? m[1] ?? m[2] ?? m[3] ?? "" : null;
+}
+function itemprops(page, prop) {
+  const values = [];
+  for (const m of page.matchAll(new RegExp(`<(\\w+)\\b[^>]*\\bitemprop\\s*=\\s*["']?[^"'>]*\\b${prop}\\b[^>]*>`, "gi"))) {
+    let content = tagAttr(m[0], "content");
+    if (content === null && !["meta", "link"].includes(m[1].toLowerCase())) {
+      const rest = page.slice(m.index + m[0].length), end = rest.search(new RegExp(`</${m[1]}\\s*>`, "i"));
+      content = end >= 0 ? rest.slice(0, end) : "";
+    }
+    values.push(content || "");
+  }
+  return values;
+}
+function pageTitle(page) {
+  const og = page.match(/<meta[^>]+property=["']og:title["'][^>]*>/i);
+  const found = og ? tagAttr(og[0], "content") : (page.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i) || page.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i) || [])[1];
+  return found ? pageText(found).split(/\s+[-|–]\s+/)[0].trim() : "";
+}
+function microdataNode(page) {
+  const lines = itemprops(page, "recipeIngredient").length ? itemprops(page, "recipeIngredient") : itemprops(page, "ingredients");
+  if (!lines.length) return null;
+  const first = p => itemprops(page, p)[0] || "";
+  const steps = itemprops(page, "recipeInstructions");
+  return {name: pageTitle(page), recipeIngredient: lines, recipeYield: first("recipeYield"), totalTime: first("totalTime"),
+    prepTime: first("prepTime"), cookTime: first("cookTime"), recipeCategory: itemprops(page, "recipeCategory"),
+    recipeInstructions: steps.length ? steps : itemprops(page, "text")};
+}
+function extractRecipe(page, url) {
+  for (const n of recipeNodes(page)) {
+    const lines = asList(n.recipeIngredient || n.ingredients).map(pageText).filter(Boolean);
+    const name = pageText(n.name) || pageTitle(page);
+    if (!name || !lines.length) continue;
+    return {url, name: name.slice(0, 80), persons: yieldPersons(n.recipeYield),
+      minutes: isoMinutes(n.totalTime) || isoMinutes(n.prepTime) + isoMinutes(n.cookTime),
+      ingredients: lines.slice(0, 40), method: recipeSteps(n.recipeInstructions).join(" ").slice(0, 4000)};
+  }
+  return null;
+}
+// </recipe-page>
+
+// Siden på GitHub Pages kan ikke selv hente andre sider. Først direkte (hvis
+// madsiden tillader det), ellers gennem en offentlig proxy, der kun får
+// adressen på opskriften.
+const RECIPE_FETCHERS = [
+  u => u,
+  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+];
+async function fetchRecipe(url) {
+  for (const via of RECIPE_FETCHERS) {
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 15000);
+    try {
+      const res = await fetch(via(url), {signal: ctl.signal});
+      const recipe = res.ok ? extractRecipe(await res.text(), url) : null;
+      if (recipe) return recipe;
+    } catch (e) { /* prøv den næste */ }
+    finally { clearTimeout(timer); }
+  }
+  return null;
+}
+// Opskriften, hvis den allerede er hentet fra madsiden til samlingen
+function urlKey(u) {
+  try { const x = new URL(u); return x.hostname.replace(/^www\./, "") + x.pathname.replace(/\/+$/, ""); } catch (e) { return ""; }
+}
+function collectionRecipe(url) {
+  const key = urlKey(url), r = key && planData.recipes.find(x => x.source && urlKey(x.source) === key);
+  if (!r) return null;
+  const lines = r.items.filter(i => !i.side).map(i => [i.amount ? amountText(i.amount, i.unit) : "", i.name].filter(Boolean).join(" "));
+  return {url: r.source, name: r.name, persons: 4, minutes: r.minutes, ingredients: [...lines, ...r.pantry], method: r.method};
+}
+
 async function importRecipe() {
   const url = $("r-url").value.trim();
   if (!url) { toast("Indsæt et link til opskriften"); return; }
+  if (!/^https?:\/\//i.test(url)) { toast("Skriv hele adressen på opskriften, fx https://…"); return; }
   const btn = $("btn-recipe-import");
   btn.disabled = true; btn.textContent = "Henter…";
   try {
-    const {recipe} = await api("/api/import_recipe", {url});
-    resetRecipeForm({id: editing, name: recipe.name, persons: recipe.persons, minutes: recipe.minutes, kind: "",
+    const recipe = !STATIC ? (await api("/api/import_recipe", {url})).recipe
+      : collectionRecipe(url) || await fetchRecipe(url);
+    if (!recipe) throw new Error("Kunne ikke hente opskriften fra siden. Kopiér i stedet ingredienslisten ind herunder.");
+    // En ny opskrift forbliver ny, og en opskrift, man retter, beholder sit id
+    const id = editing;
+    resetRecipeForm({id, name: recipe.name, persons: recipe.persons, minutes: recipe.minutes, kind: "",
       url: recipe.url, lines: recipe.ingredients, method: recipe.method});
-    editing = null;
+    editing = id;
+    $("recipe-form-title").textContent = id ? "Ret opskrift" : "Ny opskrift";
   } catch (e) { toast(e.message); }
   finally { btn.disabled = false; btn.textContent = "Hent"; }
 }
@@ -3181,7 +3358,10 @@ $("btn-basis-reset").addEventListener("click", () => {
   render();
   if ($("plan-dlg").open) renderPlan();
 });
-$("btn-recipes-close").addEventListener("click", () => { $("recipes-dlg").close(); renderPlan(); });
+$("btn-recipes-close").addEventListener("click", () => {
+  $("recipes-dlg").close();
+  if ($("week-dlg").open) renderWeek(); else renderPlan();
+});
 $("btn-recipe-import").addEventListener("click", importRecipe);
 $("btn-recipe-cancel").addEventListener("click", () => resetRecipeForm());
 $("r-lines").addEventListener("input", renderPreview);
