@@ -368,8 +368,8 @@ plan giver nye retter.
   du ser med det samme, hvilke varer der er på tilbud i ugen, og hvad retten
   koster. Er opskriften allerede i samlingen, hentes den derfra. På
   GitHub Pages kan siden ikke selv hente andre sider, så den prøver først
-  direkte og ellers gennem en offentlig proxy (allorigins.win eller
-  corsproxy.io), som kun får adressen på opskriften. Egne opskrifter
+  direkte og ellers gennem den gratis tjeneste r.jina.ai, som kun får
+  adressen på opskriften. Egne opskrifter
   gemmes i browseren.
 - **Læg på indkøbslisten** lægger tilbuddene og de varer, der ikke er på
   tilbud, på indkøbslisten. Samme vare i flere retter lægges sammen, med en
