@@ -1747,6 +1747,13 @@ const plan = {ids: [], count: 5, persons: 4, diet: "", focus: "", store: "", sta
   skipped: new Set(), have: new Set(), double: new Set()};
 let planData = null, ING = {};
 const KIND_NAMES = {okse: "Okse", gris: "Gris", kylling: "Kylling", fisk: "Fisk", vegetar: "Vegetar", andet: "Andet kød"};
+// En grøntsagsret med ansjoser, fiskesauce eller kødbouillon er ikke vegetar
+function isVegetarian(r) { return r.kind === "vegetar" && !(r.flags || []).length; }
+function kindName(r) {
+  if (r.kind === "vegetar" && !isVegetarian(r))
+    return r.flags.includes("fish") ? "Grøntsagsret med fisk i smagen" : "Grøntsagsret med kød i bouillon eller smagen";
+  return KIND_NAMES[r.kind] || r.kind;
+}
 const RED = new Set(["okse", "gris", "andet"]);
 const PLAN_MAX_PER_KIND = 2;
 // En tilbudsret: hovedingrediensen er på tilbud, og tilbuddene skal også
@@ -2558,7 +2565,7 @@ function renderPlan() {
       <div class="day">${esc(days)}</div>
       <div class="dish-head"><h3>${esc(r.name)}</h3>
         <span class="price-tag">ca. ${kr(pay)}</span></div>
-      <div class="sub">${Math.abs(pay - cost) >= 1 ? `Retten bruger for ca. ${kr(cost)} · ` : ""}${kr(cost / plan.persons / x.mult)} pr. person · ${esc(KIND_NAMES[r.kind] || r.kind)}
+      <div class="sub">${Math.abs(pay - cost) >= 1 ? `Retten bruger for ca. ${kr(cost)} · ` : ""}${kr(cost / plan.persons / x.mult)} pr. person · ${esc(kindName(r))}
         ${r.minutes ? ` · ${r.minutes} min` : ""} · ${r.veg_g} g grønt pr. person · ${onOffer} af ${x.items.length} varer på tilbud${onOffer ? ` (${Math.round(offerStats(x).share * 100)} % af prisen)` : ""}
         ${have ? ` · ${have} har du` : ""}${unknown ? ` · ${unknown} ${unknown === 1 ? "vare" : "varer"} uden kendt pris er ikke regnet med` : ""}${source ? ` · ${esc(source)}` : ""}
         ${normal - cost >= 5 ? ` · <b class="save">sparer ca. ${kr(normal - cost)}</b>` : ""}</div>
@@ -2894,7 +2901,7 @@ function otherWeeks(id, w) {
     .map(([k]) => "uge " + Number(k.split("-W")[1]));
 }
 function recipeSub(r) {
-  return [KIND_NAMES[r.kind] || r.kind, r.minutes ? `${r.minutes} min` : "", r.own ? "egen opskrift" : r.source ? host(r.source) : ""]
+  return [kindName(r), r.minutes ? `${r.minutes} min` : "", r.own ? "egen opskrift" : r.source ? host(r.source) : ""]
     .filter(Boolean).join(" · ");
 }
 function weekPersons() { return Number(store.get("weekpersons", 0)) || store.get("mealplan", {}).persons || 4; }
@@ -3016,7 +3023,7 @@ function sortName(r) { return r.name.replace(/^[^\p{L}\p{N}]+/u, ""); }
 function renderWeekRecipes() {
   const w = shownWeek(), chosen = new Set(weekIds(w)), persons = weekPersons();
   const q = tokens(week.q);
-  let list = allRecipes().filter(r => (!week.kind || (week.kind === "own" ? r.own : r.kind === week.kind)) &&
+  let list = allRecipes().filter(r => (!week.kind || (week.kind === "own" ? r.own : week.kind === "vegetar" ? isVegetarian(r) : r.kind === week.kind)) &&
     q.every(t => tokens(r.name + " " + r.items.map(i => i.name).join(" ")).some(x => x.startsWith(t))))
     .sort((a, b) => (b.own || false) - (a.own || false) || sortName(a).localeCompare(sortName(b), "da"));
   // Kun retter med varer på tilbud i ugen: størst andel først (så flest
@@ -3174,7 +3181,7 @@ function renderPreview() {
   });
   const {recipe, why} = recipeFromLines(d);
   $("r-preview").innerHTML = `<ul class="preview">${rows.join("")}</ul>` + (recipe
-    ? `<p class="hint">${esc(KIND_NAMES[recipe.kind])} · hovedingrediens: ${esc(recipe.items.filter(i => i.main).map(i => i.name).join(", "))}. Retten kommer på madplanen, når den er på tilbud.</p>
+    ? `<p class="hint">${esc(kindName(recipe))} · hovedingrediens: ${esc(recipe.items.filter(i => i.main).map(i => i.name).join(", "))}. Retten kommer på madplanen, når den er på tilbud.</p>
       ${previewOffers(recipe, Number(d.persons) || 4)}`
     : `<p class="hint" style="color:var(--error)">${esc(why)}</p>`);
 }
@@ -3212,7 +3219,7 @@ function renderRecipes() {
     const {recipe} = recipeFromLines(d);
     const known = recipe ? recipe.items.filter(x => x.keys.length && !x.side).length : 0;
     return `<div class="own-recipe"><div class="what"><b>${esc(d.name)}</b>
-        <div class="sub">${recipe ? esc(KIND_NAMES[recipe.kind]) : "Kan ikke bruges"} · ${known} af ${d.lines.length} ingredienser kendes
+        <div class="sub">${recipe ? esc(kindName(recipe)) : "Kan ikke bruges"} · ${known} af ${d.lines.length} ingredienser kendes
         ${d.url ? ` · <a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(host(d.url))}</a>` : ""}</div></div>
       <div class="dish-actions">
         ${recipe ? `<button class="btn small" data-own-plan="${i}">Sæt på madplanen</button>` : ""}

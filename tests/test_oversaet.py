@@ -70,3 +70,23 @@ def test_is_english():
     assert is_english('<html lang="en-GB"><body>')
     assert not is_english('<html lang="da-DK">')
     assert not is_english("<html><body>")
+
+
+def test_english_leftovers_and_ounces():
+    from tilbudshenter.oversaet import translate_line
+
+    assert translate_line("1 bunch English spinach") == "1 bundt spinat"
+    assert translate_line("2 tbsp extra-virgin olive oil") == "2 spsk olivenolie"
+    assert translate_line("1 15 oz. can diced tomatoes ($0.89)") == "1 dåse hakkede tomater"
+    assert translate_line("2 15 oz cans chick peas, drained") == "2 dåse kikærter"
+    assert translate_line("250 - 300 g / 8 - 10 oz pasta or egg noodles of choice") == "275 g pasta"
+    assert translate_line("1lb 5oz lamb neck fillet") == "595 g lammekød"
+
+
+def test_english_name_on_danish_site_is_translated():
+    from tilbudshenter.oversaet import danish
+
+    recipe = {"name": "Italian chicken rigatoni with fresh spinach and bell pepper", "ingredients": []}
+    assert danish(recipe)[0]["name"] == "Italiensk rigatoni med kylling og frisk spinat og peberfrugt"
+    danish_name = {"name": "Poke bowl med and, grøn chili og mango", "ingredients": []}
+    assert danish(danish_name)[0]["name"] == danish_name["name"]

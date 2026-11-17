@@ -82607,30 +82607,6 @@
    "fetched": "2026-10-18"
   },
   {
-   "url": "https://pinchofyum.com/chicken-orzo-tomato-soup",
-   "name": "Chicken Orzo Tomato Soup",
-   "category": "Soup",
-   "persons": 4,
-   "minutes": 30,
-   "ingredients": [
-    "2 tablespoons DeLallo Private Reserve Extra Virgin Olive Oil",
-    "4 cloves garlic, thinly sliced or minced",
-    "1/4 cup DeLallo Tomato Paste",
-    "1/2 teaspoon Italian seasoning",
-    "4 cups chicken broth",
-    "salt to taste",
-    "1 cup DeLallo Orzo Pasta",
-    "2 cups chopped or shredded cooked chicken (I use the pulled meat from a rotisserie chicken)",
-    "1/4 cup heavy cream",
-    "1-2 cups water as desired",
-    "parmesan, herbs, red pepper flakes, and lemon for serving",
-    "bread for serving",
-    "pesto for serving (optional – recipe in notes)"
-   ],
-   "lang": "en",
-   "fetched": "2026-10-20"
-  },
-  {
    "url": "https://www.valdemarsro.dk/dhal/",
    "name": "Dhal",
    "category": "Aftensmad",
@@ -222408,27 +222384,6 @@
    "fetched": "2026-10-30"
   },
   {
-   "url": "https://www.sainsburysmagazine.co.uk/recipes/vegetarian/sponsored-gnocchi-sausage-hash-with-smoky-walnuts",
-   "name": "Sponsored: Gnocchi sausage hash with smoky walnuts",
-   "category": "",
-   "persons": 4,
-   "minutes": 0,
-   "ingredients": [
-    "1 x 500g pack gnocchi",
-    "3 tbsp olive oil, plus 1 tbsp to fry the eggs",
-    "1 bunch spring onions",
-    "8 vegetarian or vegan sausages",
-    "250g cherry vine tomatoes",
-    "100g California walnut pieces",
-    "1 tsp smoked paprika",
-    "1 tbsp light brown sugar",
-    "100g baby spinach",
-    "4 medium eggs*, to serve (optional)"
-   ],
-   "lang": "en",
-   "fetched": "2026-10-20"
-  },
-  {
    "url": "https://www.goodto.com/recipes/mexican-stuffed-chicken-with-red-rice",
    "name": "Mexican stuffed chicken with red rice recipe",
    "category": "Dinner",
@@ -323545,35 +323500,6 @@
    "fetched": "2026-10-16"
   },
   {
-   "url": "https://www.hellofresh.dk/recipes/zucchini-ricotta-and-walnut-fritters-6617a95e7727349831827681",
-   "name": "Zucchini, ricotta and walnut fritters with roasted potato and dill yoghurt",
-   "category": "",
-   "persons": 2,
-   "minutes": 35,
-   "ingredients": [
-    "500 g Kartofler",
-    "1 stk Zucchini",
-    "40 g Valnødder",
-    "2 g Citronpeber",
-    "1 stk Worcestershiresauce",
-    "100 g Ricotta",
-    "25 g Panko",
-    "40 g Finrevet ost",
-    "1 stk Dild",
-    "75 ml Yoghurt",
-    "60 g Blandet salat",
-    "1 stk Æble",
-    "1 stk Gulerod, Julienne",
-    "½ tsk Salt (trin 1)",
-    "1 stk Æg (trin 2)",
-    "½ tsk Salt (trin 2)",
-    "¼ tsk Salt (trin 4)",
-    "1 spsk Olivenolie (trin 5)",
-    "¼ tsk Salt (trin 5)"
-   ],
-   "fetched": "2026-11-05"
-  },
-  {
    "url": "https://www.danishcrown.com/da-dk/opskrifter/gammeldags-frikadeller-med-smoerdampet-spidskaal/",
    "name": "Gammeldags frikadeller med smørdampet spidskål",
    "category": "Aftensmad, Middag",
@@ -388356,34 +388282,6 @@
    "fetched": "2026-10-30"
   },
   {
-   "url": "https://www.hellofresh.dk/recipes/pan-fried-celeriac-fritters-6569aaa85234ba85b73c6687",
-   "name": "Pan fried celeriac fritters with roasted potatoes and zucchini salad",
-   "category": "",
-   "persons": 2,
-   "minutes": 40,
-   "ingredients": [
-    "1 stk Knoldselleri",
-    "4 g Bouillon",
-    "20 g Finrevet ost",
-    "½ stk Løg",
-    "1 stk Zucchini",
-    "40 g Aioli",
-    "½ stk Citrusfrugt",
-    "400 g Små kartofler",
-    "40 g Rucola",
-    "1 stk Kruspersille",
-    "4 g Hvide Løjer & Urter",
-    "10 g Pinjekerner",
-    "2 spsk Hvedemel (trin 3)",
-    "2 stk Æg (trin 3)",
-    "½ tsk Salt (trin 3)",
-    "½ spsk Olivenolie (trin 4)",
-    "¼ tsk Salt (trin 4)",
-    "1 spsk Olivenolie (trin 5)"
-   ],
-   "fetched": "2026-11-07"
-  },
-  {
    "url": "https://www.bbcgoodfood.com/recipes/teriyaki-steak-pak-choi-noodles",
    "name": "Teriyaki steak with pak choi & noodles",
    "category": "Dinner, Lunch, Main course, Supper",
@@ -446062,6 +445960,7 @@
   "https://pinchofyum.com/chicken-caesar-smash-tacos": "navnet kunne ikke oversættes: Chicken Caesar Smash Tacos",
   "https://pinchofyum.com/chicken-enchilada-casserole": "ukendt kød eller fisk: kogt revet kylling",
   "https://pinchofyum.com/chicken-lettuce-wraps-with-lime-drench": "navnet kunne ikke oversættes: Chicken Lettuce Wraps with Lime Drench",
+  "https://pinchofyum.com/chicken-orzo-tomato-soup": "ukendt kød eller fisk: hakket eller revet kogt kylling",
   "https://pinchofyum.com/chicken-parmesan": "navnet kunne ikke oversættes: House Favorite Chicken Parmesan",
   "https://pinchofyum.com/chicken-pizzaiola": "navnet kunne ikke oversættes: Chicken Pizzaiola",
   "https://pinchofyum.com/chicken-pot-pie-with-biscuits": "ikke aftensmad",
@@ -499824,6 +499723,7 @@
   "https://www.hellofresh.dk/recipes/ovnbagt-sodkartoffel-6687abc965ae7b0dd9111f50": "intet kød, fisk, æg, bælgfrugter eller ost",
   "https://www.hellofresh.dk/recipes/ovnsbakt-gnocchi-i-kremet-maissaus-65437e1b3357e0637a8292ca": "intet kød, fisk, æg, bælgfrugter eller ost",
   "https://www.hellofresh.dk/recipes/oyster-mushroom-and-vegetable-fajitas-66274e5dcae59979d9091377": "intet kød, fisk, æg, bælgfrugter eller ost",
+  "https://www.hellofresh.dk/recipes/pan-fried-celeriac-fritters-6569aaa85234ba85b73c6687": "kød eller fisk i navnet, men ikke i ingredienserne: Stegt frikadeller med pande og knoldselleri og ovnbagt kartofler og squash salat",
   "https://www.hellofresh.dk/recipes/pan-seared-chicken-and-lingonberry-sauce-659ebdebc7596f421e548845": "ikke aftensmad",
   "https://www.hellofresh.dk/recipes/pandestegt-gyoza-og-majsrisbowl-67bddbc18e41cf2506378cbc": "intet kød, fisk, æg, bælgfrugter eller ost",
   "https://www.hellofresh.dk/recipes/pandestegt-havbars-6807d3a836fada069711c951": "ukendt kød eller fisk: Dorade",
@@ -499973,6 +499873,7 @@
   "https://www.hellofresh.dk/recipes/vietnamesisk-inspireret-plantefarstacos-6908b0d179e2c370e48f6494": "intet kød, fisk, æg, bælgfrugter eller ost",
   "https://www.hellofresh.dk/recipes/vietnamesisk-plantefarsbowl-6593e327c7596f421e53b69f": "intet kød, fisk, æg, bælgfrugter eller ost",
   "https://www.hellofresh.dk/recipes/wrap-duo-66fe84bb9e82bf398e8fde0d": "ikke aftensmad",
+  "https://www.hellofresh.dk/recipes/zucchini-ricotta-and-walnut-fritters-6617a95e7727349831827681": "kød eller fisk i navnet, men ikke i ingredienserne: Frikadeller med squash, ricotta og valnødde og ovnbagt kartoffel og dild yoghurt",
   "https://www.jamieoliver.com/inspiration/recipes/": "ingen opskrift på siden",
   "https://www.jamieoliver.com/recipes/15-minute-meals": "ingen opskrift på siden",
   "https://www.jamieoliver.com/recipes/30-minute-meals/": "ingen opskrift på siden",
@@ -526924,6 +526825,7 @@
   "https://www.sainsburysmagazine.co.uk/recipes/vegetarian/seriously-crunchy-roast-potatoes": "navnet kunne ikke oversættes: Seriously crunchy roast potatoes",
   "https://www.sainsburysmagazine.co.uk/recipes/vegetarian/spiced-aubergine-pie-with-olives-and-preserved-lemon": "navnet kunne ikke oversættes: Spiced aubergine pie with olives and preserved lemon",
   "https://www.sainsburysmagazine.co.uk/recipes/vegetarian/spinach-red-onion-and-feta-quiche": "navnet kunne ikke oversættes: Spinach, red onion and feta quiche with a polenta crust",
+  "https://www.sainsburysmagazine.co.uk/recipes/vegetarian/sponsored-gnocchi-sausage-hash-with-smoky-walnuts": "kød eller fisk i navnet, men ikke i ingredienserne: Hash med gnocchi og pølser og røget valnødder",
   "https://www.sainsburysmagazine.co.uk/recipes/vegetarian/stuffed": "navnet kunne ikke oversættes: Stuffed mushrooms with goats’ cheese and creamy polenta",
   "https://www.sainsburysmagazine.co.uk/recipes/vegetarian/stuffed-courgette-flowers-with-honey": "navnet kunne ikke oversættes: Stuffed courgette flowers with honey",
   "https://www.sainsburysmagazine.co.uk/recipes/vegetarian/sweet-potato-and-stilton-burgers-with-rocket-and-avocado-mash": "navnet kunne ikke oversættes: Triple sweet potato and Stilton ‘burgers’ with avocado mash",

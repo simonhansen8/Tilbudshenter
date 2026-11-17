@@ -73,6 +73,13 @@ def test_price_text_is_not_rice():
     ("LUPILU Bleer", "baby"),
     ("Coop cocktailpølser", "koed"),
     ("PREMIER IS UNDERGROUND, ISPINDE ELLER ISBÅD", "slik_og_snacks"),
+    # Madvarer, der før endte under "Andet" og blev skjult af kategorifilteret
+    ("ALESTO Svesker", "kolonial"), ("Osso Buco", "koed"), ("Confit de Canard", "koed"),
+    ("OCEAN SEA Alaskasejfilet", "fisk"), ("Danablu", "mejeri"), ("Pak choi", "frugt_og_groent"),
+    ("Pågen Limpan", "broed_og_bager"), ("Capri-Sun", "drikkevarer"), ("Linie Aquavit", "oel_og_vin"),
+    ("Kokosmælk", "kolonial"), ("Andefedt", "koed"), ("Kalenderlys", "husholdning"),
+    ("FAVORINA Nougatkogler", "slik_og_snacks"), ("To Øl Julesovs", "oel_og_vin"), ("Kat paté", "dyr"),
+    ("Hugo Boss Bottled gaveæske", "personlig_pleje"), ("FRESHONA Hakket spinat", "frugt_og_groent"),
 ])
 def test_more_keywords(categorizer, heading, expected):
     assert categorizer.categorize(heading) == expected

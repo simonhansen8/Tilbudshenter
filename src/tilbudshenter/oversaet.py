@@ -136,7 +136,7 @@ WORDS: dict[str, str] = {
     "whole peeled tomatoes": "flåede tomater", "passata": "passata", "tomato passata": "passata",
     "tomato purée": "tomatpuré", "tomato puree": "tomatpuré", "tomato paste": "tomatpuré",
     "tomato sauce": "tomatsauce", "kidney beans": "kidneybønner", "black beans": "sorte bønner",
-    "cannellini beans": "cannellinibønner", "butter beans": "smørbønner", "chickpeas": "kikærter",
+    "cannellini beans": "cannellinibønner", "butter beans": "smørbønner", "chickpeas": "kikærter", "chick peas": "kikærter",
     "baked beans": "baked beans", "red lentils": "røde linser", "green lentils": "grønne linser",
     "lentils": "linser", "puy lentils": "grønne linser", "coconut milk": "kokosmælk", "coconut cream": "kokosfløde",
     "sweetcorn": "majs", "corn": "majs", "corn kernels": "majskerner",
@@ -239,6 +239,28 @@ ADJECTIVES = {
     "chunk": "", "pieces": "", "piece": "", "florets": "buketter", "leaves": "blade", "white": "hvid", "dark": "mørk",
     "in": "i", "flakes": "flager", "pitted": "uden sten", "vine-ripened": "", "long": "", "fresh,": "frisk",
     "x": "", "of": "", "a": "", "an": "", "plus": "", "some": "", "few": "", "the": "",
+    # Ord, der stod tilbage på engelsk i ingredienserne: oversættes eller udelades
+    "or": "eller", "english": "", "british": "", "continental": "", "welfare": "", "higher": "", "virgin": "",
+    "extra-virgin": "", "fat": "", "low": "", "low-fat": "", "full-fat": "", "fat-free": "", "reduced-fat": "",
+    "reduced": "", "sodium": "", "low-sodium": "", "reduced-sodium": "", "free": "", "full": "", "cooking": "",
+    "plain": "", "ready": "", "ready-rolled": "", "steamed": "dampet", "juiced": "", "zested": "",
+    "deseeded": "uden kerner", "cracked": "", "thick": "", "thin": "", "firm": "fast", "soft": "blød", "hard": "",
+    "brown": "brun", "wild": "vild", "dry": "tør", "crumbled": "smuldret", "picked": "", "runny": "flydende",
+    "chinese": "kinesisk", "torn": "", "boiled": "kogt", "split": "", "lightly": "let", "coarsely": "groft",
+    "very": "", "clean": "", "scrubbed": "", "red": "rød", "green": "grøn", "yellow": "gul", "single": "",
+    "seasoned": "krydret", "uncooked": "", "salted": "saltet", "removed": "", "seeds": "frø", "seed": "frø",
+    "powder": "pulver", "wine": "vin", "wedges": "både", "thumb": "", "thumb-sized": "", "sized": "",
+    "flatleaf": "bredbladet", "flat-leaf": "bredbladet", "sprigs": "kviste", "sprig": "kvist", "bunch": "bundt",
+    "pack": "pakke", "packet": "pakke", "can": "dåse", "cans": "dåser", "tin": "dåse", "jar": "glas", "into": "",
+    "each": "", "from": "", "as": "", "such": "", "if": "", "other": "", "choice": "", "bought": "",
+    "store-bought": "", "part": "", "make": "", "made": "", "little": "", "half": "halv", "skin": "", "bone": "",
+    "inch": "", "stems": "", "greens": "grønt", "pastry": "dej", "sheet": "", "sheets": "", "rind": "skal",
+    "zest": "skal", "juice": "saft", "granules": "", "pouch": "pose", "splash": "et skvæt", "squeeze": "",
+    "drizzle": "", "colour": "", "olive": "oliven", "puree": "puré", "sourdough": "surdejsbrød",
+    "wholemeal": "fuldkorns", "wholewheat": "fuldkorns", "seeded": "", "gluten-free": "glutenfri",
+    "vegan": "vegansk", "vegetarian": "vegetarisk", "your": "", "favorite": "", "favourite": "", "store": "",
+    "strained": "", "lean": "", "spears": "", "stalk": "", "mixed": "blandet", "roasted": "ovnristet", "neck": "",
+    "fillet": "", "fillets": "",
 }
 
 # Kød og fisk, som ingen oversættelse må overse. Står et af ordene tilbage
@@ -481,6 +503,23 @@ def translate_line(line: str) -> str:
     "1 cup (240ml) milk" -> "2,4 dl mælk"; "400g can chopped tomatoes" -> "1 dåse hakkede tomater".
     """
     text = _clean(line)
+    # Amerikanske priser og ounces i parentes: "(jar, $0.85)", "(16 oz, $2.98*)", "(5 1/2 oz"
+    text = re.sub(r"\([^)]*\$\s*\d[^)]*\)?|\(\s*\d[\d.,/ ]*\s*oz\b[^)]*\)?", " ", text)
+    # "250 g / 8 - 10 oz", "75ml/3fl oz": kun den metriske mængde
+    text = re.sub(r"(\d\s*(?:g|kg|ml|l)\b)\s*/\s*[\d.,/ -]+\s*(?:fl\.?\s*)?oz\b\.?", r"\1", text)
+    # "1 15 oz. can diced tomatoes", "2 15-oz. cans beans", "one 24-oz. jar sauce": antal dåser eller glas
+    if m := re.match(rf"^\s*(one|two|{_NUM})\s+(?:{_NUM})\s*-?\s*(?:oz|ounce)\.?\s*-?\s*(?:container\s+)?"
+                     r"(can|cans|tin|tins|jar|jars)\b\s*(?:of\s+)?(.*)$", text, re.IGNORECASE):
+        count = {"one": 1, "two": 2}.get(m.group(1).lower()) or _number(m.group(1))
+        unit = "glas" if m.group(2).lower().startswith("jar") else "dåse"
+        return f"{_fmt(count)} {unit} {translate_name(m.group(3))}".strip()
+    # "1lb 5oz lamb", "1/2 12 oz. roasted red peppers": i gram
+    if m := re.match(rf"^\s*({_NUM})\s*lbs?\.?\s+({_NUM})\s*oz\.?\s+(.*)$", text, re.IGNORECASE):
+        grams = _number(m.group(1)) * 453.6 + _number(m.group(2)) * 28.35
+        return f"{_fmt(round(grams))} g {translate_name(m.group(3))}".strip()
+    if m := re.match(rf"^\s*({_NUM})\s+({_NUM})\s*-?\s*oz\.?\s+(.*)$", text, re.IGNORECASE):
+        grams = _number(m.group(1)) * _number(m.group(2)) * 28.35
+        return f"{_fmt(round(grams))} g {translate_name(m.group(3))}".strip()
     # Overskrifter i ingredienslisten: "For the sauce"
     if re.match(r"^(for the|for)\b.*:?$", text, re.IGNORECASE) and len(text.split()) <= 5:
         return ""
@@ -740,6 +779,12 @@ def danish(recipe: dict) -> tuple[dict | None, str]:
     Danske opskrifter gives tilbage uændret.
     """
     if recipe.get("lang") != "en":
+        # Danske madsider (fx HelloFresh) har nogle gange et engelsk navn:
+        # "Creamy paprika spiced chicken with fresh rucola". Kan det oversættes, gøres det
+        name = recipe["name"]
+        if re.search(r"\b(?:with|and|the)\b", name, re.IGNORECASE) and not re.search(r"\b(?:med|og)\b", name, re.IGNORECASE):
+            if title := translate_title(name):
+                return {**recipe, "name": title}, ""
         return recipe, ""
     name = recipe["name"]
     if any(re.search(rf"\b{re.escape(w)}\b", name.lower()) for w in NOT_DINNER_EN):

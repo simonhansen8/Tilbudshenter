@@ -221,7 +221,10 @@ browseren.
 3. Er der heller ingen historik, sammenlignes prisen pr. kg eller liter med
    **de andre valgte butikker** i de aktuelle aviser. Koster hakket oksekød
    75 kr/kg i Netto og typisk 100 kr/kg hos de andre, vises det som
-   "ca. -25%". Det gælder almindelige basisvarer som hakket kød,
+   "ca. -25%". Kæder med fælles avis (fx Kvickly og SuperBrugsen) tæller som
+   én butik, og har de andre butikker kun dyre specialvarer på tilbud (fx
+   gourmet-olivenolie til 300 kr/l), bruges medianen af alle tilbud på varen
+   i stedet. Det gælder almindelige basisvarer som hakket kød,
    kyllingebryst, bacon, laks, mælk, æg, kartofler og kaffe (se
    `comparison.py`). Tilbud på flere forskellige varer ("Hakket okse- eller
    grisekød"), færdigretter, pålæg og økologiske varer sammenlignes ikke.
