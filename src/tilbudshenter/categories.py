@@ -45,7 +45,7 @@ DEFAULT_CATEGORIES: dict[str, dict] = {
             "sodavand", "cola", "coca cola", "fanta", "tuborg squash", "pepsi", "faxe kondi", "juice", "saft",
             "vand ", "kildevand", "danskvand", "energidrik", "smoothie", "iste",
             "powerade", "monster energy", "red bull", "drik", "rynkeby",
-            "ribena", "solbærdrik", "cocio", "kakaomælk",
+            "ribena", "solbærdrik", "cocio", "kakaomælk", "most", "æblemost",
         ],
     },
     "oel_og_vin": {
@@ -112,7 +112,7 @@ DEFAULT_CATEGORIES: dict[str, dict] = {
     "mejeri": {
         "navn": "Mejeri & æg",
         "noegleord": [
-            "danablu", "manchego", "budding", "becel", "pecorino", "halloumi", "ricotta", "gedeost",
+            "danablu", "cheasy", "klovborg", "manchego", "budding", "becel", "pecorino", "halloumi", "ricotta", "gedeost",
             "kefir", "edamer", "cheese", "saint agur", "kærgården", "søhvide", "oatly", "risifrutti", "actimel", "ama ", "fedtstof",
             "mælk", "letmælk", "minimælk", "sødmælk", "yoghurt", "skyr",
             "ost", "smør", "fløde", "creme fraiche", "cremefraiche", "kærnemælk",
