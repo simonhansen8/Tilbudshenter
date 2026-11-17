@@ -61,7 +61,8 @@ PRODUCT_GROUPS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "ris": ("ris", [["ris "], ["jasminris"], ["basmatiris"]], ["grød", "kiks", "papir"]),
     "hvedemel": ("hvedemel", [["hvedemel"]], []),
     "sukker": ("sukker", [["sukker "]], []),
-    "olivenolie": ("olivenolie", [["olivenolie"]], []),
+    # "Sardiner i olivenolie" og "Soltørrede tomater i olivenolie" er ikke olivenolie
+    "olivenolie": ("olivenolie", [["olivenolie"]], ["i ", "sardin", "tun ", "makrel", "ansjos", "soltørrede", "artiskok"]),
     "rugbroed": ("rugbrød", [["rugbrød"]], []),
     "toastbroed": ("toastbrød", [["toastbrød"]], []),
 }
@@ -80,6 +81,8 @@ _EXCLUDE_ALWAYS = [
 # En billigere pris end dette i forhold til de andre butikker er næsten
 # altid en fejl i mængden (fx en multipakke), ikke et tilbud.
 MAX_DISCOUNT_PCT = 65.0
+# Se compare_across_stores
+SPECIALTY_FACTOR = 1.5
 
 
 @dataclass
@@ -136,11 +139,17 @@ def compare_across_stores(offers: list[Offer]) -> dict[str, Comparison]:
     """Sammenligner enhedsprisen for hvert tilbud med de andre butikkers.
 
     Returnerer {tilbuds-id: Comparison} for tilbud, der er billigere pr. kg
-    eller liter end medianen af de andre butikkers billigste tilbud på
-    samme varetype.
+    eller liter end de andre butikkers typiske pris på samme varetype: medianen
+    af de andre butikkers billigste tilbud. Er den mere end SPECIALTY_FACTOR
+    gange medianen af alle tilbud på varetypen, har de andre butikker kun dyre
+    specialvarer på tilbud (fx gourmet-olivenolie), og så bruges medianen af
+    alle tilbud. Samme tilbud i flere kæder med
+    fælles avis (fx Kvickly og SuperBrugsen) tæller kun én gang.
     """
     # (varetype, enhed) -> butik -> laveste enhedspris
     best: dict[tuple[str, str], dict[str, float]] = {}
+    every: dict[tuple[str, str], list[float]] = {}
+    seen: set[tuple] = set()
     grouped: list[tuple[Offer, tuple[str, str]]] = []
     for offer in offers:
         unit_price = offer.unit_price
@@ -150,10 +159,15 @@ def compare_across_stores(offers: list[Offer]) -> dict[str, Comparison]:
         if group is None or (offer.unit == "stk" and group not in PER_PIECE_GROUPS):
             continue
         key = (group, offer.unit)
+        grouped.append((offer, key))
+        same = (key, " ".join(_tokens(offer.heading)), round(unit_price, 2))
+        if same in seen:
+            continue
+        seen.add(same)
         store = _store_key(offer.dealer)
         prices = best.setdefault(key, {})
         prices[store] = min(prices.get(store, unit_price), unit_price)
-        grouped.append((offer, key))
+        every.setdefault(key, []).append(unit_price)
 
     result: dict[str, Comparison] = {}
     for offer, key in grouped:
@@ -162,6 +176,9 @@ def compare_across_stores(offers: list[Offer]) -> dict[str, Comparison]:
         if not others:
             continue
         reference = statistics.median(others)
+        typical = statistics.median(every[key])
+        if reference > typical * SPECIALTY_FACTOR:
+            reference = typical
         discount = (1 - offer.unit_price / reference) * 100
         if 0 < discount <= MAX_DISCOUNT_PCT:
             result[offer.id] = Comparison(PRODUCT_GROUPS[key[0]][0], reference, len(others))

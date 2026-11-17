@@ -50,7 +50,9 @@ def test_ingredient_keys_skip_non_raw_goods():
         "San Marco Pizza med hvidløg & ost",
     ]:
         assert "blomkaal" not in ingredient_keys(heading)
-        assert set(ingredient_keys(heading)) <= {"broccoli"}, heading
+        assert set(ingredient_keys(heading)) <= {"broccoli", "butternut"}, heading
+    # Butternut er ikke squash, men sin egen vare
+    assert ingredient_keys("Butternut squash") == ["butternut"]
 
 
 def test_recipes_are_consistent():
@@ -83,7 +85,7 @@ def test_recipes_payload_is_json():
     bolognese = next(r for r in data if r["id"] == "bolognese")
     assert bolognese["items"][0] == {
         "amount": 500, "unit": "g", "name": "hakket kød (okse eller grise- og kalv)", "keys": ["hakket_okse", "hakket_gris_kalv"],
-        "main": True, "side": False, "prices": {"hakket_okse": [110, 500], "hakket_gris_kalv": [80, 500]},
+        "main": True, "side": False,
     }
     assert bolognese["veg_g"] == 278
 
@@ -155,7 +157,7 @@ def test_recipe_lines_in_singular_and_spice_blends():
     keys = lambda line: line_keys(parse_line(line)[2])  # noqa: E731
     assert keys("1 gulerod") == ["guleroedder"]
     assert keys("300 g kartoffel") == ["kartofler"]
-    assert keys("450 g sød kartoffel") == []
+    assert keys("450 g sød kartoffel") == ["soede_kartofler"]
     assert keys("2 stk Tomat") == ["tomater"]
     assert keys("1 stk Hvidløgsfed") == ["hvidloeg"]
     assert keys("250 g Hakket svine-/kalvekød") == ["hakket_gris_kalv"]
@@ -211,8 +213,9 @@ def test_steak_in_recipe_is_beef():
     assert line_keys("oksesteak") == ["boef"]
     assert line_keys("steaks") == ["boef"] and line_keys("tunsteak") == [] and line_keys("steaksauce") == []
     assert line_keys("steakhouse fritter") == [] and line_keys("tunbøffer") == []
-    # Uden mængde kan kødet ikke prissættes, og så bruges retten ikke
-    assert recipe_from_lines("x", name, ["Rumpsteak", *lines[1:]])[0] is None
+    # Uden mængde købes en almindelig mængde kød til 4 personer
+    no_amount = recipe_from_lines("x", name, ["Rumpsteak", *lines[1:]])[0]
+    assert (no_amount.items[0].amount, no_amount.items[0].unit, no_amount.items[0].keys) == (500, "g", ["boef"])
 
 
 def test_meat_in_name_needs_meat_in_ingredients():

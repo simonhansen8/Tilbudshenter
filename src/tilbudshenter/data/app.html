@@ -211,6 +211,7 @@ label.field input { padding: 8px 10px; border: 1px solid var(--line); border-rad
 .dish li.have .what { color: var(--muted); text-decoration: line-through; }
 .dish li .cost .link { margin-left: 8px; font-weight: 400; }
 details.have { border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; margin-top: 12px; }
+details.about { margin: 8px 0 12px; }
 details.have summary { cursor: pointer; font-weight: 600; }
 details.have .hint { margin-top: 6px; }
 .own-recipe { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
@@ -271,6 +272,16 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
 }
 [hidden] { display: none !important; }
 @media (max-width: 520px) {
+  /* Dialogerne fylder skærmen, og madplanens valg står to og to, så retterne kan ses */
+  dialog { width: calc(100vw - 12px); max-height: calc(100dvh - 12px); }
+  .dlg { max-height: calc(100dvh - 12px); }
+  .dlg-head, .dlg-foot { padding: 10px 14px; }
+  .dlg-body { padding: 4px 14px 14px; }
+  .dlg-foot .btn.small { flex: 1 1 auto; }
+  .plan-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .plan-controls select { width: 100%; min-width: 0; }
+  details.about { margin-top: 8px; }
+  #plan-sum { display: none; }  /* står allerede øverst i planen */
   h1 { font-size: 21px; }
   .actions { width: 100%; }
   .actions .btn { flex: 1; }
@@ -466,8 +477,13 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
       <button class="btn small" id="btn-plan-close">Luk</button>
     </div>
     <div class="dlg-body">
-      <p class="hint">Billig aftensmad ud fra ugens tilbud, efter kostrådene: fisk hver uge, mindre rødt kød og masser af grønt.
-        Prisen på en ret er det, du betaler i butikken for hele pakker; resten af en pakke bruges i en senere ret. Under hver vare står, hvad retten bruger, og prisen pr. person. Tryk på et tilbud for at se det. ✓ = på tilbud og billigere end basisvaren, fx kædens eget mærke.</p>
+      <details class="have about" id="plan-about">
+        <summary>Sådan virker madplanen</summary>
+        <p class="hint">Billig aftensmad ud fra ugens tilbud, efter kostrådene: fisk hver uge, mindre rødt kød og masser af grønt.
+          Hver ret er en rigtig aftensmad med kød, fisk, æg, bælgfrugter eller ost; mangler opskriften kartofler, ris, pasta eller brød,
+          kommer der kartofler eller ris med som tilbehør, og har den for lidt grønt, kommer der grønt tilbehør med.
+          Prisen på en ret er det, du betaler i butikken for hele pakker; resten af en pakke bruges i en senere ret. Under hver vare står, hvad retten bruger, og prisen pr. person. Tryk på et tilbud for at se det. ✓ = på tilbud og billigere end basisvaren, fx kædens eget mærke.</p>
+      </details>
       <div class="plan-controls">
         <label class="field">Fra <select id="plan-start"></select></label>
         <label class="field">Dage <select id="plan-count"></select></label>
@@ -1731,6 +1747,13 @@ const plan = {ids: [], count: 5, persons: 4, diet: "", focus: "", store: "", sta
   skipped: new Set(), have: new Set(), double: new Set()};
 let planData = null, ING = {};
 const KIND_NAMES = {okse: "Okse", gris: "Gris", kylling: "Kylling", fisk: "Fisk", vegetar: "Vegetar", andet: "Andet kød"};
+// En grøntsagsret med ansjoser, fiskesauce eller kødbouillon er ikke vegetar
+function isVegetarian(r) { return r.kind === "vegetar" && !(r.flags || []).length; }
+function kindName(r) {
+  if (r.kind === "vegetar" && !isVegetarian(r))
+    return r.flags.includes("fish") ? "Grøntsagsret med fisk i smagen" : "Grøntsagsret med kød i bouillon eller smagen";
+  return KIND_NAMES[r.kind] || r.kind;
+}
 const RED = new Set(["okse", "gris", "andet"]);
 const PLAN_MAX_PER_KIND = 2;
 // En tilbudsret: hovedingrediensen er på tilbud, og tilbuddene skal også
@@ -1747,10 +1770,17 @@ async function loadPlanData() {
   if (!planData) {
     planData = await api("/api/recipes");
     ING = Object.fromEntries(planData.ingredients.map(i => [i.key, i]));
+    setKinds();
+    // Varerne står kompakt i data.json (_compact_item i mealplan.py)
+    const sides = {groent: planData.side, ...planData.starch_sides};
+    const unpack = (i) => typeof i === "string" ? {...sides[i]}
+      : Array.isArray(i) ? {amount: i[0], unit: i[1], name: i[2], keys: i[3], main: !!i[4], side: false} : i;
+    for (const r of planData.recipes) r.items = r.items.map(unpack);
     // Retternes varer peger på samme pris som ingrediensen, så en rettet basispris gælder overalt
     const link = (item) => { item.prices = Object.fromEntries(item.keys.map(k => [k, ING[k].price])); };
     for (const r of planData.recipes) r.items.forEach(link);
     link(planData.side);
+    Object.values(planData.starch_sides).forEach(link);
     applyBasis();
   }
   return planData;
@@ -1819,12 +1849,14 @@ async function openBasis() {
 // <matcher> Samme regler som mealplan.py (ingredient_keys, parse_line og
 // recipe_from_lines), så egne opskrifter og indkøbslisten læses som
 // tilbuddene. tests/test_matcher_js.py tjekker, at de giver det samme.
-const PORK = new Set(["hakket_gris", "hakket_gris_kalv", "bacon", "stegeflaesk", "medister", "flaeskesteg",
-  "moerbrad", "koteletter", "poelser", "chorizo", "svinekam", "skinkekoed", "lufttoerret_skinke"]);
-const FISH = new Set(["laksefilet", "roeget_laks", "hvid_fisk", "fiskefrikadeller", "tun", "rejer"]);
-const CHICKEN = new Set(["hakket_kylling", "kyllingebryst", "kyllingelaar", "hel_kylling", "kalkun", "and"]);
-const BEEF = new Set(["hakket_okse", "boef", "okse_tern", "oksesteg", "oksemoerbrad", "kalvekoed", "lam"]);
-const MEAT = new Set([...PORK, ...FISH, ...CHICKEN, ...BEEF]);
+// Kødet og fisken efter slags, fra ingrediensernes "kind" i mealplan.py
+let PORK = new Set(), FISH = new Set(), CHICKEN = new Set(), BEEF = new Set(), MEAT = new Set();
+function setKinds() {
+  const of = (kind) => new Set(planData.ingredients.filter(i => i.kind === kind).map(i => i.key));
+  PORK = of("gris"); FISH = of("fisk"); CHICKEN = of("kylling"); BEEF = of("okse");
+  MEAT = new Set([...PORK, ...FISH, ...CHICKEN, ...BEEF]);
+}
+if (planData) setKinds();
 
 function tokens(text) { return text.normalize("NFC").toLowerCase().match(/[\p{L}\p{N}_]+/gu) || []; }
 
@@ -1929,6 +1961,38 @@ function itemGrams(i) {
 // En ret ud fra en egen opskrift, som recipe_from_lines i mealplan.py. Kød
 // og varer, der ikke kan genkendes, kommer med uden pris.
 const LIQUIDS = new Set(["maelk", "floede"]);
+const NOT_WORD = "[\\p{L}\\p{N}_]";
+// En kendt vare uden mængde købes (missing_amount i mealplan.py)
+const QTY_IN_TEXT = new RegExp(`(?<![\\p{L}\\p{N}_.,])(\\d+(?:[.,]\\d+)?)\\s*(g|gr|gram|kg|ml|cl|dl|l)(?!${NOT_WORD})`, "iu");
+const PACK_RE = /^\s*(?:ca\.?\s*)?[\d½¼¾⅓⅔][\d\s.,/½¼¾⅓⅔-]*(pakke|pakker|pk|bakke|bakker|pose|poser|net|bundt|bundter|bdt)\.?(?=\s|$)/i;
+let OPTIONAL_RE = null;
+function missingAmount(line, text, k) {
+  if (!OPTIONAL_RE) {
+    const words = planData.optional.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+    OPTIONAL_RE = new RegExp(`(?<!${NOT_WORD})(${words})(?!${NOT_WORD})`, "iu");
+  }
+  if (ING[k].missing_pantry || OPTIONAL_RE.test(line)) return [0, ""];
+  const m = text.match(QTY_IN_TEXT);
+  if (m) { const [u, f] = planData.units[m[2].toLowerCase()]; return [Number(m[1].replace(",", ".")) * f, u]; }
+  if (ING[k].default) return ING[k].default;
+  // Kød og fisk: en almindelig portion til 4, eller ét stk af en steg eller en hel kylling
+  return ING[k].kind && ING[k].price[1] < 500 ? [500, "g"] : [1, "stk"];
+}
+
+// Kartofler eller ris til en ret uden noget mættende (starch_side i mealplan.py)
+function starchSide(name, items, pantry) {
+  const starch = items.filter(i => i.amount && i.keys.some(k => ING[k].starch))
+    .reduce((s, i) => s + itemGrams(i) * ING[i.keys[0]].kcal / 100, 0);
+  if (starch >= planData.min_starch_kcal) return null;
+  if (tokens(name).some(t => planData.starch_names.some(w => t.endsWith(w)))) return null;
+  const others = [...items.filter(i => !i.keys.length).map(i => i.name), ...pantry];
+  if (others.some(t => hasAny(t, planData.starch_words) && !hasAny(t, planData.not_starch))) return null;
+  const text = [name, ...items.map(i => i.name)].join(" ");
+  const rice = hasAny(text, planData.rice_words)
+    || hasAny(pantry.join(" "), planData.rice_words.filter(w => !planData.rice_not_pantry.includes(w)))
+    || items.some(i => i.keys.some(k => planData.rice_keys.includes(k)));
+  return {...planData.starch_sides[rice ? "ris" : "kartofler"]};
+}
 
 function recipeFromLines(d) {
   const scale = 4 / Math.max(1, Math.min(12, Number(d.persons) || 4));
@@ -1945,10 +2009,20 @@ function recipeFromLines(d) {
       (staple || !amount ? pantry : unknown).push(text);
       continue;
     }
+    if (!amount) {
+      [amount, unit] = missingAmount(line, text, keys[0]);
+      // "Smør til stegning", "evt. persille": regnes for at være derhjemme
+      if (!amount) { pantry.push(text); continue; }
+      if (!QTY_IN_TEXT.test(text)) amount /= scale;  // en almindelig mængde til 4 personer
+    } else if (["stk", "bundt"].includes(unit) && PACK_RE.test(line)
+               && (ING[keys[0]].pack > ING[keys[0]].price[1] || ING[keys[0]].count_g)) {
+      amount *= ING[keys[0]].pack; unit = "g";  // "1 pakke grillpølser" er en hel pakke
+    } else if (unit === "stk" && ING[keys[0]].count_g) {
+      amount *= ING[keys[0]].count_g; unit = "g";  // "10 cherrytomater" er ikke 10 bakker
+    }
     amount *= scale;
     if (unit === "stk" && !ING[keys[0]].price[1]) { amount *= planData.piece_g; unit = "g"; }
     if (unit === "g" && LIQUIDS.has(keys[0])) { amount /= 100; unit = "dl"; }  // "2 spsk mælk" er 0,3 dl
-    if (!amount) { pantry.push(text); continue; }
     items.push(makeItem(Math.round(amount * 100) / 100, unit, text.slice(0, 80), keys));
   }
   if (!items.length) return {recipe: null, why: "Ingen af ingredienserne kan findes i tilbudsaviserne"};
@@ -1962,6 +2036,8 @@ function recipeFromLines(d) {
   const kind = d.kind || (some(FISH) ? "fisk" : some(CHICKEN) ? "kylling" : some(BEEF) ? "okse" : some(PORK) ? "gris"
     : meat.includes("fish") ? "fisk" : meat.includes("pork") ? "gris" : meat.length ? "andet" : "vegetar");
   const veg = items.filter(i => i.keys.length && ING[i.keys[0]].veg).reduce((s, i) => s + itemGrams(i), 0) / 4;
+  const starch = starchSide(d.name || "", items, pantry);
+  if (starch) items.push(starch);
   if (veg < planData.min_veg) items.push({...planData.side});
   const vegAll = items.filter(i => i.keys.length && ING[i.keys[0]].veg).reduce((s, i) => s + itemGrams(i), 0) / 4;
   return {recipe: {id: d.id, name: d.name, kind, minutes: Number(d.minutes) || 0, items, veg_g: Math.round(vegAll),
@@ -2489,7 +2565,7 @@ function renderPlan() {
       <div class="day">${esc(days)}</div>
       <div class="dish-head"><h3>${esc(r.name)}</h3>
         <span class="price-tag">ca. ${kr(pay)}</span></div>
-      <div class="sub">${Math.abs(pay - cost) >= 1 ? `Retten bruger for ca. ${kr(cost)} · ` : ""}${kr(cost / plan.persons / x.mult)} pr. person · ${esc(KIND_NAMES[r.kind] || r.kind)}
+      <div class="sub">${Math.abs(pay - cost) >= 1 ? `Retten bruger for ca. ${kr(cost)} · ` : ""}${kr(cost / plan.persons / x.mult)} pr. person · ${esc(kindName(r))}
         ${r.minutes ? ` · ${r.minutes} min` : ""} · ${r.veg_g} g grønt pr. person · ${onOffer} af ${x.items.length} varer på tilbud${onOffer ? ` (${Math.round(offerStats(x).share * 100)} % af prisen)` : ""}
         ${have ? ` · ${have} har du` : ""}${unknown ? ` · ${unknown} ${unknown === 1 ? "vare" : "varer"} uden kendt pris er ikke regnet med` : ""}${source ? ` · ${esc(source)}` : ""}
         ${normal - cost >= 5 ? ` · <b class="save">sparer ca. ${kr(normal - cost)}</b>` : ""}</div>
@@ -2629,7 +2705,7 @@ async function planToList() {
     for (const y of x.items) {
       if (y.have) continue;
       const target = y.offer ? offers : extra;
-      const key = y.offer ? y.offer.id : `${y.item.side ? "side" : y.item.keys[0] || y.item.name}`;
+      const key = y.offer ? y.offer.id : `${y.item.side === "groent" ? "side" : y.item.keys[0] || y.item.name}`;
       const e = target.get(key) || {offer: y.offer, item: y.item, dishes: [], amounts: new Map(),
         pieceG: y.item.keys.length ? y.item.prices[y.item.keys[0]][1] : 0, buy: null};
       if (!e.dishes.includes(x.recipe.name)) e.dishes.push(x.recipe.name);
@@ -2653,7 +2729,7 @@ async function planToList() {
   const note = (e) => (e.buy && e.buy.count > 1 && !e.buy.stk ? `${packText(e.buy)} · ` : "")
     + [amounts(e), `til ${joinDa(e.dishes)}`].filter(Boolean).join(" ");
   const texts = [...extra.values()].map(e => {
-    const name = e.item.side ? "Grønt tilbehør (råkost, salat eller broccoli)" : cap(e.item.name);
+    const name = e.item.side === "groent" ? "Grønt tilbehør (råkost, salat eller broccoli)" : cap(e.item.name);
     const a = amounts(e);
     return {text: name + (a ? ` (${a})` : ""), note: `til ${joinDa(e.dishes)}`,
       category: e.item.keys.length ? ING[e.item.keys[0]].dept : "andet"};
@@ -2825,7 +2901,7 @@ function otherWeeks(id, w) {
     .map(([k]) => "uge " + Number(k.split("-W")[1]));
 }
 function recipeSub(r) {
-  return [KIND_NAMES[r.kind] || r.kind, r.minutes ? `${r.minutes} min` : "", r.own ? "egen opskrift" : r.source ? host(r.source) : ""]
+  return [kindName(r), r.minutes ? `${r.minutes} min` : "", r.own ? "egen opskrift" : r.source ? host(r.source) : ""]
     .filter(Boolean).join(" · ");
 }
 function weekPersons() { return Number(store.get("weekpersons", 0)) || store.get("mealplan", {}).persons || 4; }
@@ -2947,7 +3023,7 @@ function sortName(r) { return r.name.replace(/^[^\p{L}\p{N}]+/u, ""); }
 function renderWeekRecipes() {
   const w = shownWeek(), chosen = new Set(weekIds(w)), persons = weekPersons();
   const q = tokens(week.q);
-  let list = allRecipes().filter(r => (!week.kind || (week.kind === "own" ? r.own : r.kind === week.kind)) &&
+  let list = allRecipes().filter(r => (!week.kind || (week.kind === "own" ? r.own : week.kind === "vegetar" ? isVegetarian(r) : r.kind === week.kind)) &&
     q.every(t => tokens(r.name + " " + r.items.map(i => i.name).join(" ")).some(x => x.startsWith(t))))
     .sort((a, b) => (b.own || false) - (a.own || false) || sortName(a).localeCompare(sortName(b), "da"));
   // Kun retter med varer på tilbud i ugen: størst andel først (så flest
@@ -2991,7 +3067,7 @@ async function weekToList(id = null, btn = $("btn-week-list")) {
   const lines = new Map();
   for (const r of recipes) {
     for (const item of r.items) {
-      const key = item.side ? "side" : item.keys[0] || item.name;
+      const key = item.side === "groent" ? "side" : item.keys[0] || item.name;
       const e = lines.get(key) || {item, dishes: [], amounts: new Map()};
       if (!e.dishes.includes(r.name)) e.dishes.push(r.name);
       if (item.amount) e.amounts.set(item.unit, (e.amounts.get(item.unit) || 0) + scaledAmount(item));
@@ -3001,7 +3077,7 @@ async function weekToList(id = null, btn = $("btn-week-list")) {
   plan.persons = old;
   const texts = [...lines.values()].map(e => {
     const a = [...e.amounts].map(([unit, n]) => { const t = amountText(Math.round(n * 10) / 10, unit); return unit === "stk" ? `${t} stk` : t; }).join(" + ");
-    const name = e.item.side ? "Grønt tilbehør (råkost, salat eller broccoli)" : cap(e.item.name);
+    const name = e.item.side === "groent" ? "Grønt tilbehør (råkost, salat eller broccoli)" : cap(e.item.name);
     return {text: name + (a ? ` (${a})` : ""), note: `til ${joinDa(e.dishes)} (uge ${w.week})`,
       category: e.item.keys.length ? ING[e.item.keys[0]].dept : "andet"};
   }).filter(t => !state.list.some(i => i.heading === t.text));
@@ -3096,13 +3172,16 @@ function renderPreview() {
   const rows = d.lines.map(line => {
     const [amount, unit, text] = parseLine(line);
     const keys = text ? lineKeys(text) : [];
+    // "Smør til stegning" og "evt. persille" uden mængde har man derhjemme (missingAmount)
+    if (keys.length && !amount && !missingAmount(line, text, keys[0])[0])
+      return `<li>${esc(line)} <span class="sub">→ regnes for at være derhjemme</span></li>`;
     if (keys.length) return `<li class="ok">${esc(line)} <span class="sub">→ ${esc(keys.map(k => ING[k].name).join(" eller "))}</span></li>`;
     if (hasAny(text, planData.words.pantry) || !amount) return `<li>${esc(line)} <span class="sub">→ regnes for at være derhjemme</span></li>`;
     return `<li class="unknown">${esc(line)} <span class="sub">→ kendes ikke i tilbudsaviserne, kommer med uden pris</span></li>`;
   });
   const {recipe, why} = recipeFromLines(d);
   $("r-preview").innerHTML = `<ul class="preview">${rows.join("")}</ul>` + (recipe
-    ? `<p class="hint">${esc(KIND_NAMES[recipe.kind])} · hovedingrediens: ${esc(recipe.items.filter(i => i.main).map(i => i.name).join(", "))}. Retten kommer på madplanen, når den er på tilbud.</p>
+    ? `<p class="hint">${esc(kindName(recipe))} · hovedingrediens: ${esc(recipe.items.filter(i => i.main).map(i => i.name).join(", "))}. Retten kommer på madplanen, når den er på tilbud.</p>
       ${previewOffers(recipe, Number(d.persons) || 4)}`
     : `<p class="hint" style="color:var(--error)">${esc(why)}</p>`);
 }
@@ -3140,7 +3219,7 @@ function renderRecipes() {
     const {recipe} = recipeFromLines(d);
     const known = recipe ? recipe.items.filter(x => x.keys.length && !x.side).length : 0;
     return `<div class="own-recipe"><div class="what"><b>${esc(d.name)}</b>
-        <div class="sub">${recipe ? esc(KIND_NAMES[recipe.kind]) : "Kan ikke bruges"} · ${known} af ${d.lines.length} ingredienser kendes
+        <div class="sub">${recipe ? esc(kindName(recipe)) : "Kan ikke bruges"} · ${known} af ${d.lines.length} ingredienser kendes
         ${d.url ? ` · <a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(host(d.url))}</a>` : ""}</div></div>
       <div class="dish-actions">
         ${recipe ? `<button class="btn small" data-own-plan="${i}">Sæt på madplanen</button>` : ""}

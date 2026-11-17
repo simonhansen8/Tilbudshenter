@@ -83,7 +83,14 @@ def test_history_used_when_no_pre_price(cfg, categorizer):
     typical = {("hakket oksekød", "kg"): 100.0}
     result = select_offers([o], replace(cfg, min_discount_pct=30), categorizer, typical)
     assert result and round(result[0].score) == 40
-    assert "under normal enhedspris" in result[0].reasons[0]
+    assert "under den typiske pris i tidligere aviser" in result[0].reasons[0]
+
+
+def test_history_ignores_other_goods_with_same_name(cfg, categorizer):
+    # "Julekalender" til 50 kr mod tidligere julekalendere til 200 kr er ikke 75 % rabat
+    o = offer("Julekalender", 10, description="200 g")
+    result = select_offers([o], cfg, categorizer, {("julekalender", "kg"): 200.0})
+    assert result[0].known_discount is None
 
 
 def test_per_category_and_limit(cfg, categorizer):

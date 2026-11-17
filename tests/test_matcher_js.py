@@ -32,6 +32,18 @@ RECIPES = [
     (["4 kyllingebryst", "1 broccoli", "300 g ris", "1 dåse kokosmælk", "2 spsk karry"], 4),
     (["400 g pasta", "150 g bacon", "4 æg", "100 g revet ost"], 4),
     (["500 g hakket oksekød", "1 æg", "2 spsk mælk", "1 løg"], 4),
+    # Uden kartofler eller ris: kartofler som tilbehør til en steg, ris til en karry
+    (["1,5 kg flæskesteg", "2 løg", "4 gulerødder"], 4),
+    (["600 g kyllingebryst", "1 dåse kokosmælk", "2 spsk karry", "1 broccoli"], 4),
+    (["400 g kyllingelår", "400 g broccoli", "1 spsk chinese ris wine eddike"], 4),
+    # Kendte varer uden mængde købes; det valgfrie har man derhjemme
+    (["400 g hakket oksekød", "mutti polpa hakkede tomater 400g", "Kogte ris til servering", "evt. persille",
+      "smør til stegning", "low-fat yoghurt", "Rumpsteak"], 2),
+    # "1 pakke" er en hel pakke
+    (["1 pakke grillpølser", "1 pose kartofler", "2 dåser kikærter", "4 pitabrød", "40 g daggammelt brød"], 4),
+    # Tælles enkeltvis, men sælges i bakker og bundter
+    (["3 dl hytteost", "2 æg", "10 cherrytomater", "8 champignoner", "1 bundt asparges", "1 bakke cherrytomater",
+      "4 skiver bacon"], 2),
 ]
 
 

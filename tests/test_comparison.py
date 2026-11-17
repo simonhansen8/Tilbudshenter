@@ -91,3 +91,17 @@ def test_foetex_food_does_not_count_as_another_store():
     result = compare_across_stores(offers)
     assert {o.dealer for o in offers if o.id in result} == {"føtex", "føtex food"}
     assert all(c.other_stores == 1 and c.reference == 100 for c in result.values())
+
+
+def test_specialty_goods_and_shared_papers_do_not_set_the_reference():
+    # Kvickly og SuperBrugsen har samme avis og samme gourmet-olie; den er ikke
+    # den typiske pris, når de fleste tilbud på olivenolie koster 100-150 kr/l
+    offers = [offer("Ekstra jomfru olivenolie", 79, "Lidl", "750 ml"), offer("Olivenolie", 59, "Lidl", "500 ml"),
+              offer("PRIMADONNA olivenolie", 49.95, "Lidl", "500 ml"),
+              offer("Zucchi ekstra jomfru olivenolie", 110, "føtex", "750 ml"),
+              offer("Estepa Ekstra jomfruolivenolie", 149.95, "Kvickly", "500 ml"),
+              offer("Estepa Ekstra jomfruolivenolie", 149.95, "SuperBrugsen", "500 ml")]
+    result = compare_across_stores(offers)
+    lidl = result[offers[0].id]
+    assert lidl.reference < 150 and lidl.other_stores == 2
+    assert product_group("Sardiner i olivenolie") is None
