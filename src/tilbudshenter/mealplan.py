@@ -47,6 +47,8 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
                  PRODUCT_GROUPS["moerbrad"][2]),
     # "kotelet" alene finder ikke nakke- og svinekoteletter, der slutter på "koteletter"
     "koteletter": ("koteletter", [["kotelet"], ["koteletter"]], ["lam", "kalv", "okse"]),
+    "ribben": ("ribben eller spareribs", [["ribben"], ["spareribs"], ["ribbensteg"], ["svine", "ribs"]],
+               ["pålæg", "kalv", "okse", "lam"]),
     "svinekam": ("svinekam eller nakkefilet", [["svinekam"], ["grisekam"], ["kamfilet"], ["kamsteg"], ["nakkefilet"],
                                                ["kam", "gris"]], ["kotelet", "koteletter", "pålæg", "røget", "hamburgerryg"]),
     "skinkekoed": ("skinkeschnitzler, -strimler eller -tern",
@@ -85,21 +87,27 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
                           ["kalkunschnitzel"], ["kalkunschnitzler"], ["kalkun", "schnitzel"], ["kalkunoverlår"],
                           ["kalkununderlår"], ["kalkunkød"], ["hakket", "kalkun"]],
                ["paneret", "nuggets", "bacon", "pålæg", "cordon", "hakkebøf", "hakkebøffer", "røget", "middagskalkun"]),
-    "and": ("and", [["andebryst"], ["andebryster"], ["andelår"], ["and ", "hel "], ["landand"]],
+    "and": ("and", [["andebryst"], ["andebryster"], ["andelår"], ["and ", "hel "], ["landand"], ["andesteg"],
+                    ["juleand"], ["andestege"]],
             ["confiteret", "confiterede", "menu", "andemenu", "sauce", "dyne", "stegt"]),
     # Fisk
-    "laksefilet": ("laksefilet", [*PRODUCT_GROUPS["laksefilet"][1], ["laks "], ["lakseside"], ["laksesider"]], [*PRODUCT_GROUPS["laksefilet"][2], "skiver"]),
+    "laksefilet": ("laksefilet", [*PRODUCT_GROUPS["laksefilet"][1], ["laks "], ["lakseside"], ["laksesider"],
+                                  ["ørred"], ["ørredfilet"]], [*PRODUCT_GROUPS["laksefilet"][2], "skiver"]),
     # Kold- og varmrøget laks og gravad laks; laksefilet udelukker dem
     "roeget_laks": ("røget laks", [["røget", "laks"], ["gravad", "laks"], ["røgede", "laks"]],
                     ["paté", "pate", "salat", "topping", "mousse", "sandwich", "røræg", "smørrebrød"]),
     "hvid_fisk": ("torsk eller anden hvid fisk", [["torsk"], ["sej "], ["sejfilet"], ["kuller"], ["rødspætte"],
-                                                  ["fiskefilet"], ["pangasius"], ["hoki"]],
+                                                  ["fiskefilet"], ["pangasius"], ["hoki"],
+                                                  ["lyssej"], ["mørksej"], ["kulmule"], ["hellefisk"], ["rødfisk"],
+                                                  ["havkat"], ["rødtunge"], ["skrubbe "], ["skrubbefilet"]],
                   ["fars", "rogn", "lever", "frikadelle", "tørret", "røget"]),
     "fiskefrikadeller": ("fiskefrikadeller", [["fiskefrikadelle"], ["fiskefars"]], []),
     "tun": ("tun på dåse", [["tun "], ["tunfisk"]], ["salat", "mousse"]),
     "rejer": ("rejer", [["rejer"]], ["salat", "cocktail", "chips"]),
     # Mejeri og æg
-    "aeg": PRODUCT_GROUPS["aeg"],
+    # Æggeblommer og -hvider købes som æg
+    "aeg": ("æg", [*PRODUCT_GROUPS["aeg"][1], ["æggeblomme"], ["æggeblommer"], ["æggehvide"], ["æggehvider"]],
+            PRODUCT_GROUPS["aeg"][2]),
     "maelk": ("mælk", [["letmælk"], ["minimælk"], ["sødmælk"], ["skummetmælk"], ["kærnemælk"], ["mælk "]],
               ["kakao", "chokolade", "is "]),
     "floede": ("fløde", [["fløde "], ["piskefløde"], ["madlavningsfløde"], ["kogefløde"], ["cremefine"]],
@@ -127,7 +135,9 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "smoer": PRODUCT_GROUPS["smoer"],
     # Kolonial og brød
     "pasta": ("pasta", [["pasta "], ["spaghetti"], ["penne"], ["fusilli"], ["makaroni"], ["tagliatelle"],
-                        ["farfalle"], ["rigatoni"], ["pastaskruer"]],
+                        ["farfalle"], ["rigatoni"], ["pastaskruer"],
+                        ["orzo"], ["linguine"], ["fettuccine"], ["pappardelle"], ["spaghettini"], ["tortiglioni"],
+                        ["conchiglie"], ["orecchiette"], ["bucatini"], ["macaroni"]],
               ["salat", "lasagne", "græskar", "pesto", "tortellini", "ravioli", "fyldt"]),
     "lasagneplader": ("lasagneplader", [["lasagneplader"], ["lasagne", "plader"]], []),
     "ris": ("ris", [["ris "], ["jasminris"], ["basmatiris"], ["parboiled"], ["risottoris"]],
@@ -139,7 +149,7 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "pizzadej": ("pizzadej", [["pizzadej"], ["pizzabund"]], []),
     "hakkede_tomater": ("hakkede tomater", [["hakkede", "tomater"], ["flåede", "tomater"], ["passata"]], []),
     "kidneyboenner": ("kidneybønner", [["kidney"], ["chilibønner"], ["sorte", "bønner"]], []),
-    "kokosmaelk": ("kokosmælk", [["kokosmælk"]], ["drik"]),
+    "kokosmaelk": ("kokosmælk", [["kokosmælk"], ["kokosfløde"]], ["drik"]),
     "linser": ("linser", [["linser"]], ["chips", "snack", "suppe", "pasta"]),
     "majs": ("majs", [["majs "], ["majskerner"]], ["popcorn", "chips", "snack", "kolbe"]),
     # Frugt og grønt
@@ -157,9 +167,9 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "peberfrugt": PRODUCT_GROUPS["peberfrugt"],
     "broccoli": PRODUCT_GROUPS["broccoli"],
     "blomkaal": ("blomkål", [["blomkål"]], ["broccoli", "ris"]),
-    "spidskaal": ("spidskål eller hvidkål", [["spidskål"], ["hvidkål"]], []),
+    "spidskaal": ("spidskål eller hvidkål", [["spidskål"], ["hvidkål"], ["savoykål"], ["glaskål"]], []),
     "roedkaal": ("rødkål", [["rødkål"]], []),
-    "champignon": ("champignon", [["champignon"]], []),
+    "champignon": ("champignon", [["champignon"], ["portobello"], ["østershat"], ["shiitake"]], []),
     "spinat": ("spinat", [["spinat"]], ["tærte", "pandekage", "ravioli"]),
     "salat": ("salat", [["iceberg"], ["hjertesalat"], ["salathoved"], ["hovedsalat"], ["salat "]], ["dressing"]),
     "romaine": ("romainesalat", [["romaine"]], ["dressing"]),
@@ -175,6 +185,46 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "mango": ("mango", [["mango"]], ["juice", "chutney", "is ", "smoothie", "drik", "tørret", "lassi", "saft", "sorbet"]),
     "persille": ("persille", [["persille"]], ["pesto", "smør"]),
     "aebler": PRODUCT_GROUPS["aebler"],
+    # Flere grøntsager, bælgfrugter, mejerivarer og tilbehør, som opskrifterne
+    # ofte bruger
+    "skalotteloeg": ("skalotteløg", [["skalotteløg"], ["skalotter"], ["skalotte"], ["echalion"]], ["ristede", "syltede"]),
+    "aubergine": ("aubergine", [["aubergine"], ["auberginer"]], ["dip", "creme", "grillet", "grillede"]),
+    "soede_kartofler": ("søde kartofler", [["sød", "kartof"], ["søde", "kartof"], ["sødkartof"]],
+                        ["fritter", "chips", "pommes", "mos", "frites"]),
+    "pak_choi": ("pak choi", [["pak", "choi"], ["pakchoi"], ["pak", "choy"], ["bok", "choy"]], []),
+    "asparges": ("asparges", [["asparges"]], ["suppe", "chips"]),
+    "pastinak": ("pastinak eller persillerod", [["pastinak"], ["persillerod"], ["persillerødder"]], ["chips"]),
+    "butternut": ("butternut eller græskar", [["butternut"], ["græskar"], ["hokkaido"]],
+                  ["kerner", "frø", "seeds", "suppe", "olie", "kage", "is "]),
+    "fennikel": ("fennikel", [["fennikel"]], ["frø", "te ", "pølse"]),
+    "knoldselleri": ("knoldselleri", [["knoldselleri"], ["selleri", "knold"], ["sellerirod"]], ["salt", "chips"]),
+    "groenkaal": ("grønkål", [["grønkål"], ["sortkål"], ["cavolo"]], ["chips", "snack"]),
+    "rosenkaal": ("rosenkål", [["rosenkål"]], []),
+    "radiser": ("radiser", [["radise"], ["radiser"]], []),
+    "roedbeder": ("rødbeder", [["rødbede"]], ["chips", "juice", "saft", "salat"]),
+    "boennespirer": ("bønnespirer", [["bønnespirer"], ["beansprouts"]], []),
+    "sukkeraerter": ("sukkerærter", [["sukkerærter"], ["mangetout"], ["sugar", "snap"]], []),
+    "kikaerter": ("kikærter", [["kikærter"], ["kikært"]], ["chips", "snack", "mel ", "hummus", "pasta"]),
+    "hvide_boenner": ("hvide bønner", [["cannellini"], ["smørbønner"], ["hvide", "bønner"], ["borlotti"],
+                                       ["butterbønner"]], ["tomatsauce", "tomat", "kaffe", "grønne"]),
+    "tofu": ("tofu", [["tofu"]], []),
+    "ricotta": ("ricotta", [["ricotta"]], []),
+    "mascarpone": ("mascarpone", [["mascarpone"]], []),
+    "flodeost": ("flødeost", [["flødeost"], ["philadelphia"], ["smøreost"]], ["laks", "kage", "rejer"]),
+    "hytteost": ("hytteost", [["hytteost"]], []),
+    "halloumi": ("halloumi eller grillost", [["halloumi"], ["grillost"], ["paneer"]], []),
+    "gedeost": ("gedeost", [["gedeost"], ["chèvre"], ["chevre"]], []),
+    "couscous": ("couscous", [["couscous"]], ["salat"]),
+    "bulgur": ("bulgur", [["bulgur"]], ["salat"]),
+    "quinoa": ("quinoa", [["quinoa"]], ["salat", "chips"]),
+    "perlebyg": ("perlebyg", [["perlebyg"], ["pearl", "barley"], ["bygkerner"], ["perlespelt"]], []),
+    "gnocchi": ("gnocchi", [["gnocchi"]], []),
+    "butterdej": ("butterdej eller tærtedej", [["butterdej"], ["filodej"], ["tærtedej"], ["filo "]], []),
+    "pitabroed": ("pitabrød eller naan", [["pitabrød"], ["pita "], ["naan"], ["naanbrød"]], ["chips", "snack"]),
+    "broed": ("brød", [["brød "], ["baguette"], ["baguettes"], ["flute "], ["flutes"], ["ciabatta"], ["focaccia"],
+                       ["franskbrød"], ["landbrød"], ["surdejsbrød"], ["hvedebrød"], ["toastbrød"], ["rugbrød"]],
+              ["rasp", "krummer", "crumbs", "crouton", "croutoner", "chips", "kage", "smørrebrød", "pålæg", "hvidløgsbrød",
+               "hvedemel", "mel ", "flour"]),
 }
 
 # Basispris (kr pr. kg eller liter): den almindelige hyldepris uden tilbud
@@ -188,7 +238,7 @@ NORMAL_PRICES: dict[str, tuple[float, float]] = {
     "hakket_okse": (110, 500), "hakket_gris": (65, 500), "hakket_gris_kalv": (80, 500), "hakket_kylling": (90, 500),
     "kyllingebryst": (115, 150), "kyllingelaar": (45, 200), "hel_kylling": (60, 1400), "bacon": (110, 150),
     "chorizo": (180, 200), "stegeflaesk": (100, 400), "medister": (75, 500), "flaeskesteg": (65, 1500),
-    "moerbrad": (110, 500), "koteletter": (85, 200), "poelser": (90, 60), "boef": (280, 150), "okse_tern": (180, 500),
+    "moerbrad": (110, 500), "koteletter": (85, 200), "ribben": (55, 1000), "poelser": (90, 60), "boef": (280, 150), "okse_tern": (180, 500),
     "svinekam": (90, 1000), "skinkekoed": (100, 400), "lufttoerret_skinke": (350, 80), "oksesteg": (200, 1000),
     "oksemoerbrad": (450, 600), "kalvekoed": (220, 500), "lam": (180, 1000), "kalkun": (120, 500), "and": (180, 350),
     "laksefilet": (230, 125), "roeget_laks": (300, 150), "hvid_fisk": (200, 125), "fiskefrikadeller": (120, 60), "tun": (120, 185),
@@ -206,6 +256,14 @@ NORMAL_PRICES: dict[str, tuple[float, float]] = {
     "bladselleri": (35, 400), "avocado": (50, 200), "groenne_boenner": (40, 400), "aerter": (30, 450),
     "squash": (30, 300), "wokgroent": (35, 600), "citron": (40, 100), "lime": (60, 70), "mango": (40, 400),
     "persille": (150, 30), "aebler": (25, 150),
+    "skalotteloeg": (40, 30), "aubergine": (35, 300), "soede_kartofler": (25, 300), "pak_choi": (60, 200),
+    "asparges": (90, 250), "pastinak": (25, 150), "butternut": (20, 1200), "fennikel": (40, 300),
+    "knoldselleri": (20, 700), "groenkaal": (50, 250), "rosenkaal": (40, 500), "radiser": (40, 150),
+    "roedbeder": (15, 150), "boennespirer": (40, 200), "sukkeraerter": (80, 150), "kikaerter": (25, 400),
+    "hvide_boenner": (25, 400), "tofu": (50, 300), "ricotta": (70, 250), "mascarpone": (80, 250),
+    "flodeost": (80, 200), "hytteost": (45, 250), "halloumi": (120, 200), "gedeost": (160, 150),
+    "couscous": (30, 500), "bulgur": (30, 500), "quinoa": (60, 400), "perlebyg": (25, 500), "gnocchi": (35, 500),
+    "butterdej": (60, 275), "pitabroed": (50, 80), "broed": (35, 400),
 }
 
 # Basisprisen følger tilbudsaviserne: koster en vare typisk mere på tilbud end
@@ -275,8 +333,15 @@ BASIS_PACK_G: dict[str, float] = {
     "kyllingebryst": 500, "kyllingelaar": 1000, "poelser": 400, "koteletter": 600, "boef": 300, "laksefilet": 250,
     "hvid_fisk": 400, "fiskefrikadeller": 300, "aeg": 600, "tortilla": 320, "burgerboller": 280, "poelsebroed": 400,
     "lasagneplader": 500, "kartofler": 2000, "guleroedder": 1000, "loeg": 1000, "hvidloeg": 150, "tomater": 500,
-    "citron": 300, "lime": 210, "aebler": 1000,
+    "citron": 300, "lime": 210, "aebler": 1000, "skalotteloeg": 300, "pitabroed": 400, "roedbeder": 500,
+    "pastinak": 500,
 }
+
+
+# Vægten af én, når en opskrift tæller varer, der sælges i bakker eller
+# bundter: "10 cherrytomater" er 150 g, ikke 10 bakker
+COUNT_G: dict[str, float] = {"cherrytomater": 15, "champignon": 20, "radiser": 15, "rosenkaal": 15,
+                             "sukkeraerter": 6, "asparges": 20}
 
 
 def basis_pack_g(key: str) -> float:
@@ -332,6 +397,7 @@ class Item:
     name: str
     keys: list[str] = field(default_factory=list)  # ingredienser fra INGREDIENTS
     main: bool = False  # retten foreslås kun, når en hovedingrediens er på tilbud
+    side: str = ""  # tilbehør, madplanen lægger til: "groent", "kartofler" eller "ris"
 
 
 @dataclass
@@ -735,7 +801,9 @@ def _matches(tokens: list[str], spec: tuple[str, list[list[str]], list[str]]) ->
 # Mere præcise ingredienser, der vinder over en bredere: står der
 # "revet parmesan", er det parmesan og ikke en hvilken som helst revet ost
 REPLACES = {"okse_tern": ["oksesteg"], "oksemoerbrad": ["moerbrad"], "parmesan": ["revet_ost"], "frisk_mozzarella": ["revet_ost"], "romaine": ["salat"], "rucola": ["salat"], "cherrytomater": ["tomater"],
-            "foraarsloeg": ["loeg"]}
+            "foraarsloeg": ["loeg"], "skalotteloeg": ["loeg"], "pastinak": ["persille"], "knoldselleri": ["bladselleri"],
+            "sukkeraerter": ["aerter"], "hvide_boenner": ["groenne_boenner"], "soede_kartofler": ["kartofler"],
+            "pitabroed": ["broed"]}
 
 
 # Første ord i hvert mønster. Står ingen af dem i varenavnet, kan
@@ -835,7 +903,9 @@ VEGETABLES = {
     "guleroedder", "loeg", "porrer", "tomater", "hakkede_tomater", "agurk", "peberfrugt", "broccoli",
     "blomkaal", "spidskaal", "roedkaal", "champignon", "spinat", "salat", "groenne_boenner", "aerter",
     "squash", "wokgroent", "majs", "kidneyboenner", "cherrytomater", "romaine", "rucola", "bladselleri", "avocado",
-    "foraarsloeg", "linser",
+    "foraarsloeg", "linser", "skalotteloeg", "aubergine", "soede_kartofler", "pak_choi", "asparges", "pastinak",
+    "butternut", "fennikel", "knoldselleri", "groenkaal", "rosenkaal", "radiser", "roedbeder", "boennespirer",
+    "sukkeraerter", "kikaerter", "hvide_boenner",
 }
 
 # Kostrådene anbefaler omkring 600 g frugt og grønt om dagen. En ret med
@@ -844,7 +914,66 @@ MIN_VEG_PER_PERSON = 125
 
 # Tilbehøret: det billigste af disse, der er på tilbud
 SIDE = Item(500, "g", "grønt tilbehør, fx råkost, salat eller dampet broccoli",
-            ["guleroedder", "spidskaal", "broccoli", "agurk", "tomater", "salat", "groenne_boenner", "aerter"])
+            ["guleroedder", "spidskaal", "broccoli", "agurk", "tomater", "salat", "groenne_boenner", "aerter"], side="groent")
+
+# Energi i kcal pr. 100 g (rå vare). En aftensmad skal mætte: en ret uden
+# kartofler, ris, pasta, brød eller lignende får kartofler eller ris som
+# tilbehør, og en ret med for lidt mad i er ikke en aftensmad.
+KCAL: dict[str, float] = {
+    "hakket_okse": 200, "hakket_gris": 200, "hakket_gris_kalv": 190, "hakket_kylling": 140, "kyllingebryst": 110,
+    "kyllingelaar": 190, "hel_kylling": 160, "bacon": 330, "stegeflaesk": 400, "medister": 300, "flaeskesteg": 250,
+    "moerbrad": 120, "koteletter": 200, "ribben": 280, "svinekam": 180, "skinkekoed": 120, "lufttoerret_skinke": 250, "poelser": 250,
+    "chorizo": 400, "boef": 150, "okse_tern": 150, "oksesteg": 140, "oksemoerbrad": 130, "kalvekoed": 120, "lam": 230,
+    "kalkun": 110, "and": 200, "laksefilet": 200, "roeget_laks": 180, "hvid_fisk": 80, "fiskefrikadeller": 180,
+    "tun": 150, "rejer": 90, "aeg": 140, "maelk": 45, "floede": 300, "creme_fraiche": 250, "revet_ost": 350,
+    "frisk_mozzarella": 250, "parmesan": 400, "feta": 270, "yoghurt": 60, "smoer": 740, "pasta": 360,
+    "lasagneplader": 360, "ris": 350, "nudler": 360, "tortilla": 300, "burgerboller": 270, "poelsebroed": 270,
+    "pizzadej": 250, "hakkede_tomater": 25, "kidneyboenner": 100, "kokosmaelk": 180, "linser": 330, "majs": 80,
+    "kartofler": 75, "guleroedder": 35, "loeg": 40, "foraarsloeg": 30, "hvidloeg": 140, "porrer": 30, "tomater": 20,
+    "cherrytomater": 25, "agurk": 12, "peberfrugt": 30, "broccoli": 35, "blomkaal": 25, "spidskaal": 25,
+    "roedkaal": 30, "champignon": 22, "spinat": 22, "salat": 15, "romaine": 15, "rucola": 25, "bladselleri": 15,
+    "avocado": 200, "groenne_boenner": 30, "aerter": 80, "squash": 17, "wokgroent": 35, "citron": 30, "lime": 30,
+    "mango": 60, "persille": 40, "aebler": 50, "skalotteloeg": 70, "aubergine": 25, "soede_kartofler": 85,
+    "pak_choi": 15, "asparges": 20, "pastinak": 60, "butternut": 45, "fennikel": 30, "knoldselleri": 25,
+    "groenkaal": 45, "rosenkaal": 40, "radiser": 15, "roedbeder": 45, "boennespirer": 30, "sukkeraerter": 40,
+    "kikaerter": 120, "hvide_boenner": 100, "tofu": 130, "ricotta": 150, "mascarpone": 430, "flodeost": 250,
+    "hytteost": 90, "halloumi": 320, "gedeost": 300, "couscous": 360, "bulgur": 350, "quinoa": 360,
+    "perlebyg": 350, "gnocchi": 160, "butterdej": 400, "pitabroed": 270, "broed": 260,
+}
+
+# Det mættende i en ret: står ingen af disse i retten, får den kartofler
+# eller ris som tilbehør
+STARCH = {"kartofler", "soede_kartofler", "ris", "pasta", "lasagneplader", "nudler", "tortilla", "burgerboller",
+          "poelsebroed", "pizzadej", "couscous", "bulgur", "quinoa", "perlebyg", "gnocchi", "butterdej",
+          "pitabroed", "broed"}
+# Mættende ting, madplanen ikke kan prissætte, men som retten har
+STARCH_WORDS = ["polenta", "kartoffelmos", "mos ", "brød", "ris ", "nudler", "pasta", "tortilla", "wraps", "pommes",
+                "fritter", "spelt", "hirse", "freekeh", "ramen", "udon", "soba", "risotto", "naan", "pita",
+                "lefse", "dej ", "gær "]
+# Retter, der selv er det mættende, selvom opskriften ikke nævner det ("Tarte flambée" med gær og mel)
+STARCH_NAMES = ["pizza", "pizzaer", "tærte", "tærter", "tarte", "quiche", "lasagne", "risotto", "pasta", "wrap", "wraps",
+                "taco", "tacos", "burrito", "burritos", "sandwich", "calzone", "pie", "pirogger", "dumplings",
+                "gnocchi", "nudler", "nudelsuppe", "ramen", "flammkuchen", "focaccia", "toast", "pandekager"]
+# Ord, der ikke er noget mættende, selvom de nævner det: "ris wine eddike", "rismel"
+_NOT_STARCH = ["eddike", "vin", "wine", "mel ", "rismel", "papir", "stivelse", "krummer", "rasp", "crumbs", "mælk",
+               "milk", "flager"]
+# Så meget mættende skal retten have (kcal til 4 personer), for at den ikke får tilbehør
+MIN_STARCH_KCAL = 250
+# Retter, der får ris i stedet for kartofler
+RICE_WORDS = ["karry", "curry", "wok", "chili", "thai", "indisk", "asiatisk", "dhal", "dahl", "dal ", "tikka",
+              "masala", "teriyaki", "korma", "satay", "stroganoff", "sursød", "kokos", "soja", "sojasauce",
+              "fiskesauce", "garam", "ingefær", "gochujang", "jambalaya", "bulgogi", "kung", "stir", "sambal",
+              "østerssauce", "hoisin", "rendang", "vindaloo", "madras", "biryani", "gumbo"]
+# Chili som krydderi gør ikke retten til en chiliret; kun i navnet eller varerne
+RICE_NOT_PANTRY = ["chili"]
+RICE_KEYS = ["kokosmaelk", "pak_choi", "boennespirer", "tofu"]
+STARCH_SIDES = {
+    "kartofler": Item(1000, "g", "kartofler som tilbehør", ["kartofler"], side="kartofler"),
+    "ris": Item(300, "g", "ris som tilbehør", ["ris"], side="ris"),
+}
+# En hentet opskrift er en aftensmad, når dens egne varer giver mindst så
+# mange kcal pr. person (uden tilbehør og det, man har derhjemme)
+MIN_DINNER_KCAL = 120
 
 
 def _grams(item: Item) -> float:
@@ -860,20 +989,83 @@ def vegetables_per_person(items: list[Item]) -> float:
     return sum(_grams(i) for i in items if i.keys and i.keys[0] in VEGETABLES) / 4
 
 
+def kcal_per_person(items: list[Item]) -> float:
+    """Energien pr. person i en ret til 4 fra de varer, der kan genkendes."""
+    return sum(_grams(i) * KCAL[i.keys[0]] / 100 for i in items if i.keys and i.amount) / 4
+
+
+def starch_side(recipe: Recipe) -> Item | None:
+    """Kartofler eller ris til en ret uden noget mættende, fx en flæskesteg
+    eller en karry, hvor opskriften ikke nævner tilbehøret."""
+    starch = sum(_grams(i) * KCAL[i.keys[0]] / 100 for i in recipe.items
+                 if i.amount and any(k in STARCH for k in i.keys))
+    if starch >= MIN_STARCH_KCAL:
+        return None
+    if any(t.endswith(w) for t in _tokens(recipe.name) for w in STARCH_NAMES):
+        return None
+    others = [i.name for i in recipe.items if not i.keys] + list(recipe.pantry)
+    if any(_has_any(text, STARCH_WORDS) and not _has_any(text, _NOT_STARCH) for text in others):
+        return None
+    text = " ".join([recipe.name, *(i.name for i in recipe.items)])
+    rice = (_has_any(text, RICE_WORDS) or _has_any(" ".join(recipe.pantry), [w for w in RICE_WORDS if w not in RICE_NOT_PANTRY])
+            or any(k in RICE_KEYS for i in recipe.items for k in i.keys))
+    return STARCH_SIDES["ris" if rice else "kartofler"]
+
+
 def recipe_items(recipe: Recipe) -> list[Item]:
-    """Rettens varer, med grønt tilbehør hvis den har for lidt grønt."""
-    if vegetables_per_person(recipe.items) >= MIN_VEG_PER_PERSON:
-        return recipe.items
-    return [*recipe.items, SIDE]
+    """Rettens varer, med grønt tilbehør, hvis den har for lidt grønt, og
+    kartofler eller ris, hvis den ikke har noget mættende."""
+    items = list(recipe.items)
+    if (starch := starch_side(recipe)) is not None:
+        items.append(starch)
+    if vegetables_per_person(recipe.items) < MIN_VEG_PER_PERSON:
+        items.append(SIDE)
+    return items
+
+
+def dish_head(name: str) -> list[str]:
+    """Ordene i det, retten er: "Kylling i karrysauce med ris" -> ["kylling"].
+    "Pesto- og gedeost-spaghetti" er spaghetti: "og" efter en bindestreg deler ikke."""
+    head = re.split(r"\s(?:med|i|på|til|with|in|on|uden)\s|(?<!-)\s(?:og)\s|[,|&(]", f" {name} ", maxsplit=1,
+                    flags=re.IGNORECASE)[0]
+    return _tokens(head) or _tokens(name)
+
+
+# Supper og salater skal have mere i sig for at være en aftensmad
+LIGHT_HEADS = ["suppe", "salat", "salater", "bowl", "soup", "salad"]
+MIN_LIGHT_KCAL = 250
+# En aftensmad har protein: kød, fisk, æg, bælgfrugter, tofu eller ost (gram til 4 personer)
+PROTEIN_KEYS = {"aeg", "kidneyboenner", "linser", "kikaerter", "hvide_boenner", "tofu", "feta", "halloumi", "hytteost",
+                "ricotta", "revet_ost", "frisk_mozzarella", "parmesan", "gedeost"}
+MIN_PROTEIN_G = 60
+
+
+def dinner_problem(recipe: Recipe) -> str:
+    """Hvorfor en hentet opskrift ikke er en aftensmad, eller "" hvis den er."""
+    head = dish_head(recipe.name)
+    light = bool(head) and any(head[-1].endswith(w) for w in LIGHT_HEADS)
+    if kcal_per_person(recipe.items) < (MIN_LIGHT_KCAL if light else MIN_DINNER_KCAL):
+        return "for lidt mad til en aftensmad"
+    protein = sum(_grams(i) for i in recipe.items
+                  if i.amount and any(k in PROTEIN_KEYS or k in _MEAT_KEYS for k in i.keys))
+    if protein < MIN_PROTEIN_G:
+        return "intet kød, fisk, æg, bælgfrugter eller ost"
+    return ""
 
 
 def _item_payload(i: Item) -> dict:
-    return {
-        "amount": _amount(i.amount), "unit": i.unit, "name": i.name, "keys": i.keys, "main": i.main,
-        "side": i is SIDE,
-        # Basispris pr. kg og vægt pr. stk for hver ingrediens
-        "prices": {k: list(NORMAL_PRICES[k]) for k in i.keys},
-    }
+    # Basispris og vægt pr. stk følger med ingredienserne (ingredients_payload)
+    return {"amount": _amount(i.amount), "unit": i.unit, "name": i.name, "keys": i.keys, "main": i.main,
+            "side": i.side or False}
+
+
+def _compact_item(i: dict) -> list | str:
+    """En vare i data.json: [mængde, enhed, navn, ingredienser, hovedingrediens],
+    og tilbehøret bare som "groent", "kartofler" eller "ris". Browseren pakker
+    dem ud igen (loadPlanData i app.html); det gør data.json halvt så stor."""
+    if i["side"]:
+        return i["side"]
+    return [i["amount"], i["unit"], i["name"], i["keys"], 1 if i["main"] else 0]
 
 
 def _recipe_payload(r: Recipe) -> dict:
@@ -902,16 +1094,17 @@ def recipes_payload() -> list[dict]:
 # indkøbslisten kan følge vejen gennem butikken
 _DEPARTMENT_KEYS = {
     "koed": ["hakket_okse", "hakket_gris", "hakket_gris_kalv", "hakket_kylling", "kyllingebryst", "kyllingelaar",
-             "hel_kylling", "bacon", "stegeflaesk", "medister", "flaeskesteg", "moerbrad", "koteletter", "poelser",
+             "hel_kylling", "bacon", "stegeflaesk", "medister", "flaeskesteg", "moerbrad", "koteletter", "ribben", "poelser",
              "boef", "okse_tern", "chorizo", "svinekam", "skinkekoed", "lufttoerret_skinke", "oksesteg", "oksemoerbrad",
              "kalvekoed", "lam", "kalkun", "and"],
     "fisk": ["laksefilet", "roeget_laks", "hvid_fisk", "fiskefrikadeller", "rejer"],
     "mejeri": ["aeg", "maelk", "floede", "creme_fraiche", "revet_ost", "frisk_mozzarella", "parmesan", "feta", "yoghurt", "smoer",
-               "pizzadej"],
-    "broed_og_bager": ["tortilla", "burgerboller", "poelsebroed"],
+               "pizzadej", "tofu", "ricotta", "mascarpone", "flodeost", "hytteost", "halloumi", "gedeost", "butterdej"],
+    "broed_og_bager": ["tortilla", "burgerboller", "poelsebroed", "pitabroed", "broed"],
     "frost": ["aerter", "wokgroent"],
     "kolonial": ["pasta", "lasagneplader", "ris", "nudler", "hakkede_tomater", "kidneyboenner", "kokosmaelk",
-                 "majs", "tun", "linser"],
+                 "majs", "tun", "linser", "kikaerter", "hvide_boenner", "couscous", "bulgur", "quinoa", "perlebyg",
+                 "gnocchi"],
 }
 DEPARTMENTS = {k: dept for dept, keys in _DEPARTMENT_KEYS.items() for k in keys}
 
@@ -1003,11 +1196,17 @@ PANTRY_WORDS = [
     "risvin", "mirin", "kødsnor", "fiskesause", "nori", "tang ", "ansjos", "ansjoser",
 ]
 PORK_WORDS = ["skinke", "bacon", "pancetta", "chorizo", "salami", "svin", "gris", "flæsk", "pølse", "prosciutto",
-              "serrano", "medister", "kotelet", "spegepølse"]
-FISH_WORDS = ["fisk", "laks", "torsk", "tun ", "rejer", "makrel", "sild", "ansjos", "muslinger", "hummer",
-              "krabbe", "blæksprutte", "rødspætte", "kuller", "sej ", "skaldyr", "kammusling", "tang "]
+              "serrano", "medister", "kotelet", "spegepølse", "ribben", "spareribs",
+              # Engelske ord, som oversættelsen lader stå
+              "pork", "pepperoni", "nduja", "ham ", "gammon", "lardons", "hamburgerryg", "kassler"]
+FISH_WORDS = ["fisk", "laks", "torsk", "tun ", "rejer", "makrel", "sild", "ansjos", "muslinge", "hummer",
+              "krabbe", "blæksprutte", "rødspætte", "kuller", "sej ", "skaldyr", "kammusling", "tang ", "lyssej",
+              "mørksej", "kulmule", "hellefisk", "rødfisk", "havkat", "ørred", "pighvar", "rødtunge", "skrubbe ",
+              "sardin", "havbars", "dorade", "havrude", "bass", "seabass", "bream", "monkfish", "halibut", "haddock",
+              "cod ", "salmon", "prawn", "prawns", "shrimp", "squid", "calamari", "mussels", "clams", "scallops"]
 MEAT_WORDS = ["kød", "okse", "kalv", "lam", "kylling", "kalkun", "and ", "andebryst", "gås", "vildt", "hjort",
-              "rådyr", "kanin", "bøf", "frikadelle", "høne", "hønse", "lever", "kebab", "gyros", "steak", "tournedos", "gulasch", "gullasch",
+              "rådyr", "kanin", "bøf", "andesteg", "juleand", "chicken", "beef", "turkey", "lamb", "meatball",
+              "meatballs", "pulled", "bresaola", "venison", "duck", "frikadelle", "høne", "hønse", "lever", "kebab", "gyros", "steak", "tournedos", "gulasch", "gullasch",
               "entrecote", "culotte", "ribeye", "picanha"]
 _KIND_KEYS = [
     ("fisk", ["laksefilet", "roeget_laks", "hvid_fisk", "fiskefrikadeller", "tun", "rejer"]),
@@ -1015,9 +1214,10 @@ _KIND_KEYS = [
     ("kylling", ["hakket_kylling", "kyllingebryst", "kyllingelaar", "hel_kylling", "kalkun", "and"]),
     ("okse", ["hakket_okse", "boef", "okse_tern", "oksesteg", "oksemoerbrad", "kalvekoed", "lam"]),
     ("gris", ["hakket_gris", "hakket_gris_kalv", "bacon", "stegeflaesk", "medister", "flaeskesteg", "moerbrad",
-              "koteletter", "poelser", "chorizo", "svinekam", "skinkekoed", "lufttoerret_skinke"]),
+              "koteletter", "poelser", "chorizo", "svinekam", "skinkekoed", "lufttoerret_skinke", "ribben"]),
 ]
 _MEAT_KEYS = {k for _, keys in _KIND_KEYS for k in keys}
+KIND_OF = {k: kind for kind, keys in _KIND_KEYS for k in keys}
 
 
 def _has_any(text: str, words: list[str]) -> bool:
@@ -1064,6 +1264,43 @@ def line_keys(name: str) -> list[str]:
     return [k for k in keys if k not in replaced]
 
 
+# En kendt vare uden mængde ("hakkede tomater", "kogte ris til servering")
+# skal købes: med mængden i teksten ("polpa 400g"), ellers en almindelig
+# mængde til 4 personer, og ellers ét stk eller én pakke. Kun det valgfrie og
+# smør til stegning regnes for at være derhjemme.
+_QTY_IN_TEXT = re.compile(r"(?<![\w.,])(\d+(?:[.,]\d+)?)\s*(g|gr|gram|kg|ml|cl|dl|l)(?![\w])", re.IGNORECASE)
+OPTIONAL_WORDS = ["evt", "eventuelt", "valgfrit", "valgfri", "optional", "efter smag", "til stegning", "til pynt",
+                  "til pensling", "til smøring", "til friture", "til drys", "til panering", "lidt", "en smule",
+                  "et skvæt", "skvæt", "håndfuld", "knivspids", "nip", "drys"]
+_OPTIONAL_RE = re.compile(r"(?<!\w)(" + "|".join(re.escape(w) for w in OPTIONAL_WORDS) + r")(?!\w)", re.IGNORECASE)
+MISSING_PANTRY = {"smoer", "maelk"}
+# "1 pakke", "2 poser", "1 net": en hel pakke af varen (BASIS_PACK_G)
+_PACK_RE = re.compile(r"^\s*(?:ca\.?\s*)?[\d½¼¾⅓⅔][\d\s.,/½¼¾⅓⅔-]*(pakke|pakker|pk|bakke|bakker|pose|poser|net|bundt|bundter|bdt)\.?(?=\s|$)",
+                      re.IGNORECASE)
+DEFAULT_AMOUNTS: dict[str, tuple[float, str]] = {
+    "ris": (300, "g"), "pasta": (400, "g"), "kartofler": (1000, "g"), "soede_kartofler": (800, "g"),
+    "couscous": (300, "g"), "bulgur": (300, "g"), "quinoa": (300, "g"), "perlebyg": (300, "g"), "nudler": (250, "g"),
+    "gnocchi": (500, "g"), "hvidloeg": (2, "fed"), "tortilla": (8, "stk"), "pitabroed": (4, "stk"),
+    "burgerboller": (4, "stk"), "poelsebroed": (8, "stk"), "aeg": (4, "stk"), "floede": (2, "dl"),
+    "yoghurt": (500, "g"),
+}
+
+
+def missing_amount(line: str, text: str, key: str) -> tuple[float, str]:
+    """Mængden af en kendt vare, når linjen ikke har en. (0, "") betyder derhjemme."""
+    if key in MISSING_PANTRY or _OPTIONAL_RE.search(line):
+        return 0.0, ""
+    if (m := _QTY_IN_TEXT.search(text)):
+        unit, factor = UNITS[m[2].lower()]
+        return float(m[1].replace(",", ".")) * factor, unit
+    if key in DEFAULT_AMOUNTS:
+        return DEFAULT_AMOUNTS[key]
+    # Kød og fisk: en almindelig portion til 4, eller ét stk af en steg eller en hel kylling
+    if key in KIND_OF and NORMAL_PRICES[key][1] < 500:
+        return 500.0, "g"
+    return 1.0, "stk"
+
+
 def _piece_grams(key: str) -> float:
     return NORMAL_PRICES[key][1] or DEFAULT_PIECE_G
 
@@ -1098,15 +1335,25 @@ def recipe_from_lines(
             small = unit == "g" and amount <= 10
             (pantry if staple or small or not amount else unknown).append(text)
             continue
+        if not amount:
+            amount, unit = missing_amount(line, text, keys[0])
+            if not amount:
+                # "Smør til stegning", "evt. persille" og lignende: regnes for at være derhjemme
+                pantry.append(text)
+                continue
+            if not _QTY_IN_TEXT.search(text):  # en almindelig mængde til 4 personer
+                amount /= scale
+        elif unit in ("stk", "bundt") and _PACK_RE.match(line) and (
+                basis_pack_g(keys[0]) > NORMAL_PRICES[keys[0]][1] or keys[0] in COUNT_G):
+            # "1 pakke grillpølser" er en hel pakke, ikke én pølse
+            amount, unit = amount * basis_pack_g(keys[0]), "g"
+        elif unit == "stk" and keys[0] in COUNT_G:
+            amount, unit = amount * COUNT_G[keys[0]], "g"
         amount *= scale
         if unit == "stk" and not NORMAL_PRICES[keys[0]][1]:
             amount, unit = amount * DEFAULT_PIECE_G, "g"
         if unit == "g" and keys[0] in LIQUIDS:  # "2 spsk mælk" er 0,3 dl, ikke 30 g
             amount, unit = amount / 100, "dl"
-        if not amount:
-            # "Smør til stegning" og lignende: regnes for at være derhjemme
-            pantry.append(text)
-            continue
         items.append(Item(round(amount, 2), unit, text[:80], keys))
     if len(items) < 2:
         return None, "for få kendte ingredienser"
@@ -1154,18 +1401,21 @@ def load_imported(path=None) -> list[dict]:
 
 @lru_cache(maxsize=1)
 def imported_recipes() -> tuple[Recipe, ...]:
+    """Opskrifterne fra madsiderne, der er aftensmad. Reglerne bruges også på
+    opskrifter, der blev hentet, før reglerne blev skærpet."""
+    from .opskrifter import clean_name, is_dinner
     from .oversaet import danish
 
     result = []
     for data in load_imported():
         data, _ = danish(data)  # engelske opskrifter på dansk
-        if data is None:
+        if data is None or not is_dinner(data):
             continue
         recipe, _ = recipe_from_lines(
-            "web-" + hashlib.sha1(data["url"].encode()).hexdigest()[:10], data["name"], data["ingredients"],
+            "web-" + hashlib.sha1(data["url"].encode()).hexdigest()[:10], clean_name(data["name"]), data["ingredients"],
             data.get("persons") or 4, data.get("minutes") or 0, "", data["url"],
         )
-        if recipe:
+        if recipe and not dinner_problem(recipe):
             result.append(recipe)
     return tuple(result)
 
@@ -1178,7 +1428,11 @@ def ingredients_payload(market: dict[str, float] | None = None, shelf: dict[str,
         {"key": k, "name": name, "patterns": patterns, "exclude": exclude,
          "price": [basis_price(k, market, shelf), NORMAL_PRICES[k][1]],
          **({"src": {f: shelf[k][f] for f in ("store", "product", "pack", "shelf")}} if k in shelf else {}),
-         "pack": basis_pack_g(k), "veg": k in VEGETABLES, "dept": department(k), "replaces": REPLACES.get(k, [])}
+         "pack": basis_pack_g(k), "veg": k in VEGETABLES, "dept": department(k), "replaces": REPLACES.get(k, []),
+         "kcal": KCAL[k], **({"kind": KIND_OF[k]} if k in KIND_OF else {}), **({"starch": True} if k in STARCH else {}),
+         **({"default": list(DEFAULT_AMOUNTS[k])} if k in DEFAULT_AMOUNTS else {}),
+         **({"missing_pantry": True} if k in MISSING_PANTRY else {}),
+         **({"count_g": COUNT_G[k]} if k in COUNT_G else {})}
         for k, (name, patterns, exclude) in INGREDIENTS.items()
     ]
 
@@ -1187,9 +1441,13 @@ def plan_payload(market: dict[str, float] | None = None, shelf: dict[str, dict] 
     """Alt, madplanen i browseren skal bruge. ``market`` er market_prices for
     tilbuddene i prishistorikken, ``shelf`` de rigtige hyldepriser."""
     return {
-        "recipes": recipes_payload(),
+        "recipes": [{**r, "items": [_compact_item(i) for i in r["items"]]} for r in recipes_payload()],
         "ingredients": ingredients_payload(market, shelf),
         "side": _item_payload(SIDE),
+        "starch_sides": {k: _item_payload(i) for k, i in STARCH_SIDES.items()},
+        "starch_words": STARCH_WORDS, "rice_words": RICE_WORDS, "rice_keys": RICE_KEYS,
+        "not_starch": _NOT_STARCH, "rice_not_pantry": RICE_NOT_PANTRY, "min_starch_kcal": MIN_STARCH_KCAL, "starch_names": STARCH_NAMES,
+        "optional": OPTIONAL_WORDS,
         "words": {"not_raw": _NOT_RAW, "not_raw_heading": _NOT_RAW_HEADING, "pantry": PANTRY_WORDS,
                   "flavor": FLAVOR_WORDS, "flavor_ok": {k: list(_flavor_ok(k)) for k in INGREDIENTS if _flavor_ok(k)},
                   "varieties": VARIETIES,

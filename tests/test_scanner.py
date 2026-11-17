@@ -51,6 +51,23 @@ def test_typical_prices_need_two_catalogs(storage):
     assert storage.typical_unit_prices(exclude_catalogs={"c0", "c1"}) == {}
 
 
+def test_typical_prices_skip_duplicates_and_different_goods(storage):
+    from tilbudshenter.models import Catalog, Offer
+
+    # Samme tilbud i tre aviser fra samme kæde tæller én gang
+    for i in range(3):
+        cat = Catalog(id=f"a{i}", dealer="ABC Lavpris", label="", run_from=NOW, run_till=NOW)
+        storage.save_catalog(cat, "test", scanned=True)
+        storage.save_offers([Offer(id=f"a{i}", catalog_id=cat.id, dealer="ABC Lavpris",
+                                   heading="Kaffe", description="100 g", price=50)])
+    assert storage.typical_unit_prices() == {}
+    # Kaffe til 120 og 500 kr/kg er ikke samme vare
+    cat = Catalog(id="l1", dealer="Lidl", label="", run_from=NOW, run_till=NOW)
+    storage.save_catalog(cat, "test", scanned=True)
+    storage.save_offers([Offer(id="l1", catalog_id="l1", dealer="Lidl", heading="Kaffe", description="500 g", price=60)])
+    assert storage.typical_unit_prices() == {}
+
+
 def test_paper_details_are_stored_and_old_catalogs_fetched_again(tmp_path, cfg, categorizer):
     import sqlite3
 

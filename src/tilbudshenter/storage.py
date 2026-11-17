@@ -77,6 +77,10 @@ CREATE INDEX IF NOT EXISTS offers_product ON offers(product_key, unit);
 """
 
 
+# Svinger prisen pr. kg på en vare med samme navn mere end dette, er det
+# forskellige varer, og historikken kan ikke bruges som normalpris
+TYPICAL_MAX_SPREAD = 2.0
+
 # Kæder uden egen avis har de samme tilbud som en anden kæde og må ikke tælle
 # dobbelt i prishistorikken
 _NOT_TWIN = f" AND dealer NOT IN ({', '.join('?' * len(PAPER_TWINS))})"
@@ -279,27 +283,30 @@ class Storage:
     def typical_unit_prices(self, exclude_catalogs: set[str] | None = None) -> dict[tuple[str, str], float]:
         """Median-enhedspris pr. vare fra tidligere aviser.
 
-        Bruges som "normalpris" for tilbud uden førpris. Kun varer set i
-        mindst to tidligere aviser medtages.
+        Bruges som "normalpris" for tilbud uden førpris. Samme tilbud i flere
+        aviser fra samme kæde tæller kun én gang, og en vare skal være set
+        mindst to gange. Svinger prisen mere end ``TYPICAL_MAX_SPREAD`` gange,
+        dækker navnet over forskellige varer (fx "Julekalender" eller
+        "Kalenderlys"), og så bruges historikken ikke.
         """
         exclude_catalogs = exclude_catalogs or set()
         rows = self.conn.execute(
-            "SELECT product_key, unit, unit_price, catalog_id FROM offers WHERE unit_price IS NOT NULL"
+            "SELECT product_key, unit, unit_price, catalog_id, dealer, run_from FROM offers WHERE unit_price IS NOT NULL"
             + _NOT_TWIN, list(PAPER_TWINS)
         ).fetchall()
-        prices: dict[tuple[str, str], list[float]] = {}
-        catalogs_seen: dict[tuple[str, str], set[str]] = {}
+        prices: dict[tuple[str, str], dict[tuple, float]] = {}
         for r in rows:
             if r["catalog_id"] in exclude_catalogs:
                 continue
             key = (r["product_key"], r["unit"])
-            prices.setdefault(key, []).append(r["unit_price"])
-            catalogs_seen.setdefault(key, set()).add(r["catalog_id"])
-        return {
-            key: statistics.median(values)
-            for key, values in prices.items()
-            if len(catalogs_seen[key]) >= 2
-        }
+            seen = (r["dealer"], (r["run_from"] or "")[:10], round(r["unit_price"], 2))
+            prices.setdefault(key, {})[seen] = r["unit_price"]
+        result = {}
+        for key, found in prices.items():
+            values = list(found.values())
+            if len(values) >= 2 and max(values) <= min(values) * TYPICAL_MAX_SPREAD:
+                result[key] = statistics.median(values)
+        return result
 
     def unit_prices(self) -> list[tuple[str, str | None, float]]:
         """(overskrift, enhed, enhedspris) for alle tilbud i prishistorikken.

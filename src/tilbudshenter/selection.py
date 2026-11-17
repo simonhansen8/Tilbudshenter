@@ -6,7 +6,7 @@ import re
 from collections import Counter
 
 from .categories import Categorizer
-from .comparison import Comparison, compare_across_stores
+from .comparison import MAX_DISCOUNT_PCT, Comparison, compare_across_stores
 from .config import Config
 from .models import PAPER_TWINS, Offer
 from .storage import product_key
@@ -91,10 +91,11 @@ def score_offer(
         reasons.append(f"-{discount:.0f}% (spar {offer.savings:.2f} kr)".replace(".", ","))
     elif typical_prices and offer.unit_price and offer.unit:
         typical = typical_prices.get((product_key(offer.heading), offer.unit))
-        if typical and typical > offer.unit_price:
+        # En meget større rabat end det er næsten altid en anden vare med samme navn
+        if typical and typical > offer.unit_price and (1 - offer.unit_price / typical) * 100 <= MAX_DISCOUNT_PCT:
             discount = (1 - offer.unit_price / typical) * 100
             basis = "historik"
-            reasons.append(f"{discount:.0f}% under normal enhedspris".replace(".", ","))
+            reasons.append(f"{discount:.0f}% under den typiske pris i tidligere aviser".replace(".", ","))
     if discount is None and comparisons and (comparison := comparisons.get(offer.id)):
         discount = (1 - offer.unit_price / comparison.reference) * 100
         basis = "butikker"

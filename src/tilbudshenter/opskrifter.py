@@ -28,7 +28,7 @@ from pathlib import Path
 from urllib.parse import quote, urlparse, urlsplit, urlunsplit
 
 from .comparison import _has_word, _tokens
-from .mealplan import recipe_from_lines
+from .mealplan import dinner_problem, dish_head, recipe_from_lines
 from .oversaet import danish, is_english
 
 log = logging.getLogger(__name__)
@@ -240,20 +240,55 @@ def extract_recipe(page: str, url: str) -> dict | None:
 NOT_DINNER = ["kage", "kager", "muffin", "cookie", "småkage", "brød ", "dessert", "desserter", "is ", "smoothie",
               "drink", "cocktail", "marmelade", "syltetøj", "dressing", "snack", "konfekt", "chokolade", "grød",
               "bagværk", "drikke", "tilbehør", "forret", "forretter", "morgenmad"]
+# Kun i navnet: "Salat med kold roastbeef" i kategorien "Aftensmad, Madpakke" er aftensmad
+NOT_DINNER_NAME = ["madpakke", "madpakken", "natmad", "pålæg", "frokostboks"]
+# Ord i navnet, der kun er aftensmad, når madsiden kalder retten en hovedret
+NOT_DINNER_UNLESS_MAIN = ["frokost", "brunch", "smørrebrød", "tapas", "frokostret"]
 
 
 # Kategorier for salater og frokost: kun aftensmad, når madsiden også kalder
 # retten en hovedret, fx "Salater, Hovedretter, Aftensmad"
-SIDE_CATEGORIES = ["salat", "salater", "frokost", "madpakke", "tapas", "brunch"]
+SIDE_CATEGORIES = ["salat", "salater", "frokost", "madpakke", "tapas", "brunch", "other", "sovs", "dressing",
+                   "buffet", "picnic", "afternoon", "boller", "søde", "lette"]
 MAIN_CATEGORIES = ["aftensmad", "hovedret", "hovedretter", "middag", "aftensretter"]
+
+# Det, retten er (navnet før "med", "og", "i" ...): en sovs, en dressing
+# eller syltede løg er ikke en aftensmad, men "Kylling i karrysauce" er
+CONDIMENT_HEADS = ["sauce", "sovs", "dressing", "dip", "marinade", "pesto", "relish", "chutney", "salsa", "pickles",
+                   "aioli", "mayonnaise", "mayo", "hummus", "tzatziki", "guacamole", "remoulade", "smør", "olie",
+                   "fond", "bouillon", "krydderi", "krydderblanding", "glasur", "sirup", "pickle"]
+CONDIMENT_FIRST = ["syltet", "syltede", "pickled", "picklede"]
+# Tilbehør og frokost: aftensmad, når madsiden kalder retten en hovedret
+SIDE_HEADS = ["coleslaw", "råkost", "kartoffelmos", "croutoner", "kiks", "knækbrød", "bagels", "bagel",
+              "sandwich", "sandwiches", "toast", "tilbehør", "pommes", "fritter", "bruschetta", "crostini"]
+
+
+def clean_name(name: str) -> str:
+    """Rettens navn uden madsidens ekstra tekst: HelloFresh skriver fx
+    "Fransk grønsalat | 10 min Delevenlig ret | med syltede løg"."""
+    parts = [p.strip() for p in name.split("|")]
+    parts = [p for p in parts if p and not re.search(r"\d+\s*min\b|delevenlig", p, re.IGNORECASE)]
+    text = " ".join(parts) or name
+    text = re.sub(r"\s*\b\d+\s*portioner\b", "", text, flags=re.IGNORECASE)
+    return re.sub(r"\s+", " ", text).strip(" -–|")
 
 
 def is_dinner(recipe: dict) -> bool:
-    text = f"{recipe['name']} {recipe.get('category', '')}"
-    if any(_has_word(_tokens(text), w) for w in NOT_DINNER):
+    name = clean_name(recipe["name"])
+    text = f"{name} {recipe.get('category', '')}"
+    if any(_has_word(_tokens(text), w) for w in NOT_DINNER) or any(_has_word(_tokens(name), w) for w in NOT_DINNER_NAME):
         return False
     cats = _tokens(recipe.get("category") or "")
-    return not (any(_has_word(cats, w) for w in SIDE_CATEGORIES) and not any(_has_word(cats, w) for w in MAIN_CATEGORIES))
+    main = any(_has_word(cats, w) for w in MAIN_CATEGORIES)
+    head = dish_head(name)
+    last = head[-1] if head else ""
+    if head and (head[0] in CONDIMENT_FIRST or any(last.endswith(w) for w in CONDIMENT_HEADS)):
+        return False
+    if main:
+        return True
+    if any(last.endswith(w) for w in SIDE_HEADS) or any(_has_word(_tokens(name), w) for w in NOT_DINNER_UNLESS_MAIN):
+        return False
+    return not any(_has_word(cats, w) for w in SIDE_CATEGORIES)
 
 
 def _why_not(recipe: dict) -> str:
@@ -263,7 +298,8 @@ def _why_not(recipe: dict) -> str:
         return why
     if not is_dinner(da):
         return "ikke aftensmad"
-    return recipe_from_lines("", da["name"], da["ingredients"], da.get("persons") or 4)[1]
+    recipe, why = recipe_from_lines("", clean_name(da["name"]), da["ingredients"], da.get("persons") or 4)
+    return why or dinner_problem(recipe)
 
 
 def sitemap_urls(xml: str) -> list[str]:

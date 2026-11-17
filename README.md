@@ -213,7 +213,11 @@ browseren.
    "Spar 43,80" eller "Spar 25 %".
 2. Mangler normalprisen, sammenlignes varens **enhedspris** (kr/kg, kr/l)
    med den typiske pris i tidligere aviser. Historikken opbygges automatisk,
-   jo længere programmet har kørt.
+   jo længere programmet har kørt. Samme tilbud i flere aviser fra samme kæde
+   tæller én gang, og svinger prisen på varer med samme navn mere end det
+   dobbelte (fx "Julekalender", "Kalenderlys" eller "Peter Larsen Kaffe" i
+   100 g og 500 g), er det forskellige varer, og historikken bruges ikke. En
+   rabat over 65 % ud fra historikken bruges heller ikke.
 3. Er der heller ingen historik, sammenlignes prisen pr. kg eller liter med
    **de andre valgte butikker** i de aktuelle aviser. Koster hakket oksekød
    75 kr/kg i Netto og typisk 100 kr/kg hos de andre, vises det som
@@ -302,7 +306,20 @@ kommer bagerst i køen (gemt i browseren), så **Ny madplan** og næste uges
 plan giver nye retter.
 
 - Retterne kommer fra en fast samling af omkring 40 danske hverdagsretter i
-  `mealplan.py`. Hver ingrediens genkendes i aviserne ud fra nøgleord, så
+  `mealplan.py` og fra opskrifterne hentet fra madsiderne (se nedenfor).
+  Kun rigtig aftensmad kommer med: ikke sovse, dressinger, syltede løg,
+  pickles, tilbehør, madpakker og frokostretter (ud fra navnet og madsidens
+  kategori), og en hentet opskrift skal mætte (mindst 120 kcal pr. person af
+  de varer, der kan genkendes, 250 kcal for supper og salater) og have kød,
+  fisk, æg, bælgfrugter, tofu eller ost (mindst 60 g til 4 personer).
+- Mangler en ret kartofler, ris, pasta, brød eller lignende, får den
+  kartofler som tilbehør, eller ris til fx karry, wok og chili, så prisen er
+  for et helt måltid.
+- En kendt vare uden mængde i opskriften ("hakkede tomater", "kogte ris til
+  servering") købes i en almindelig mængde (fx 300 g ris eller én dåse); kun
+  det valgfrie ("evt. persille", "smør til stegning") regnes for at være
+  derhjemme. "1 pakke grillpølser" er en hel pakke, og "10 cherrytomater" er
+  10 tomater, ikke 10 bakker. Hver ingrediens genkendes i aviserne ud fra nøgleord, så
   hvert tilbud ved, hvilke ingredienser det kan bruges som. En bestemt vare
   går forud for en bred: parmesan er ikke revet ost, og rucola og
   romainesalat er ikke icebergsalat. Er et tilbud på to varer, fx "pasta
@@ -427,7 +444,9 @@ bruger Tilbudshenter til at hente opskrifter automatisk:
 Kun navn, antal personer, tid og ingredienser gemmes; madplanen linker til
 madsiden for fremgangsmåden. Opskrifter med kød eller fisk, som ikke kan
 genkendes i aviserne, eller med for mange ukendte varer, springes over, da
-de ikke kan prissættes.
+de ikke kan prissættes. Det samme gør opskrifter, der ikke er aftensmad (se
+Madplan ovenfor). Reglerne bruges også på opskrifter, der allerede er hentet,
+så de flyttes til listen over sprungne sider, når reglerne skærpes.
 
 Opskrifter fra engelske madsider (fx BBC Good Food og RecipeTin Eats) gemmes
 på engelsk og oversættes til dansk, når de bruges: navnet ("Chicken and leek
