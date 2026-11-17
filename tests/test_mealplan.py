@@ -243,3 +243,20 @@ def test_broken_recipe_file_stops_the_build(tmp_path):
     with pytest.raises(json.JSONDecodeError):
         load_imported(path)
     assert load_imported(tmp_path / "findes-ikke.json") == []
+
+
+def test_desserts_and_breakfast_are_not_dinner():
+    from tilbudshenter.mealplan import dinner_problem, recipe_from_lines
+    from tilbudshenter.opskrifter import is_dinner
+
+    pie, _ = recipe_from_lines("x", "Græskartærte", ["500 g græskar", "3 æg", "2 dl fløde", "100 g flormelis",
+                                                     "1 tsk vaniljeekstrakt", "1 tsk kanel", "1 butterdej"], 4)
+    assert dinner_problem(pie) == "en dessert eller bagværk"
+    # Kanel og kakao står også i chili og karry
+    chili, _ = recipe_from_lines("x", "Chili sin carne", ["2 dåser kidneybønner", "2 dåser hakkede tomater", "1 løg",
+                                                         "1 tsk kanel", "1 spsk kakao", "300 g ris"], 4)
+    assert dinner_problem(chili) == ""
+    assert not is_dinner({"name": "Breakfast burrito", "category": ""})
+    assert not is_dinner({"name": "Sprøde kranse med marcipan", "category": ""})
+    assert not is_dinner({"name": "Rustikke gulerodsbrud 6 boller | færdig dej", "category": ""})
+    assert is_dinner({"name": "Boller i karry", "category": "Aftensmad"})

@@ -174,7 +174,8 @@ class App:
                 text = str(data.get("text", "")).strip()
                 if not text:
                     raise ValueError("Skriv hvad der skal på listen")
-                storage.add_text_to_list(text[:200], note, str(data.get("category") or "")[:40] or None)
+                storage.add_text_to_list(text[:200], note, str(data.get("category") or "")[:40] or None,
+                                         str(data.get("dealer") or "")[:60] or None)
             elif action == "check":
                 storage.set_list_checked(str(data.get("id", "")), bool(data.get("checked")))
             elif action == "remove":

@@ -1041,8 +1041,19 @@ PROTEIN_KEYS = {"aeg", "kidneyboenner", "linser", "kikaerter", "hvide_boenner", 
 MIN_PROTEIN_G = 60
 
 
+# Bagværk og desserter: en ret uden kød eller fisk med et af disse ord er sød
+# (græskartærte med vanilje og flormelis, kranse med marcipan). Kanel, kakao
+# og rosiner står også i karry og chili, så de tæller ikke.
+SWEET_WORDS = ["marcipan", "flormelis", "vanilje", "glasur", "frosting", "nougat", "remonce", "mazarin",
+               "syltetøj", "marmelade", "vaniljesukker", "kagecreme", "konditorcreme"]
+
+
 def dinner_problem(recipe: Recipe) -> str:
     """Hvorfor en hentet opskrift ikke er en aftensmad, eller "" hvis den er."""
+    if recipe.kind == "vegetar":
+        text = _tokens(" ".join([i.name for i in recipe.items] + list(recipe.pantry)))
+        if any(_has_word(text, w) for w in SWEET_WORDS):
+            return "en dessert eller bagværk"
     head = dish_head(recipe.name)
     light = bool(head) and any(head[-1].endswith(w) for w in LIGHT_HEADS)
     if kcal_per_person(recipe.items) < (MIN_LIGHT_KCAL if light else MIN_DINNER_KCAL):
@@ -1436,6 +1447,9 @@ def load_imported(path=None) -> list[dict]:
     return json.loads(text).get("recipes", [])
 
 
+MAX_MINUTES = 600
+
+
 @lru_cache(maxsize=1)
 def imported_recipes() -> tuple[Recipe, ...]:
     """Opskrifterne fra madsiderne, der er aftensmad. Reglerne bruges også på
@@ -1450,7 +1464,8 @@ def imported_recipes() -> tuple[Recipe, ...]:
             continue
         recipe, _ = recipe_from_lines(
             "web-" + hashlib.sha1(data["url"].encode()).hexdigest()[:10], clean_name(data["name"]), data["ingredients"],
-            data.get("persons") or 4, data.get("minutes") or 0, "", data["url"],
+            # Over 10 timer er marinering eller optøning, ikke tiden i køkkenet
+            data.get("persons") or 4, m if (m := data.get("minutes") or 0) <= MAX_MINUTES else 0, "", data["url"],
         )
         if recipe and not dinner_problem(recipe):
             result.append(recipe)

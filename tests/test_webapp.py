@@ -212,3 +212,12 @@ def test_import_recipe(server, monkeypatch):
     assert request(server + "/api/import_recipe", {"url": "file:///etc/passwd"}, h)[0] == 400
     monkeypatch.setattr("tilbudshenter.webapp.fetch", lambda url: "<html></html>")
     assert request(server + "/api/import_recipe", {"url": "https://mad.dk/"}, h)[0] == 400
+
+
+def test_own_item_can_belong_to_a_store(tmp_path):
+    from tilbudshenter.storage import Storage
+
+    with Storage(tmp_path / "t.db") as storage:
+        storage.add_text_to_list("Pasta (400 g)", note="ikke på tilbud", category="kolonial", dealer="Netto")
+        item = storage.shopping_list()[0]
+    assert (item["heading"], item["dealer"], item["category"]) == ("Pasta (400 g)", "Netto", "kolonial")

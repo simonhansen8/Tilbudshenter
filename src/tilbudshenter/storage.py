@@ -368,12 +368,13 @@ class Storage:
             "SELECT 1 FROM shopping_list WHERE id = ?", (offer_id,)
         ).fetchone() is not None
 
-    def add_text_to_list(self, text: str, note: str | None = None, category: str | None = None) -> str:
-        """Lægger en egen vare (fx "mælk") på listen."""
+    def add_text_to_list(self, text: str, note: str | None = None, category: str | None = None,
+                         dealer: str | None = None) -> str:
+        """Lægger en egen vare (fx "mælk") på listen, evt. under en butik."""
         item_id = f"egen-{datetime.now(timezone.utc).timestamp():.6f}"
         self.conn.execute(
-            "INSERT INTO shopping_list (id, heading, added_at, note, category) VALUES (?, ?, ?, ?, ?)",
-            (item_id, text.strip(), _now(), note, category),
+            "INSERT INTO shopping_list (id, heading, added_at, note, category, dealer) VALUES (?, ?, ?, ?, ?, ?)",
+            (item_id, text.strip(), _now(), note, category, dealer),
         )
         self.conn.commit()
         return item_id
