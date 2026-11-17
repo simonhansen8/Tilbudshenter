@@ -800,7 +800,8 @@ def _matches(tokens: list[str], spec: tuple[str, list[list[str]], list[str]]) ->
 
 # Mere præcise ingredienser, der vinder over en bredere: står der
 # "revet parmesan", er det parmesan og ikke en hvilken som helst revet ost
-REPLACES = {"okse_tern": ["oksesteg"], "oksemoerbrad": ["moerbrad"], "parmesan": ["revet_ost"], "frisk_mozzarella": ["revet_ost"], "romaine": ["salat"], "rucola": ["salat"], "cherrytomater": ["tomater"],
+REPLACES = {"okse_tern": ["oksesteg"], "oksemoerbrad": ["moerbrad", "boef"], "hvid_fisk": ["boef"],
+            "chorizo": ["poelser"], "hakket_kylling": ["kyllingebryst", "kyllingelaar"], "ricotta": ["revet_ost"], "mascarpone": ["revet_ost"], "halloumi": ["revet_ost"], "parmesan": ["revet_ost"], "frisk_mozzarella": ["revet_ost"], "romaine": ["salat"], "rucola": ["salat"], "cherrytomater": ["tomater"],
             "foraarsloeg": ["loeg"], "skalotteloeg": ["loeg"], "pastinak": ["persille"], "knoldselleri": ["bladselleri"],
             "sukkeraerter": ["aerter"], "hvide_boenner": ["groenne_boenner"], "soede_kartofler": ["kartofler"],
             "pitabroed": ["broed"]}
@@ -1255,13 +1256,49 @@ def _before_til(name: str) -> str:
     return re.split(r"\btil\b", name, maxsplit=1, flags=re.IGNORECASE)[0].strip() or name
 
 
+# Hver vare i en ingredienslinje: "hvidløg og persille" er to varer
+_ITEM_SPLIT = re.compile(r",|/|&|\b(?:og|eller|and|or|with)\b", re.IGNORECASE)
+
+
+def _key_position(key: str, tokens: list[str]) -> tuple[int, int]:
+    """Hvor ingrediensen står i teksten: det sidste ord, den matcher, og om
+    den står sidst i ordet ("asparges|kartofler")."""
+    best = (-1, 0)
+    for pattern in INGREDIENTS[key][1]:
+        if not all(_has_word(tokens, w) for w in pattern):
+            continue
+        for word in pattern:
+            w = word.strip().casefold()
+            for i, t in enumerate(tokens):
+                if _has_word([t], word):
+                    best = max(best, (i, int(t.endswith(w))))
+    return best
+
+
 def line_keys(name: str) -> list[str]:
     """Ingredienserne i en ingredienslinje (uden mængde). En mere præcis
     ingrediens vinder i hele linjen: "parmesanost, revet" er parmesan, ikke
-    også revet ost."""
-    keys = ingredient_keys(_before_til(name))
+    også revet ost. Nævner én vare flere ingredienser, er det den sidste,
+    der er varen, og de andre beskriver den: "løg pølser" er pølser,
+    "majs tortillas" er tortillas og "æg tomater" er tomater."""
+    text = _before_til(name)
+    keys = ingredient_keys(text)
     replaced = {r for k in keys for r in REPLACES.get(k, [])}
-    return [k for k in keys if k not in replaced]
+    keys = [k for k in keys if k not in replaced]
+    if len(keys) < 2:
+        return keys
+    heads: set[str] = set()
+    others: set[str] = set()
+    # Det i parentes er valgmuligheder: "hakket kød (okse eller grise- og kalv)"
+    for part in _ITEM_SPLIT.split(re.sub(r"\([^)]*\)?", " ", text)):
+        here = [k for k in ingredient_keys(part) if k in keys]
+        tokens = _tokens(part)
+        where = {k: _key_position(k, tokens) for k in here}
+        last = max(where.values(), default=None)
+        # Står to ingredienser i samme ord ("hakket kød"), tæller begge
+        heads.update(k for k in here if where[k] == last)
+        others.update(k for k in here if where[k] != last)
+    return [k for k in keys if k in heads or k not in others]
 
 
 # En kendt vare uden mængde ("hakkede tomater", "kogte ris til servering")

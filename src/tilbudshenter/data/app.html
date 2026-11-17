@@ -771,7 +771,8 @@ function findPlace(text) {
     const exact = places.find(p => p[0] === zip[0]);
     const close = exact || places.reduce((best, p) =>
       Math.abs(Number(p[0]) - n) < Math.abs(Number(best[0]) - n) ? p : best, places[0]);
-    if (!close || Math.abs(Number(close[0]) - n) > 30) return null;
+    // Københavns postnumre ligger spredt (1000-1499 er alle København K)
+    if (!close || Math.abs(Number(close[0]) - n) > 100) return null;
     return {latitude: close[2], longitude: close[3], place: exact ? placeName(exact) : `${zip[0]} (nær ${placeName(close)})`};
   }
   const hit = places.find(p => p[1].toLowerCase() === t || placeName(p).toLowerCase() === t)
@@ -892,7 +893,16 @@ async function staticApi(path, body) {
     return {items: siteList()};
   }
   if (path === "/api/settings") { saveSiteSettings(body); return {ok: true}; }
-  if (path === "/api/recipes") return siteData.plan;
+  if (path === "/api/plan") return siteData.plan;
+  if (path === "/api/recipes") {
+    // Opskrifterne er store og ligger for sig, så forsiden kan åbne hurtigt
+    if (!siteData.plan.recipes) {
+      const res = await fetch("opskrifter.json", {cache: "no-cache"});
+      if (!res.ok) throw new Error(`Kunne ikke hente opskrifterne (fejl ${res.status})`);
+      return {...siteData.plan, recipes: await res.json()};
+    }
+    return siteData.plan;
+  }
   throw new Error("Tilbuddene hentes automatisk hver dag");
 }
 
@@ -959,11 +969,13 @@ function loadPrefs() {
 // Filtrene (periode, butikker, kategorier og "kun kendt rabat") huskes i
 // browseren. Butikker og kategorier gemmes som dem, der er slået fra, så nye
 // butikker og kategorier vises, indtil de selv bliver fravalgt.
+const FILTERS_VERSION = 2;
 function savedFilters() { return store.get("filters", {}); }
 function saveFilters() {
   if (!state.offers.length) return;
   const dealers = new Set(state.offers.map(o => o.dealer));
   store.set("filters", {
+    v: FILTERS_VERSION,
     periods: [...state.periods],
     hiddenStores: [...dealers].filter(d => !state.stores.has(d)),
     hiddenCats: state.categories.map(c => c.key).filter(k => !state.cats.has(k)),
@@ -1047,6 +1059,7 @@ async function startScan(force) {
 // -- Tilbud -------------------------------------------------------------
 async function loadOffers() {
   const data = await api("/api/offers");
+  const before = new Set(state.offers.map(o => o.dealer));
   // Udløbne tilbud vises ikke, også selvom siden ikke er hentet igen siden
   const now = new Date();
   state.offers = data.offers.filter(o => !o.run_till || new Date(o.run_till) >= now);
@@ -1055,7 +1068,9 @@ async function loadOffers() {
   if (!loadOffers.didInit) {
     // Første gang: de gemte filtre, ellers standardvalgene
     const f = savedFilters();
-    const hidden = new Set(f.hiddenStores || []);
+    // Før version 2 kunne et skift af placering gemme kæder som skjulte, uden
+    // at brugeren havde valgt det; de gamle skjulte kæder bruges derfor ikke
+    const hidden = new Set(f.v >= FILTERS_VERSION ? f.hiddenStores || [] : []);
     state.stores = new Set([...stores].filter(s => !hidden.has(s)));
     if (Array.isArray(f.periods)) state.periods = new Set(f.periods.filter(p => p === "now" || p === "later"));
     if (Array.isArray(f.hiddenCats)) {
@@ -1066,7 +1081,9 @@ async function loadOffers() {
     $("filter-menu").open = !!f.open;
     loadOffers.didInit = true;
   } else {
-    state.stores = new Set([...stores].filter(s => state.stores.size === 0 || state.stores.has(s)));
+    // Kæder, der først kommer med nu (fx efter en ny placering), vises; kun
+    // dem, brugeren selv har slået fra, forbliver skjult
+    state.stores = new Set([...stores].filter(s => state.stores.size === 0 || state.stores.has(s) || !before.has(s)));
   }
   if (state.stores.size === 0) state.stores = stores;
   if (state.periods.size === 0) state.periods = new Set(["now", "later"]);
@@ -1242,7 +1259,8 @@ function filtered() {
   const minDiscount = state.settings.min_discount_pct || 0;
   const basics = basicsMatchers(), basicOf = new Map();
   let list = state.offers.filter(o =>
-    state.stores.has(o.dealer) && (basics || state.cats.has(o.category)) && state.periods.has(period(o)) &&
+    // En søgning leder i alle kategorier: "øl" og "toiletpapir" skal findes, selvom kategorien er fravalgt
+    state.stores.has(o.dealer) && (basics || match || state.cats.has(o.category)) && state.periods.has(period(o)) &&
     (!state.hideMember || !o.member) &&
     (!state.knownOnly || o.known_discount !== null) &&
     (basics || o.known_discount === null || o.known_discount >= minDiscount || o.reasons.some(r => r.startsWith("favorit"))));
@@ -1492,6 +1510,7 @@ function render() {
     return;
   }
   $("count").textContent = `Viser ${shown.length} af ${list.length} tilbud`
+    + (searchFor(state.q) ? " i alle kategorier" : "")
     + (list.length < state.offers.length ? ` (${state.offers.length} i alt)` : "");
   $("grid").innerHTML = shown.map(card).join("");
   $("btn-more").hidden = list.length <= state.limit;
@@ -1766,24 +1785,40 @@ const OFFER_MIN_ITEMS = 2, OFFER_MIN_RATIO = 0.5, OFFER_MIN_SHARE = 0.5, OFFER_M
 const SEEN_DAYS = 14, SEEN_PENALTY = 20;
 const WEEKDAYS = ["søndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag"];
 
-async function loadPlanData() {
+// Ingredienser og priser hentes med det samme (de bruges også ved tilbuddene
+// og på indkøbslisten), opskrifterne først når madplanen eller ugeplanen
+// åbnes: på den statiske side ligger de for sig i opskrifter.json.
+async function loadPlanData(withRecipes = true) {
   if (!planData) {
-    planData = await api("/api/recipes");
-    ING = Object.fromEntries(planData.ingredients.map(i => [i.key, i]));
-    setKinds();
-    // Varerne står kompakt i data.json (_compact_item i mealplan.py)
-    const sides = {groent: planData.side, ...planData.starch_sides};
-    const unpack = (i) => typeof i === "string" ? {...sides[i]}
-      : Array.isArray(i) ? {amount: i[0], unit: i[1], name: i[2], keys: i[3], main: !!i[4], side: false} : i;
-    for (const r of planData.recipes) r.items = r.items.map(unpack);
-    // Retternes varer peger på samme pris som ingrediensen, så en rettet basispris gælder overalt
-    const link = (item) => { item.prices = Object.fromEntries(item.keys.map(k => [k, ING[k].price])); };
-    for (const r of planData.recipes) r.items.forEach(link);
-    link(planData.side);
-    Object.values(planData.starch_sides).forEach(link);
-    applyBasis();
+    loadPlanData.base ||= api(STATIC ? "/api/plan" : "/api/recipes").then(data => {
+      ING = Object.fromEntries(data.ingredients.map(i => [i.key, i]));
+      planData = data;
+      setKinds();
+      linkPrices(planData.side);
+      Object.values(planData.starch_sides).forEach(linkPrices);
+      applyBasis();
+      if (planData.recipes) prepareRecipes(planData.recipes);
+      return planData;
+    }).catch(e => { loadPlanData.base = null; throw e; });
+    await loadPlanData.base;
+  }
+  if (withRecipes && !planData.recipes) {
+    loadPlanData.recipes ||= api("/api/recipes").then(data => {
+      prepareRecipes(data.recipes);
+      planData.recipes = data.recipes;
+    }).catch(e => { loadPlanData.recipes = null; throw e; });
+    await loadPlanData.recipes;
   }
   return planData;
+}
+// Retternes varer peger på samme pris som ingrediensen, så en rettet basispris gælder overalt
+function linkPrices(item) { item.prices = Object.fromEntries(item.keys.map(k => [k, ING[k].price])); }
+// Varerne står kompakt i data.json (_compact_item i mealplan.py)
+function prepareRecipes(recipes) {
+  const sides = {groent: planData.side, ...planData.starch_sides};
+  const unpack = (i) => typeof i === "string" ? {...sides[i]}
+    : Array.isArray(i) ? {amount: i[0], unit: i[1], name: i[2], keys: i[3], main: !!i[4], side: false} : i;
+  for (const r of recipes) { r.items = r.items.map(unpack); r.items.forEach(linkPrices); }
 }
 
 // -- Basispriser ----------------------------------------------------------
@@ -1888,9 +1923,37 @@ function offerFits(line, heading, k) {
   });
 }
 
-// Ingredienserne i en opskriftslinje; i "salt til ris" er varen salt, ikke ris
+// Ingredienserne i en opskriftslinje; i "salt til ris" er varen salt, ikke ris.
+// Nævner én vare flere ingredienser, er det den sidste, der er varen: "løg
+// pølser" er pølser og "majs tortillas" tortillas (line_keys i mealplan.py)
+const ITEM_SPLIT = /,|\/|&|(?<![\p{L}\p{N}_])(?:og|eller|and|or|with)(?![\p{L}\p{N}_])/iu;
+function keyPosition(k, toks) {
+  let best = [-1, 0];
+  for (const p of ING[k].patterns) {
+    if (!p.every(w => hasWord(toks, w))) continue;
+    for (const word of p) {
+      const w = word.trim().toLowerCase();
+      toks.forEach((t, i) => {
+        if (!hasWord([t], word)) return;
+        const c = [i, t.endsWith(w) ? 1 : 0];
+        if (c[0] > best[0] || (c[0] === best[0] && c[1] > best[1])) best = c;
+      });
+    }
+  }
+  return best;
+}
 function lineKeys(text) {
-  return textKeys(text.split(/(?<![\p{L}\p{N}_])til(?![\p{L}\p{N}_])/iu)[0].trim() || text);
+  text = text.split(/(?<![\p{L}\p{N}_])til(?![\p{L}\p{N}_])/iu)[0].trim() || text;
+  const keys = textKeys(text);
+  if (keys.length < 2) return keys;
+  const heads = new Set(), others = new Set();
+  for (const part of text.replace(/\([^)]*\)?/g, " ").split(ITEM_SPLIT)) {
+    const here = textKeys(part).filter(k => keys.includes(k)), toks = tokens(part);
+    const where = new Map(here.map(k => [k, keyPosition(k, toks)]));
+    const last = [...where.values()].reduce((a, b) => !a || b[0] > a[0] || (b[0] === a[0] && b[1] > a[1]) ? b : a, null);
+    for (const k of here) (where.get(k)[0] === last[0] && where.get(k)[1] === last[1] ? heads : others).add(k);
+  }
+  return keys.filter(k => heads.has(k) || !others.has(k));
 }
 
 function textKeys(text) {
@@ -3410,7 +3473,7 @@ function urlKey(u) {
   try { const x = new URL(u); return x.hostname.replace(/^www\./, "") + x.pathname.replace(/\/+$/, ""); } catch (e) { return ""; }
 }
 function collectionRecipe(url) {
-  const key = urlKey(url), r = key && planData.recipes.find(x => x.source && urlKey(x.source) === key);
+  const key = urlKey(url), r = key && planData && planData.recipes && planData.recipes.find(x => x.source && urlKey(x.source) === key);
   if (!r) return null;
   const lines = r.items.filter(i => !i.side).map(i => [i.amount ? amountText(i.amount, i.unit) : "", i.name].filter(Boolean).join(" "));
   return {url: r.source, name: r.name, persons: 4, minutes: r.minutes, ingredients: [...lines, ...r.pantry], method: r.method};
@@ -3626,6 +3689,8 @@ async function saveSettings() {
     state.knownOnly = state.settings.only_known_discount;
     await loadOffers();
     saveFilters();
+    // Spørgsmålet "Hvor handler du?" er besvaret
+    if (STATIC && state.settings.latitude != null) showMessage("");
     if (storesChanged && !STATIC) {
       showMessage(`<div class="grow">Indstillingerne er gemt. Hent tilbud for at få aviser fra dine nye valg med.</div>
         <button class="btn primary small" onclick="startScan()">Hent nu</button>`);
@@ -3798,7 +3863,23 @@ async function useMyLocation() {
   }
 }
 $("settings-form").addEventListener("submit", e => {
-  if (e.submitter && e.submitter.value === "save") { e.preventDefault(); if ($("settings-form").reportValidity()) { $("settings").close(); saveSettings(); } }
+  if (!(e.submitter && e.submitter.value === "save")) return;
+  e.preventDefault();
+  if (STATIC) {
+    // Stedet tages med, også når man trykker Gem uden at forlade feltet, og
+    // et sted, der ikke kan findes, må ikke stille og roligt beholde det gamle
+    const text = $("s-place").value.trim();
+    if (text && text !== (state.loc.place || "")) {
+      const found = findPlace(text);
+      if (!found) {
+        $("s-place-status").innerHTML = `<span style="color:var(--error)">Kunne ikke finde "${esc(text)}". Skriv et dansk postnummer eller en by.</span>`;
+        $("s-place").focus();
+        return;
+      }
+      state.loc = found; $("s-place").value = found.place;
+    } else if (!text) state.loc = {latitude: null, longitude: null, place: ""};
+  }
+  if ($("settings-form").reportValidity()) { $("settings").close(); saveSettings(); }
 });
 
 (async function init() {
@@ -3822,7 +3903,7 @@ $("settings-form").addEventListener("submit", e => {
     await loadOffers();
     // Madplanens ingredienser bruges også til at sortere indkøbslisten
     // og til basispriserne ved tilbuddene
-    loadPlanData().then(render).catch(() => {});
+    loadPlanData(false).then(render).catch(() => {});
     // Første gang: hent tilbud med det samme
     if (!STATIC && !s.last_scan && !s.scan.running) startScan();
     if (STATIC) {

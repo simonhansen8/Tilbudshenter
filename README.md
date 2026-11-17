@@ -33,7 +33,9 @@ Første gang skal GitHub Pages slås til: *Settings → Pages*, vælg
 *Save*. Grenen oprettes af workflowen første gang, den kører.
 
 Siden bygges med `tilbudshenter side --ud side`, som henter aviserne og
-skriver `index.html` og `data.json` i mappen `side`.
+skriver `index.html`, `data.json` (tilbuddene) og `opskrifter.json` i mappen
+`side`. Opskrifterne fylder det meste og hentes først, når madplanen eller
+ugeplanen åbnes, så forsiden åbner hurtigt på telefonen.
 
 Kræver Python 3.11 eller nyere. Der er ingen andre afhængigheder.
 
@@ -85,7 +87,8 @@ I appen kan du:
 
 - hente nye tilbud med knappen **Hent nye tilbud** (første gang sker det
   automatisk),
-- søge og filtrere på butik og kategori, sortere efter rabat eller pris pr. kg,
+- søge og filtrere på butik og kategori, sortere efter rabat eller pris pr. kg
+  (en søgning leder i alle kategorier, så fx "øl" findes, selvom kategorien er fravalgt),
 - trykke på et tilbud for at se et stort billede, hele siden i avisen med
   tilbuddet markeret og en knap til den rigtige tilbudsavis på eTilbudsavis,
 - vise tilbuddene butik for butik i samme rækkefølge som i tilbudsavisen

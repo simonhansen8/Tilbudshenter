@@ -24,6 +24,11 @@ LINES = [
     "1 bundt forårsløg", "2 dl græsk yoghurt", "1 tsk fiskesauce", "5 skiver bacon",
     "1 tsk revet ingefær", "1 frisk mozzarella", "2 kugler mozzarella", "100 g fintrevet ost", "50 g revet comté",
     "salt til ris", "2 spsk smør til stegning", "4 laksebøffer", "2 dl sojayoghurt", "Cheddar twist",
+    # Den sidste ingrediens i en vare er varen; resten beskriver den
+    "8 caramelised løg pølser", "8 majs tortillas", "250 g ricotta revet ost", "4 kylling pølser",
+    "1 dåse hakkede tomater with løg og hvidløg", "1 kg aspargeskartofler", "200 g ris stick nudler",
+    "2 æg tomater", "4 torsk bøffer", "hvidløg og persille", "rødkål og gulerod mix",
+    "hakket kød (okse eller grise- og kalv)", "500 g hakket kød", "250 g frisk æg tagliatelle",
 ]
 RECIPES = [
     (["500 g hakket oksekød", "1 løg", "2 fed hvidløg", "1 dåse hakkede tomater", "400 g spaghetti", "salt"], 4),
@@ -124,3 +129,13 @@ def test_wrong_kinds_are_not_matched():
               "Cheddar twist": []}
     for line, keys in expect.items():
         assert line_keys(parse_line(line)[2]) == keys, line
+
+
+def test_last_ingredient_is_the_item():
+    expect = {"caramelised løg pølser": ["poelser"], "majs tortillas": ["tortilla"],
+              "ricotta revet ost": ["ricotta"], "chorizo pølser": ["chorizo"], "kylling pølser": ["poelser"],
+              "hakkede tomater with løg og hvidløg": ["hakkede_tomater", "loeg", "hvidloeg"], "æg tomater": ["tomater"],
+              "torsk bøffer": ["hvid_fisk"], "hvidløg og persille": ["hvidloeg", "persille"],
+              "kogt ris og lime både": ["ris", "lime"], "hakket kyllingebryst": ["hakket_kylling"]}
+    for line, keys in expect.items():
+        assert line_keys(line) == keys, line

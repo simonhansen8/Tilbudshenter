@@ -152,9 +152,13 @@ def site_data(cfg: Config, now: datetime | None = None, stores: dict[str, list[d
         market = market_prices(storage.unit_prices())
     shelf_list, _ = shelf.load(shelf.path_for(cfg.database))
 
+    # Kæder uden tilbud (fx "Coop", hvis aviser kun er vin- og åbningsaviser)
+    # kan ikke bruges til noget og vises ikke
+    with_offers = {o.dealer for o in offers}
     by_store: dict[str, list] = {}
     for c in catalogs:
-        by_store.setdefault(c.dealer, []).append(c)
+        if c.dealer in with_offers:
+            by_store.setdefault(c.dealer, []).append(c)
     stores = stores or {}
     defaults = settings_from_config(example_config())
     # Ingen placering, før brugeren vælger en; så vises alle butikker
@@ -188,6 +192,7 @@ def site_data(cfg: Config, now: datetime | None = None, stores: dict[str, list[d
         "offers": [offer_payload(o, categorizer) for o in offers],
         # Sidebillederne ligger i aviser.json, som først hentes, når de skal vises
         "papers": papers_payload(catalogs, pages=False),
+        # Opskrifterne ligger i opskrifter.json, som først hentes, når madplanen åbnes
         "plan": plan_payload(market, shelf.basis_prices(shelf_list)),
     }
 
@@ -207,9 +212,14 @@ def static_html() -> str:
 def build_site(
     cfg: Config, out_dir: Path, now: datetime | None = None, stores: dict[str, list[dict]] | None = None,
 ) -> dict:
-    """Skriver index.html og data.json i ``out_dir``. Returnerer dataene."""
+    """Skriver index.html, data.json, opskrifter.json og aviser.json i
+    ``out_dir``. Returnerer dataene (uden opskrifterne)."""
     data = site_data(cfg, now, stores)
+    recipes = data["plan"].pop("recipes")
     out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "opskrifter.json").write_text(
+        json.dumps(recipes, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
+    )
     (out_dir / "index.html").write_text(static_html(), encoding="utf-8")
     (out_dir / "data.json").write_text(
         json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
