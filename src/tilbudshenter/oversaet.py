@@ -91,7 +91,7 @@ WORDS: dict[str, str] = {
     "meatballs": "kødboller",
     # Fisk
     "salmon fillets": "laksefilet", "salmon fillet": "laksefilet", "salmon": "laks", "smoked salmon": "røget laks",
-    "hot-smoked salmon": "varmrøget laks", "hot smoked salmon": "varmrøget laks",
+     "hot smoked salmon": "varmrøget laks",
     "cod fillets": "torskefilet", "cod fillet": "torskefilet", "cod": "torsk", "haddock": "kuller",
     "pollock": "sej", "hake": "kulmule", "white fish fillets": "fiskefilet", "white fish": "fiskefilet",
     "basa": "pangasius", "plaice": "rødspætte", "tuna": "tun", "tinned tuna": "tun", "canned tuna": "tun",
@@ -263,6 +263,253 @@ ADJECTIVES = {
     "fillet": "", "fillets": "",
 }
 
+# Udtryk, der stod tilbage på engelsk i de hentede opskrifter (talt i hele
+# samlingen, de hyppigste først). Kun nye udtryk tilføjes; de eksisterende ovenfor gælder.
+_MORE_WORDS = {
+    # Varer
+    "taco seasoning": "tacokrydderi", "fajita seasoning": "fajitakrydderi", "cajun seasoning": "cajunkrydderi",
+    "italian seasoning": "italiensk krydderiblanding", "bbq seasoning": "grillkrydderi", "seasoning": "krydderi",
+    "stock concentrate": "bouillon", "bouillon cube": "bouillonterning", "bouillon cubes": "bouillonterninger",
+    "black peppercorns": "sorte peberkorn", "peppercorns": "peberkorn", "peppercorn": "peberkorn",
+    "szechuan peppercorns": "szechuanpeber", "sichuan peppercorns": "szechuanpeber",
+    "chicken cutlets": "kyllingebryst", "chicken cutlet": "kyllingebryst", "lamb cutlets": "lammekoteletter",
+    "cutlets": "koteletter", "cutlet": "kotelet", "knob of butter": "smør", "ground cloves": "stødt nellike",
+    "whole cloves": "hele nelliker", "garlic bulb": "hvidløg", "garlic bulbs": "hvidløg", "fennel bulb": "fennikel",
+    "fennel bulbs": "fennikel", "vine tomatoes": "tomater", "cherry vine tomatoes": "cherrytomater",
+    "sun-dried tomatoes": "soltørrede tomater", "sun dried tomatoes": "soltørrede tomater",
+    "sundried tomatoes": "soltørrede tomater", "sun-dried tomato": "soltørret tomat", "sun-dried": "soltørrede",
+    "sundried": "soltørrede", "greek-style yoghurt": "græsk yoghurt", "greek-style yogurt": "græsk yoghurt",
+    "bread crumbs": "rasp", "breadcrumb": "rasp", "panko bread crumbs": "panko", "saffron": "safran",
+    "egg noodle nests": "ægnudler", "egg noodle nest": "ægnudler", "noodle nests": "nudler", "noodle nest": "nudler",
+    "noodle": "nudler", "beansprouts": "bønnespirer", "beansprout": "bønnespirer", "clear honey": "honning",
+    "radishes": "radiser", "radish": "radiser", "broad beans": "bondebønner", "broad bean": "bondebønner",
+    "roast chicken": "kylling", "echalion shallots": "skalotteløg", "banana shallots": "skalotteløg",
+    "banana shallot": "skalotteløg", "flaked almonds": "mandelflager", "flatbreads": "fladbrød", "flatbread": "fladbrød",
+    "pea shoots": "ærteskud", "maris piper potatoes": "kartofler", "king edward potatoes": "kartofler",
+    "ghee": "ghee", "fenugreek seeds": "bukkehornsfrø", "fenugreek": "bukkehorn", "kasoori methi": "bukkehornsblade",
+    "banana prawns": "rejer", "pasta shells": "pasta", "taco shells": "tacoskaller", "shaoxing rice wine": "risvin",
+    "shaoxing wine": "risvin", "shaohsing wine": "risvin", "brussels sprouts": "rosenkål", "cucumbers": "agurker",
+    "persian cucumbers": "agurker", "lebanese cucumbers": "agurker", "palm sugar": "palmesukker",
+    "monterey jack": "revet ost", "mangetout": "sukkerærter", "snow peas": "sukkerærter", "sugar snap peas": "sukkerærter",
+    "chiles": "chili", "chile": "chili", "chilies": "chili", "chilis": "chili", "chillis": "chili",
+    "preserved lemons": "syltede citroner", "preserved lemon": "syltet citron", "sunflower oil": "solsikkeolie",
+    "sunflower seeds": "solsikkekerner", "watercress": "brøndkarse", "baking potatoes": "bagekartofler",
+    "baking potato": "bagekartoffel", "jacket potatoes": "bagekartofler", "scotch bonnet": "chili",
+    "naans": "naanbrød", "naan": "naanbrød", "porcini mushrooms": "karl johan svampe", "porcini": "karl johan svampe",
+    "apricots": "abrikoser", "apricot": "abrikos", "gem lettuces": "hjertesalat", "gem lettuce": "hjertesalat",
+    "romaine lettuces": "romainesalat", "romaine hearts": "romainesalat", "lettuces": "salat",
+    "all purpose flour": "hvedemel", "all-purpose flour": "hvedemel", "self-raising flour": "hvedemel",
+    "rice vermicelli": "risnudler", "vermicelli noodles": "risnudler", "vermicelli": "risnudler",
+    "short pasta": "pasta", "sumac": "sumak", "purple sprouting broccoli": "broccoli", "sprouting broccoli": "broccoli",
+    "chestnut mushrooms": "champignon", "cremini mushrooms": "champignon", "button mushrooms": "champignon",
+    "closed cup mushrooms": "champignon", "bella mushrooms": "champignon", "parmesan shavings": "parmesan",
+    "silken tofu": "silketofu", "extra-firm tofu": "fast tofu", "gherkins": "syltede agurker", "gherkin": "syltet agurk",
+    "cornichons": "cornichoner", "worcester sauce": "worcestershiresauce", "bamboo shoots": "bambusskud",
+    "hazelnuts": "hasselnødder", "caraway seeds": "kommen", "caraway": "kommen", "nutritional yeast": "gærflager",
+    "bamboo skewers": "grillspyd", "wooden skewers": "grillspyd", "skewers": "grillspyd",
+    "evaporated milk": "kondenseret mælk", "condensed milk": "kondenseret mælk", "desiccated coconut": "kokosmel",
+    "creamed coconut": "kokoscreme", "msg": "smagsforstærker", "corn cobs": "majskolber", "cobs": "kolber",
+    "muscovado sugar": "farin", "muscovado": "farin", "demerara sugar": "rørsukker", "celeriac": "knoldselleri",
+    "groundnut oil": "jordnøddeolie", "rapeseed oil": "rapsolie", "canola oil": "rapsolie", "grapeseed oil": "druekerneolie",
+    "cardamon pods": "kardemommekapsler", "flank steak": "flanksteak", "oranges": "appelsiner",
+    "cavolo nero": "sortkål", "long-grain rice": "ris", "chicken leg": "kyllingelår", "eating apples": "æbler",
+    "eating apple": "æble", "cos lettuce": "romainesalat", "scallion": "forårsløg", "goulash": "gullasch",
+    "marjoram": "merian", "walnut": "valnødder", "walnuts": "valnødder", "rump steaks": "bøffer", "rump steak": "bøf",
+    "plum tomatoes": "blommetomater", "plum tomato": "blommetomat", "water chestnuts": "vandkastanjer",
+    "eggplants": "auberginer", "pistachios": "pistacienødder", "pittas": "pitabrød", "pitta breads": "pitabrød",
+    "elbow macaroni": "makaroni", "corn starch": "majsstivelse", "cornstarch": "majsstivelse", "starch": "stivelse",
+    "parmigiano-reggiano": "parmesan", "parmigiano reggiano": "parmesan", "oats": "havregryn",
+    "rolled oats": "havregryn", "porridge oats": "havregryn", "cranberries": "tranebær", "capsicums": "peberfrugter",
+    "haricot beans": "hvide bønner", "cornmeal": "majsmel", "swede": "kålroe", "fast-action yeast": "tørgær",
+    "artichokes": "artiskokker", "artichoke hearts": "artiskokhjerter", "artichoke": "artiskok", "zucchinis": "squash",
+    "israeli couscous": "perlecouscous", "pearl couscous": "perlecouscous", "berries": "bær", "dates": "dadler",
+    "medjool dates": "dadler", "redcurrant jelly": "ribsgelé", "seaweed": "tang", "napa cabbage": "kinakål",
+    "sweetheart cabbage": "spidskål", "hispi cabbage": "spidskål", "cocoa": "kakao", "bocconcini": "mozzarellakugler",
+    "angel hair pasta": "pasta", "chipolatas": "pølser", "chipolata": "pølser", "mangoes": "mango",
+    "swiss chard": "bladbede", "rainbow chard": "bladbede", "chard": "bladbede", "silverbeet": "bladbede",
+    "cress": "karse", "houmous": "hummus", "mace": "muskatblomme", "marmalade": "marmelade", "galangal": "galanga",
+    "agave syrup": "agavesirup", "agave": "agavesirup", "pepitas": "græskarkerner", "chipotles": "chipotle",
+    "rye bread": "rugbrød", "spelt": "spelt", "black-eyed peas": "black eyed bønner", "black-eyed beans": "black eyed bønner",
+    "semolina": "semulje", "cavatappi": "pasta", "campanelle": "pasta", "rotini": "pasta", "ditalini": "pasta",
+    "risoni": "orzo", "emmental": "emmentaler", "runner beans": "snittebønner", "snake beans": "snittebønner",
+    "currants": "korender", "poppy seeds": "birkes", "sultanas": "sultanarosiner", "ras-el-hanout": "ras el hanout",
+    "queso fresco": "feta", "croutons": "croutoner", "turnips": "majroer", "turnip": "majroe",
+    "pappadums": "papadums", "poppadoms": "papadums", "prunes": "svesker", "stilton": "blåskimmelost",
+    "garden peas": "ærter", "makrut lime leaves": "limeblade", "chapatis": "chapati", "heavy whipping cream": "piskefløde",
+    "plums": "blommer", "pears": "pærer", "chervil": "kørvel", "figs": "figner", "quark": "kvark", "syrup": "sirup",
+    "microgreens": "spirer", "fetta": "feta", "beetroots": "rødbeder", "cherries": "kirsebær", "grapes": "druer",
+    "pecans": "pekannødder", "medallions": "medaljoner", "schnitzels": "schnitzler", "escalopes": "schnitzler",
+    "poultry": "fjerkræ", "burgers": "burgere", "lamb shanks": "lammekød", 
+    "crisps": "chips", "gyozas": "gyoza", "cauliflowers": "blomkål", "rotis": "roti", "beer": "øl",
+    "brandy": "brandy", "dough": "dej", "naan bread": "naanbrød", "naan breads": "naanbrød",
+    "spice paste": "krydderpasta", "curry paste": "karrypasta", "pitta bread": "pitabrød", "pita bread": "pitabrød", "extract": "ekstrakt", "kernels": "kerner", "egg whites": "æggehvider",
+    "egg yolk": "æggeblomme", "egg yolks": "æggeblommer", "whites": "hvider", "dipping sauce": "dip",
+    "stuffing": "fyld", "self-raising": "", "dashes": "stænk", "drops": "dråber", "glug": "et skvæt",
+    "dollop": "en klat", "splash of": "et skvæt", "lemon wedges": "citron i både", "lime wedges": "lime i både",
+    "pomegranate seeds": "granatæblekerner", "pomegranate": "granatæble", "pine nuts": "pinjekerner",
+}
+_MORE_ADJ = {
+    # Fyldord og beskrivelser uden betydning for indkøbet
+    "bone-in": "", "packed": "", "higher-welfare": "", "leaf": "", "curly": "", "bulb": "", "bulbs": "", "vine": "",
+    "stalks": "stængler", "stalk": "stængel", "greek-style": "græsk", "crumbs": "rasp", "strands": "", "threads": "",
+    "nest": "", "nests": "", "clear": "", "packs": "pakker", "pkt": "pakke", "pkts": "pakker", "pkg": "pakke",
+    "block": "", "blocks": "", "low-salt": "", "reduced-salt": "", "salt-reduced": "", "low-calorie": "",
+    "calorie": "", "half-fat": "", "lighter": "", "roast": "", "mixed-colour": "blandede", "echalion": "",
+    "tub": "", "tubs": "", "flaked": "", "ready-made": "færdig", "homemade": "hjemmelavet", "more": "", "carton": "",
+    "cartons": "", "shelled": "", "glass": "et glas", "maris": "", "piper": "", "king": "", "edward": "",
+    "banana": "", "shells": "", "mashed": "most", "lengthways": "på langs", "lengthwise": "på langs",
+    "shaoxing": "", "shaohsing": "", "blanched": "", "taste": "", "difference": "", "sainsbury's": "",
+    "simply": "", "simplynature": "", "tilda": "", "delallo": "", "jamie's": "", "patak's": "", "napolina": "",
+    "coles": "", "swanson": "", "belazu": "", "amoy": "", "kewpie": "", "sacla": "", "rotel": "", "al'fez": "",
+    "cut": "", "center": "", "center-cut": "", "kashmiri": "", "wholegrain": "fuldkorns", "whole-grain": "fuldkorns",
+    "microwave": "", "microwavable": "", "microwaveable": "", "round": "", "loin": "", "loins": "", "washed": "",
+    "you": "", "like": "", "such": "", "any": "", "use": "", "required": "", "only": "", "but": "", "than": "",
+    "then": "", "just": "", "it's": "", "will": "", "that": "", "this": "", "until": "", "using": "", "need": "",
+    "buy": "", "have": "", "don't": "", "ones": "", "both": "", "how": "", "find": "", "add": "", "ensure": "",
+    "rashers": "skiver", "rasher": "skive", "inch": "", "-inch": "", "inches": "", "lebanese": "", "persian": "",
+    "preserved": "syltet", "sunflower": "solsikke", "baking": "", "reserved": "", "tenderstem": "", "tenderstem®": "",
+    "sharp": "lagret", "shapes": "", "bonnet": "", "scotch": "", "jumbo": "store", "part-skim": "", "low-moisture": "",
+    "tiger": "", "jarred": "", "dash": "et skvæt", "warmed": "lune", "bottle": "flaske", "btl": "flaske",
+    "fire-roasted": "grillede", "all": "", "unsweetened": "usødet", "broken": "", "short": "", "unwaxed": "usprøjtet",
+    "purple": "lilla", "package": "pakke", "packets": "pakker", "bella": "", "chestnut": "", "cremini": "",
+    "button": "", "closed": "", "cup": "", "shavings": "", "shaved": "høvlet", "snow": "", "smooth": "",
+    "extra-firm": "fast", "ounce": "", "ounces": "", "-ounce": "", "silken": "", "stoned": "uden sten", "russet": "",
+    "yukon": "", "gold": "", "desiree": "", "charlotte": "", "kipfler": "", "sebago": "", "coliban": "", "chat": "",
+    "jersey": "", "floury": "melede", "waxy": "faste", "brine": "lage", "shoots": "skud", "coarse": "groft",
+    "pinches": "knivspids", "ancho": "", "balls": "", "grating": "", "defrosted": "optøet", "thawed": "optøet",
+    "bird's": "", "eye": "", "bird's-eye": "", "birds": "", "birdseye": "", "birds'-eye": "", "unit": "",
+    "stale": "daggammelt", "day-old": "daggammelt", "bashed": "knust", "ready-cooked": "",
+    "ready-to-eat": "", "snipped": "klippet", "separated": "", "soaked": "udblødt", "straight-to-wok": "",
+    "unpeeled": "", "pods": "kapsler", "pod": "kapsel", "cardamon": "kardemomme", "flank": "",
+    "ends": "", "stem": "", "stems": "", "long-grain": "", "grilled": "", "skinned": "uden skind",
+    "prepared": "", "leg": "", "mug": "krus", "arborio": "", "squeezed": "presset", "eating": "", "cos": "",
+    "gluten": "", "skim": "skummet", "sachet": "pose", "podded": "", "rings": "ringe", "bio": "", "petite": "",
+    "unseasoned": "", "sprouting": "", "poblano": "", "deveined": "renset", "rump": "", "swiss": "",
+    "plum": "blomme", "sake": "sake", "new": "nye", "from": "", "left": "", "heaping": "", "woody": "",
+    "hearts": "", "cumberland": "", "lincolnshire": "", "elbow": "", "southwest": "", "frying": "", "brand": "",
+    "chargrilled": "", "italian-style": "italiensk", "andouille": "", "plant-based": "plantebaseret",
+    "stewing": "", "braising": "", "thick-cut": "tykke", "thin-cut": "tynde", "bamboo": "", "batch": "", "heat": "",
+    "tasty": "", "dairy-free": "mælkefri", "non-dairy": "plantebaseret", "punnet": "bakke", "couple": "et par",
+    "nut": "nødde", "mature": "lagret", "aged": "lagret", "halves": "halvdele", "unsmoked": "", "container": "",
+    "long-stemmed": "", "long-stem": "", "thin-stemmed": "", "wedge": "båd", "medium-sized": "",
+    "cold-pressed": "koldpresset", "chantenay": "", "ears": "", "ear": "", "fast-action": "", "cook": "",
+    "preferably": "", "ideally": "", "grains": "", "springwater": "", "thigh": "lår", "shell-on": "",
+    "crusty": "sprødt", "garnishes": "", "garnish": "", "short-grain": "", "less": "", "loaf": "", "all-butter": "",
+    "extra-lean": "", "angle": "", "links": "", "skirt": "", "grams": "", "napa": "", "rounds": "", "hass": "",
+    "haas": "", "wide": "", "loosely": "", "tightly": "", "dressed": "", "tender": "", "vidalia": "",
+    "sweetheart": "", "hispi": "", "excess": "", "quick-cook": "", "quick-to-cook": "", "breads": "brød",
+    "diagonal": "skråt", "diagonally": "skråt", "slivered": "", "grainy": "", "dice": "tern", "quantity": "",
+    "boiling": "kogende", "just-boiled": "kogende", "applewood": "", "shop-bought": "", "store-bought": "",
+    "better": "", "adjust": "", "finger": "", "angel": "", "hair": "", "hard-boiled": "hårdkogte",
+    "soft-boiled": "blødkogte", "mixture": "", "casserole": "gryderet", "filets": "fileter",
+    "pre-cooked": "", "precooked": "", "indonesian": "indonesisk", "rindless": "",
+    "cored": "", "peel": "skræl", "giant": "", "seasonal": "", "poached": "pocheret", "streaky": "", "riced": "",
+    "stripped": "", "added": "", "whole-milk": "", "discarded": "", "heads": "", "parts": "", "oven": "",
+    "portions": "portioner", "batch-cooked": "", "needles": "", "sprinkle": "", "minute": "", "minutes": "",
+    "wedged": "", "backstraps": "", "backstrap": "", "stemmed": "", "out": "", "pots": "bægre", "plump": "",
+    "check": "", "bite-sized": "mundrette", "slice": "skive", "refrigerated": "", "no-boil": "", "two": "to",
+    "box": "æske", "serveware": "", "shop": "", "sustainable": "", "sustainably": "", "semi-dried": "semitørrede",
+    "sun-blush": "semitørrede", "easy": "", "spiral": "", "plant": "plante", "melting": "", "trimmings": "",
+    "barbecued": "", "bases": "bunde", "raising": "", "self": "", "wooden": "", "truss": "",
+    "butterflied": "", "sri": "", "lankan": "", "shell": "", "boned": "", "blitzed": "blendet", "tips": "spidser",
+    "leafy": "", "sourced": "", "red-skinned": "", "red-skin": "", "dipping": "", "shakes": "", "oil-packed": "i olie",
+    "crumbly": "", "thumb-size": "", "joint": "", "traditional": "", "left-over": "", "cleaned": "renset",
+    "nonstick": "", "rolled": "", "jointed": "", "garden": "", "depending": "", "ready-roasted": "",
+    "deep-frying": "", "additional": "", "chump": "", "cured": "", "approved": "", "matchsticks": "tændstikker",
+    "used": "", "flake": "flager", "heavy": "", "knife": "", "flageolet": "", "medley": "blanding",
+    "no-added-salt": "", "shortcut": "", "short-cut": "", "togarashi": "", "merchant": "", "according": "",
+    "ready-grated": "revet", "fragrant": "", "moons": "", "half-moons": "", "flowers": "blomster",
+    "heritage": "", "heirloom": "", "measuring": "", "peeler": "", "around": "ca.", "winter": "", "summer": "",
+    "great": "", "rspca": "", "pressed": "presset", "colouring": "farve", "medjool": "", "basics": "", "bits": "",
+    "full-bodied": "", "fruity": "", "bags": "poser", "dry-roasted": "ristede", "seedless": "uden kerner",
+    "piquillo": "", "methi": "", "bramley": "", "braeburn": "", "clarified": "klaret", "cassia": "kanel",
+    "intense": "", "julienned": "i strimler", "hot-smoked": "", "cooled": "afkølet", "total": "",
+    "shichimi": "", "sugar-snap": "sukker", "micro": "", "flavourless": "neutral", "squashed": "", "field": "",
+    "condensed": "kondenseret", "patted": "", "rack": "", "medium-large": "", "small-medium": "", "extra-large": "",
+    "pimento": "", "pale": "", "stone": "", "best": "", "aleppo": "", "outer": "", "dishes": "", "following": "",
+    "jug": "", "based": "", "cane": "", "oliver": "", "pickling": "", "concentrated": "", "concentrate": "",
+    "flesh": "", "skipjack": "", "dissolved": "opløst", "malaysian": "", "individual": "", "bones": "",
+    "spiciness": "", "times": "", "gently": "", "lots": "", "tongs": "", "heated": "", "peppadew": "",
+    "hokkien": "", "bark": "", "lengths": "", "quarters": "kvarte", "squares": "", "butterhead": "", "springs": "",
+    "shallow": "", "vacuum-packed": "", "vac-packed": "", "stuffed": "fyldte", "pared": "", "meal": "",
+    "dry-cured": "lufttørret", "lukewarm": "lunkent", "atlantic": "", "ice-cold": "iskold", "thickening": "",
+    "bakes": "", "lancashire": "", "jap": "", "core": "", "alternative": "", "puffs": "", "canned": "", "platter": "",
+    "works": "", "kind": "", "tiny": "", "bird": "", "bruised": "knust", "slit": "", "lovely": "", "scant": "",
+    "something": "", "options": "", "fresno": "", "cheshire": "", "pestle": "", "mortar": "", "suggested": "",
+    "garlic-ginger": "", "milled": "", "-minute": "", "pierced": "", "caster": "", "kicap": "", "kasoori": "",
+    "starchy": "", "scored": "", "supremes": "", "sweetener": "sødemiddel", "caught": "", "squeezes": "",
+    "tied": "", "joe's": "", "trader": "", "bit": "", "multigrain": "flerkorns", "french-trimmed": "", "tunisian": "",
+    "pomodorino": "", "sub": "", "batter": "dej", "boursin": "", "rich": "", "fermented": "fermenteret",
+    "carcass": "", "tail-on": "", "rustic": "", "part-boned": "", "prefer": "", "telegraph": "", "tube": "",
+    "colby": "", "grade": "", "tough": "", "cheddar-style": "", "blended": "", "mexican-style": "mexicansk", "eat": "",
+    "tie": "", "bow": "", "yourself": "", "through": "", "enough": "", "roasting": "", "garlic-infused": "",
+    "assorted": "blandede", "yolk": "blomme", "different": "", "filling": "fyld", "instructions": "",
+    "substitute": "", "parmesan-style": "", "whisked": "pisket", "-fat": "", "kept": "", "chorizo-style": "",
+    "simmer": "", "sautéed": "stegte", "teaspoon": "", "teaspoons": "", "tsp": "", "tbsp": "", "tablespoon": "",
+    "tablespoons": "", "cups": "", "mls": "", "ml-": "", "kg-": "", "ltr": "", "litre": "", "milliliter": "",
+    "cube": "terning", "cubes": "terninger", "knob": "en klat", "knobs": "", "cloves": "fed", "clove": "fed",
+}
+_MORE_WORDS.update({
+    "pineapple slices": "ananasskiver", "young pea pods": "ærtebælge", "pea pods": "ærtebælge", "pea": "ærte",
+    "groundnut": "jordnødde", "rapeseed": "raps", "canola": "raps", "pork chops": "koteletter", "lamb chops": "lammekoteletter",
+    "chops": "koteletter", "lamb shoulder": "lammebov", "pork shoulder": "svinebov", "shoulder": "bov",
+    "chicken thighs": "kyllingelår", "thighs": "lår", "breasts": "bryst", "chestnuts": "kastanjer",
+    "red leicester": "revet ost", "double gloucester": "revet ost", "cotija": "feta", "petit pois": "ærter",
+    "mange tout": "sukkerærter", "lemon grass": "citrongræs", "bavette steak": "bøf", "bavette": "bøf",
+    "chinese five-spice": "five spice", "five-spice": "five spice", "five spice powder": "five spice",
+    "tartar sauce": "remoulade", "tartare sauce": "remoulade", "baps": "boller", "bread rolls": "boller",
+    "mooli": "rædike", "daikon": "rædike", "cheeks": "kæber", "coley": "sej", "eschalots": "skalotteløg",
+    "eschallots": "skalotteløg", "eschallot": "skalotteløg", "peaches": "ferskner", "peach": "fersken",
+    "nam pla": "fiskesauce", "beef shin": "okseskank", "shin": "skank", "macadamia nuts": "macadamianødder",
+    "macadamia": "macadamianødder", "arrowroot": "majsstivelse", "rum": "rom", "iced water": "isvand",
+    "bonito flakes": "bonitoflager", "demi-baguette": "baguette", "pinenuts": "pinjekerner",
+    "dessicated coconut": "kokosmel", "guinness": "mørkt øl", "stout": "mørkt øl", "jeera": "spidskommen",
+    "squashes": "squash", "pepperjack": "revet ost", "pepper jack": "revet ost", "sun-blushed tomatoes": "semitørrede tomater",
+    "sunblush tomatoes": "semitørrede tomater", "tumeric": "gurkemeje", "hemp seeds": "hampefrø",
+    "cornbread": "majsbrød", "tomatillos": "grønne tomater", "tomatillo": "grøn tomat", "asiago": "parmesan",
+    "tortiglioni": "pasta", "shoyu": "sojasauce", "biscuits": "kiks", "treacle": "sirup", "black treacle": "sirup",
+    "kabocha": "græskar", "kabocha squash": "græskar", "acorn squash": "græskar", "cornflakes": "cornflakes",
+    "cornflake": "cornflakes", "babycorn": "majs", "baby corn": "majs", "gravy browning": "sovsekulør",
+    "browning": "sovsekulør", "bolognaise": "bolognese", "omelette": "omelet", "chicory": "julesalat",
+    "chapattis": "chapati", "poppadums": "papadums", "shitake": "shiitake", "shiitake": "shiitake",
+    "gochugaru": "koreansk chili", "romanesco": "romanesco", "blackcurrant": "solbær", "juniper berries": "enebær",
+    "juniper": "enebær", "wensleydale": "ost", "marylands": "kyllingelår", "chicken marylands": "kyllingelår",
+    "mutton": "lammekød", "caper": "kapers", "capers": "kapers", "collard greens": "grønkål",
+    "taleggio": "taleggio", "lavash": "lavash", "baharat": "baharat", "sofrito": "sofrito", "kombu": "kombu",
+    "asafoetida": "asafoetida", "furikake": "furikake", "antipasti": "antipasti", "pulled pork": "pulled pork",
+})
+_MORE_ADJ.update({
+    "slices": "", "tins": "dåser", "jars": "glas", "bunches": "bundter", "bundle": "bundt",
+    "punnets": "bakker", "packages": "pakker", "purée": "puré", "cooking": "", "easy-cook": "", "grass": "",
+    "their": "", "yum": "", "tout": "", "marmite": "", "all-purpose": "", "purpose": "", "thickened": "",
+    "pul": "", "chuck": "", "shallow-frying": "", "chip": "", "creamed": "", "season": "", "mins": "",
+    "iced": "", "fronds": "", "haricot": "hvide", "layers": "", "ovenproof": "", "old-fashioned": "",
+    "sprinkling": "", "option": "", "bulk": "", "three": "tre", "smaller": "", "castelvetrano": "",
+    "nocellara": "", "manzanilla": "", "whole-wheat": "fuldkorns", "frontier": "", "co-op": "", "guajillo": "",
+    "medium-hot": "", "kettle": "", "sun-blushed": "semitørrede", "sunblush": "semitørrede", "bowtie": "",
+    "hemp": "hampe", "low-carb": "", "nonfat": "", "straight": "", "delight": "", "outdoor": "", "sun": "",
+    "lazy": "", "fully": "", "whizzed": "blendet", "semi-": "", "pimento-stuffed": "fyldte", "brazilian": "",
+    "see": "", "board": "", "roux": "", "bite-size": "mundrette", "cro": "", "tons": "", "colours": "",
+    "necessary": "", "monterrey": "", "log": "", "dollops": "", "griddled": "", "spoonful": "en skefuld",
+    "extra-mature": "lagret", "pla": "", "open": "", "cap": "", "litres": "", "buk": "", "deboned": "udbenet",
+    "case": "", "folded": "", "whipped": "pisket", "farmhouse": "", "snapped": "", "ready-to-cook": "",
+    "sides": "", "wheel": "", "peppery": "", "sweetened": "sødet", "lite": "light", "medallion": "medaljon",
+    "live": "", "pint": "", "rascal": "", "firmly": "", "tail": "", "de-veined": "renset", "walnut-sized": "",
+    "controlled": "", "saltine": "", "ultimate": "", "paper": "", "pearled": "perle", "brewed": "brygget",
+    "visible": "", "robust": "", "chaat": "", "pandan": "", "poppy": "birkes", "albacore": "", "ctn": "",
+    "on-the-vine": "", "spoon": "", "cajun-style": "cajun", "pasties": "", "chinkiang": "", "whole-egg": "",
+    "glutinous": "klæbrig", "provencal": "provencalsk", "undrained": "", "stir-fried": "wokstegt", "tbps": "",
+    "fistful": "en håndfuld", "twists": "", "grapeseed": "druekerne", "natural-style": "naturel", "tamar": "",
+    "valley": "", "hunk": "et stykke", "acorn": "", "mexicana": "", "infused": "", "peppered": "peberet",
+    "fir": "", "quarts": "", "collard": "", "thick": "", "-thick": "", "-spice": "", "-fat": "", "-minute": "",
+    "small-to-medium": "", "pass-me": "", "kent": "", "velveeta": "", "ritz": "", "perino": "", "doongara": "",
+    "rizazz": "", "bonito": "bonito", "recipe": "", "recipes": "", "rye": "rug", "dessicated": "", "smoothly": "", "half-and-half": "fløde",
+})
+for _k, _v in _MORE_WORDS.items():
+    WORDS.setdefault(_k, _v)
+for _k, _v in _MORE_ADJ.items():
+    ADJECTIVES.setdefault(_k, _v)
+
 # Kød og fisk, som ingen oversættelse må overse. Står et af ordene tilbage
 # på engelsk, bruges opskriften ikke.
 ENGLISH_MEAT = ["beef", "pork", "chicken", "lamb", "turkey", "duck", "bacon", "ham", "gammon", "sausage", "fish",
@@ -282,7 +529,7 @@ TITLE_WORDS: dict[str, str] = {
     "creamy": "cremet", "crispy": "sprød", "crunchy": "sprød", "spicy": "stærk", "sticky": "klistret", "smoky": "røget",
     "cheesy": "med ost", "garlicky": "med hvidløg", "lemony": "med citron", "herby": "med krydderurter",
     "honey": "honning", "garlic": "hvidløg", "lemon": "citron", "roast": "ovnstegt", "roasted": "ovnbagt",
-    "baked": "bagt", "grilled": "grillet", "fried": "stegt", "pan-fried": "pandestegt", "stuffed": "fyldt",
+    "baked": "bagt", "grilled": "", "fried": "stegt", "pan-fried": "pandestegt", "stuffed": "fyldt",
     "slow-cooker": "langtidskogt", "slow": "langtids", "cooker": "", "slow-cooked": "langtidskogt",
     "trykkoger": "i trykkoger", "airfryer": "i airfryer", "bradepande": "på bradepande",
     "braised": "braiseret", "pulled": "pulled", "one-pot": "i én gryde", "one-pan": "på én pande", "traybake": "i fad",
@@ -376,7 +623,7 @@ TITLE_WORDS: dict[str, str] = {
     "haddock": "kuller", "hake": "kulmule", "mackerel": "makrel", "trout": "ørred", "sea": "", "bass": "havbars",
     "bream": "dorade", "seafood": "skaldyr", "mussels": "muslinger", "clams": "muslinger", "squid": "blæksprutte",
     "calamari": "blæksprutte", "crab": "krabbe", "scallops": "kammuslinger", "king": "", "tiger": "", "shrimps": "rejer",
-    "sardines": "sardiner", "anchovy": "ansjos", "anchovies": "ansjoser", "smoked": "røget", "hot-smoked": "varmrøget",
+    "sardines": "sardiner", "anchovy": "ansjos", "anchovies": "ansjoser", "smoked": "røget", "hot-smoked": "",
     "cured": "saltet", "gammon": "skinke", "prosciutto": "prosciutto", "pancetta": "pancetta", "salami": "salami",
     "pepperoni": "pepperoni", "meat": "kød", "meaty": "med kød", "veal": "kalv", "venison": "hjort", "pheasant": "fasan",
     "quail": "vagtel", "goose": "gås", "breast": "bryst", "breasts": "bryst", "thighs": "lår", "thigh": "lår",
@@ -441,7 +688,11 @@ def _clean(text: str) -> str:
     text = unicodedata.normalize("NFC", text)
     for k, v in _FRACTIONS.items():
         text = re.sub(rf"(\d)\s*{k}", rf"\1 {v}", text).replace(k, v)
-    text = text.replace("–", "-").replace("—", "-").replace("’", "'").replace("‘", "'")
+    text = text.replace("–", "-").replace("—", "-").replace("’", "'").replace("‘", "'").replace("⁄", "/")
+    # Usynlige tegn og et "+" eller ":" foran mængden ("+ 1 teaspoon sugar")
+    text = re.sub(r"[\u200b-\u200f\u2060\ufeff]", "", text)
+    text = re.sub(r"^\s*[+:*•-]+\s*", "", text)
+    text = re.sub(r"(\d)\s*/\s*(\d)", r"\1/\2", text)  # "1 ⁄4 chicken" er en kvart kylling
     return re.sub(r"\s+", " ", text).strip()
 
 
@@ -467,6 +718,16 @@ _PHRASES = sorted(WORDS, key=lambda w: -len(w))
 _PHRASE_RE = re.compile(r"(?<![\w-])(" + "|".join(re.escape(p) for p in _PHRASES) + r")(?![\w-])", re.IGNORECASE)
 
 
+def _word(w: str) -> str:
+    """Et enkelt ord, der ikke er en vare: oversat, udeladt eller som det står.
+    Tegn omkring ordet ("smoked,", "*", "®") tæller ikke."""
+    key = w.strip(".,:;*®™“”\"!?/()")
+    if key in ADJECTIVES:
+        return ADJECTIVES[key]
+    # Rester af mængder ("2kg/4½lb" giver "/4") og løse tegn
+    return "" if not key or re.fullmatch(r"[/+x-]+|[/+-]?[\d/.,]+(?:lbs?|oz|kg|g|ml)?", key) else w
+
+
 def translate_name(text: str) -> str:
     """En ingrediens på dansk, fx "boneless chicken thighs" -> "uden ben kyllingelår"."""
     text = _clean(text).lower()
@@ -483,16 +744,29 @@ def translate_name(text: str) -> str:
         text = " ".join(parts[: parts.index(text) + 1])
     text = re.sub(r"\((?:optional|see note[^)]*|note[^)]*)\)|\boptional\b", " ", text)
     text = re.sub(r"\([^)]*\)", " ", text)
+    # En parentes uden slutning: "cayenne pepper (more to taste" er cayennepeber,
+    # men i "boneless, (skinless chicken breasts" står varen i parentesen
+    if "(" in text:
+        head, tail = text.split("(", 1)
+        text = head if _PHRASE_RE.search(head) else f"{head} {tail}"
+    # Mængder midt i teksten: "chopped to make 2 tbsp", "6-ounce", "1-inch piece"
+    text = re.sub(r"\b(?:to\s+(?:make\s+)?)?\d[\d/.,]*\s*-?\s*(?:tsp|tbsp|teaspoons?|tablespoons?|cups?|oz|ounces?|lbs?|"
+                  r"pounds?|g|kg|ml|cm|mm|in|inch(?:es)?)\b\.?", " ", text)
+    text = re.sub(r"(?<![\w-])-?(?:inch|ounce|oz)\b", " ", text)
     text = re.sub(r"\bor\b.*$", "", text) if " or " in text and _PHRASE_RE.search(text.split(" or ")[0]) else text
     text = re.sub(r"\b(?:and|or)\s*$", "", text.strip())
     out = []
     pos = 0
     for m in _PHRASE_RE.finditer(text):
-        out += [ADJECTIVES.get(w, w) for w in text[pos:m.start()].split()]
+        out += [_word(w) for w in text[pos:m.start()].split()]
         out.append(WORDS[m.group(1).lower()])
         pos = m.end()
-    out += [ADJECTIVES.get(w, w) for w in text[pos:].split()]
+    out += [_word(w) for w in text[pos:].split()]
     name = re.sub(r"\s+", " ", " ".join(w for w in out if w)).strip(" -()")
+    # Samme ord to gange ("frisk frisk koriander" fra "fresh cilantro" = "frisk koriander")
+    name = re.sub(r"\b(\w+) \1\b", r"\1", name)
+    name = re.sub(r"(\w+brød) brød\b", r"\1", name)
+    name = re.sub(r"(\w*bouillon) (terning(?:er)?)\b", r"\1\2", name)
     name = re.sub(r" og (?=i tern|i skiver|hakket)", " ", name)
     return re.sub(r"^(?:og |eller )+|(?: og| eller)+$", "", name).strip()
 
@@ -585,7 +859,7 @@ _DANISH_WORDS = {w for v in WORDS.values() for w in v.split()}
 
 def _english_meat_left(text: str) -> str:
     """Et engelsk kød- eller fiskeord, der ikke blev oversat ("bacon" er også dansk)."""
-    words = [w for w in re.findall(r"[a-zæøå]+", text.lower()) if w not in _DANISH_WORDS]
+    words = [w for w in re.findall(r"[a-zæøåé]+", text.lower()) if w not in _DANISH_WORDS]
     for w in words:
         if any(w == m or (w.startswith(m) and len(m) >= 4) or w == m + "s" for m in ENGLISH_MEAT):
             return w
@@ -614,7 +888,9 @@ _TITLE_PHRASES = {
     "leg of lamb": "lammekølle", "cream of": "cremet", "leftover": "", "leftovers": "", "instant pot": "trykkoger", "air fryer": "airfryer", "air-fryer": "airfryer",
     "slow cooker": "slow-cooker", "slow-cooker": "slow-cooker", "sheet pan": "bradepande", "sheet-pan": "bradepande",
     "pot pie": "tærte", "fish and chips": "fish and chips", "bangers and mash": "pølser med kartoffelmos",
-    "toad in the hole": "toad in the hole", "toad-in-the-hole": "toad in the hole", "mac and cheese": "mac and cheese",
+    "toad in the hole": "pølser i dej", "toad-in-the-hole": "pølser i dej", "bubble and squeak": "kartoffel- og kålpandekage",
+    "sausage rolls": "pølsehorn", "sausage roll": "pølsehorn", "yum yum": "", "kievs": "kiev", "wellingtons": "wellington",
+    "pan noodles": "stegte nudler", "bakes": "i fad", "traybake": "i fad", "tray bake": "i fad", "mac and cheese": "mac and cheese",
     "mac 'n' cheese": "mac and cheese", "cheat's": "", "shepherd's pie": "shepherd's pie", "cottage pie": "cottage pie",
     "sweet potato": "sød kartoffel", "sweet potatoes": "søde kartofler", "spring onion": "forårsløg",
     "spring onions": "forårsløg", "green beans": "grønne bønner", "black beans": "sorte bønner",
@@ -754,7 +1030,49 @@ def translate_title(name: str) -> str | None:
     title = _danish_order(out).replace("\x00", "")
     title = re.sub(r"\b(med|og|i|på|til)( (med|og|i|på|til))+\b", r"\1", title).strip()
     title = re.sub(r"^(med|og|i|på|til) |( med| og| i| på| til)$", "", title).strip()
+    title = _agree(re.sub(r"\s+", " ", title))
     return title[:1].upper() + title[1:] if title else None
+
+
+# Tillægsord, der bøjes foran flertal: "Bagte rejer", "Svenske kødboller"
+_ADJ_PLURAL = {
+    "sprød": "sprøde", "bagt": "bagte", "ovnbagt": "ovnbagte", "stegt": "stegte", "ovnstegt": "ovnstegte",
+    "pandestegt": "pandestegte", "langtidsstegt": "langtidsstegte", "langtidskogt": "langtidskogte", "kogt": "kogte",
+    "grillet": "grillede", "cremet": "cremede", "krydret": "krydrede", "røget": "røgede", "stærk": "stærke",
+    "sød": "søde", "sur": "sure", "fyldt": "fyldte", "glaseret": "glaserede", "paneret": "panerede",
+    "braiseret": "braiserede", "dampet": "dampede", "nem": "nemme", "hurtig": "hurtige", "klassisk": "klassiske",
+    "stor": "store", "rød": "røde", "grøn": "grønne", "sort": "sorte", "hvid": "hvide", "brun": "brune",
+    "lun": "lune", "frisk": "friske", "gylden": "gyldne", "syrlig": "syrlige", "klistret": "klistrede",
+    "wokket": "wokkede", "smadret": "smadrede", "toppet": "toppede", "syltet": "syltede", "saltet": "saltede",
+    "hjemmelavet": "hjemmelavede", "sund": "sunde", "let": "lette", "blandet": "blandede", "revet": "revne",
+}
+_SINGULAR_ER = {"peber", "koriander", "ingefær", "cheddar", "burger", "sommer", "vinter", "lever", "fiber",
+                "rabarber", "smørrebrød", "cider", "kaffer", "ananas", "couscous", "gryder"}
+
+
+def _plural_noun(word: str) -> bool:
+    w = word.lower().strip(",")
+    if w in _SINGULAR_ER or w.endswith(("peber", "burger")):
+        return False
+    return w.endswith(("er", "ere", "ller", "ler", "rne", "skåle", "tacos", "wraps", "chips", "kiks", "bønner", "æg", "spyd"))
+
+
+def _agree(title: str) -> str:
+    """Tillægsord foran et navneord i flertal bøjes, også flere i træk."""
+    words = title.split(" ")
+    for i in range(len(words) - 2, -1, -1):
+        low = words[i].lower()
+        if low not in _ADJ_PLURAL:
+            continue
+        nxt = words[i + 1]
+        if _plural_noun(nxt) or nxt.lower() in _ADJ_PLURAL.values():
+            form = _ADJ_PLURAL[low]
+            words[i] = form[:1].upper() + form[1:] if words[i][:1].isupper() else form
+    # Nationaliteter på -sk: "svensk kødboller" -> "svenske kødboller"
+    for i in range(len(words) - 2, -1, -1):
+        if words[i].lower().endswith("sk") and words[i].lower() in _ADJ and _plural_noun(words[i + 1]):
+            words[i] += "e"
+    return " ".join(words)
 
 
 def translate_category(category: str) -> str:
