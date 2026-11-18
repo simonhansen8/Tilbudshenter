@@ -87,14 +87,12 @@ I appen kan du:
 
 - hente nye tilbud med knappen **Hent nye tilbud** (første gang sker det
   automatisk),
-- søge og filtrere på butik og kategori, sortere efter rabat eller pris pr. kg
-  (en søgning leder i alle kategorier, så fx "øl" findes, selvom kategorien er fravalgt),
+- søge og filtrere (se *Filtre* nedenfor) og sortere efter rabat eller pris pr. kg,
 - trykke på et tilbud for at se et stort billede, hele siden i avisen med
   tilbuddet markeret og en knap til den rigtige tilbudsavis på eTilbudsavis,
 - vise tilbuddene butik for butik i samme rækkefølge som i tilbudsavisen
   (sortering *Butik, som i avisen*),
-- vælge mellem tilbud der gælder nu, og dem der starter senere,
-- se hvilke tilbud der kræver Lidl Plus, kædens app eller medlemskab (og skjule dem),
+- se hvilke tilbud der kræver Lidl Plus, kædens app eller medlemskab,
 - se normalprisen ved hvert tilbud, og om tilbuddet faktisk er billigere: butikkens
   egen normalpris, når avisen oplyser den, ellers basisprisen (madplanens hyldepris
   uden tilbud, se nedenfor) for almindelige basisvarer som hakket oksekød, mælk og kartofler.
@@ -110,7 +108,7 @@ I appen kan du:
   delte tekst er kort, kun det, der mangler, med en samlet pris. Listen kan også
   sendes som mail eller udskrives,
 - lave en **madplan** ud fra ugens tilbud (se nedenfor),
-- vælge butikker, aviser, kategorier og din placering under **Indstillinger**.
+- vælge kæder, aviser, favoritter og din placering under **Indstillinger**.
 
 Appen kører kun på din egen computer. Luk konsolvinduet for at stoppe den.
 Vil du prøve med demodata uden internet: `tilbudshenter app --demo`.
@@ -205,12 +203,39 @@ noegleord = ["havregryn", "müsli", "skyr"]
 noegleord = ["tatar"]          # ekstra nøgleord til en eksisterende kategori
 ```
 
+### Filtre
+
+Som udgangspunkt vises alle tilbud fra dine kæder. Knappen **Filtre** over
+tilbuddene åbner valgene:
+
+- **Butik**, **Kategori** og **Gælder** (nu eller senere): tryk på det, du vil
+  se, fx Netto. Så vises kun Netto, og et tryk mere på fx Lidl tager Lidl med.
+  **Alle** slår filteret fra. **Kun mad og drikke** vælger alle kategorier
+  undtagen husholdning, personlig pleje, baby, dyr og non-food.
+- **Rabat**: alle tilbud, kun dem med kendt rabat, eller mindst 10-50 % rabat.
+  Mange aviser oplyser ingen normalpris; de tilbud vises kun under *Alle tilbud*.
+- **Højeste pris**, **Skjul medlems- og app-priser** og **Skjul varer**
+  (tilbud der nævner fx "øl" eller "øko", med samme regler som søgningen).
+
+Tallet ved hvert valg er, hvor mange tilbud man får med det. Hvert filter, der
+er slået til, står som et mærke ved siden af knappen og fjernes med ét tryk, og
+**Nulstil alle** viser alt igen. Under tilbuddene står, hvor mange filtrene
+skjuler, og skjuler de alt, foreslås det, hvad man kan slå fra. Søgningen
+bruger også filtrene. Filtrene huskes i browseren. Hvilke kæder og aviser der
+hentes, vælges under *Indstillinger* (linket *Flere kæder og aviser*).
+
+Har du `udelad_ord` eller `max_pris` i `tilbudshenter.toml`, bliver de til filtre
+første gang, appen åbnes med de nye filtre, så de kan ses og fjernes. I
+appen bruges `[kategorier]`, `min_rabat_procent`, `kun_kendt_rabat` og
+`skal_indeholde` ikke;
+de gælder kun rapporterne fra `tilbudshenter scan` og `tilbudshenter tilbud`.
+
 ### Mine basisvarer
 
-Under **Filtre** kan du skrive de varer, du altid køber, fx mælk, smør, kaffe
-og bananer. Sæt flueben ved **Kun mine basisvarer**, så vises alle tilbud på
-dem samlet vare for vare, med den billigste pr. kg eller liter først. Kategorier
-og mindste rabat gælder ikke her, og varer uden tilbud nævnes over listen.
+Vælg **Mine basisvarer** over tilbuddene, og skriv de varer, du altid køber,
+fx mælk, smør, kaffe og bananer. Så vises alle tilbud på dem samlet vare for
+vare, med den billigste pr. kg eller liter først. Kategori og rabat gælder ikke
+her (butik, periode, pris og skjulte varer gør), og varer uden tilbud nævnes over listen.
 Varen skal stå i tilbuddets overskrift som et helt ord eller sidst i et
 sammensat ord: "mælk" finder "letmælk", men ikke "mælkedrik" eller
 "smørrebrød". Et minus udelader noget: `mælk -kakao`. Listen gemmes i
@@ -248,8 +273,9 @@ Mange kæder (fx Netto og REMA 1000) oplyser sjældent en normalpris, og
 derfor er sammenligningen med andre butikker vigtig for dem. Anslåede
 rabatter vises med "ca." og en ramme i stedet for fyldt mærke. Tilbud,
 hvor rabatten ikke kendes, vises efter dem med kendt rabat, sorteret efter
-kategori og enhedspris. Sæt `kun_kendt_rabat = true` for at skjule dem.
-`min_rabat_procent` skjuler tilbud, hvis kendte rabat er lavere.
+kategori og enhedspris. I appen skjules de med filteret **Rabat**; i
+rapporterne med `kun_kendt_rabat = true`. `min_rabat_procent` skjuler tilbud i
+rapporterne, hvis kendte rabat er lavere.
 
 ## Rapporter
 
