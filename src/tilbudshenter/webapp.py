@@ -93,14 +93,15 @@ class App:
     def offers(self) -> dict:
         """Alle aktuelle tilbud fra de valgte butikker og aviser.
 
-        Kategori- og rabatvalg anvendes i browseren, så de kan slås til og
-        fra uden at hente igen.
+        Kategori, rabat, pris og skjulte varer er filtre i browseren, så de
+        kan ses og slås til og fra uden at hente igen.
         """
         cfg = self.config()
         categorizer = self.categorizer(cfg)
         wide = replace(
             cfg, categories=[], exclude_categories=[], min_discount_pct=0.0,
-            only_known_discount=False, top_n=0, per_category=0,
+            only_known_discount=False, max_price=None, include_keywords=[], exclude_keywords=[],
+            top_n=0, per_category=0,
         )
         now = datetime.now(timezone.utc)
         with Storage(cfg.database) as storage:

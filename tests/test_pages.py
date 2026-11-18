@@ -106,9 +106,9 @@ def test_saved_choices_survive_new_versions():
 
 
 def test_filters_are_saved():
-    # Periode, butikker og kategorier i filtermenuen huskes i browseren
+    # Filtrene (butikker, kategorier, periode, rabat osv.) huskes i browseren
     html = static_html()
-    assert 'id="filter-menu"' in html
+    assert 'id="filter-panel"' in html
     assert 'store.set("filters"' in html and 'store.get("filters", {})' in html
 
 
