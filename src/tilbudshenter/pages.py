@@ -26,6 +26,7 @@ from .selection import store_selected
 from .sources.base import SourceError
 from .sources.tjek import is_twin_store
 from .storage import Storage
+from . import version as version_info
 from .webapp import offer_payload, papers_payload, settings_from_config
 
 log = logging.getLogger(__name__)
@@ -138,7 +139,10 @@ def site_config() -> Config:
     return replace(base, stores=list(SITE_STORES), categories=[])
 
 
-def site_data(cfg: Config, now: datetime | None = None, stores: dict[str, list[dict]] | None = None) -> dict:
+def site_data(
+    cfg: Config, now: datetime | None = None, stores: dict[str, list[dict]] | None = None,
+    build: dict | None = None,
+) -> dict:
     now = now or datetime.now(timezone.utc)
     categorizer = Categorizer(merge_categories(cfg.custom_categories))
     wide = replace(
@@ -165,6 +169,8 @@ def site_data(cfg: Config, now: datetime | None = None, stores: dict[str, list[d
     defaults.update(latitude=None, longitude=None, radius_km=10.0, place="")
     return {
         "generated": now.isoformat(),
+        # Udgaven siden er bygget fra; vises i mærket øverst på siden
+        "version": build if build is not None else version_info.current(),
         "last_scan": last.isoformat() if last else None,
         "catalog_count": len(catalogs),
         "favorite_bonus": cfg.favorite_bonus,
@@ -204,9 +210,14 @@ def pages_data(cfg: Config, now: datetime | None = None) -> dict:
         return {c.id: c.pages for c in storage.catalogs(active_at=now) if c.pages}
 
 
-def static_html() -> str:
+def static_html(build: dict | None = None) -> str:
+    """Appen som statisk side. Udgaven skrives ind i siden, så den kan se,
+    om browseren viser en gammel kopi, når der er udgivet en ny."""
     html = resources.files("tilbudshenter.data").joinpath("app.html").read_text(encoding="utf-8")
-    return html.replace("<script>\n", STATIC_MARKER + "\n<script>\n", 1)
+    marker = STATIC_MARKER
+    if build is not None:
+        marker += "\n<script>window.TILBUDSHENTER_BUILD = " + json.dumps(build).replace("<", "\\u003c") + ";</script>"
+    return html.replace("<script>\n", marker + "\n<script>\n", 1)
 
 
 def build_site(
@@ -214,18 +225,24 @@ def build_site(
 ) -> dict:
     """Skriver index.html, data.json, opskrifter.json og aviser.json i
     ``out_dir``. Returnerer dataene (uden opskrifterne)."""
-    data = site_data(cfg, now, stores)
+    build = version_info.current()
+    data = site_data(cfg, now, stores, build)
     recipes = data["plan"].pop("recipes")
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "opskrifter.json").write_text(
         json.dumps(recipes, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
     )
-    (out_dir / "index.html").write_text(static_html(), encoding="utf-8")
+    (out_dir / "index.html").write_text(static_html(build), encoding="utf-8")
     (out_dir / "data.json").write_text(
         json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
     )
     (out_dir / "aviser.json").write_text(
         json.dumps(pages_data(cfg, now), separators=(",", ":")), encoding="utf-8"
+    )
+    # Lille fil, som en åben side spørger efter, for at se om der er
+    # kommet nye tilbud eller en ny udgave siden den blev åbnet
+    (out_dir / "version.json").write_text(
+        json.dumps({**build, "generated": data["generated"]}), encoding="utf-8"
     )
     (out_dir / ".nojekyll").write_text("", encoding="utf-8")
     # Siden skal ikke kunne findes via søgemaskiner

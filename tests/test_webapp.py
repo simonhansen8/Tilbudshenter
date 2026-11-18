@@ -235,3 +235,22 @@ def test_new_meal_plan_replaces_the_old_one_on_the_list(tmp_path):
         left = {i["heading"]: i for i in storage.shopping_list()}
     assert set(left) == {"Mælk", "Løg (1 net)"} and old not in {i["id"] for i in left.values()}
     assert left["Løg (1 net)"]["price"] == 7.0
+
+
+def test_version_in_state_and_update_check(tmp_path, monkeypatch):
+    from tilbudshenter import updater
+
+    app = App(tmp_path / "tilbudshenter.toml", demo=True)
+    app.version = {"sha": "a" * 40, "date": None, "dirty": False, "repo": "x/y", "source": "installeret"}
+    assert app.state()["version"]["latest"] is None
+    app.check_update(lambda url, headers: b"b" * 40)
+    v = app.state()["version"]
+    assert v["sha"] == "a" * 40 and v["latest"] == "b" * 40 and v["checked"] and not v["check_error"]
+
+    def offline(url, headers):
+        raise updater.UpdateError("Ingen forbindelse")
+
+    # Uden net huskes den sidst kendte udgave, og fejlen vises
+    app.check_update(offline)
+    v = app.state()["version"]
+    assert v["latest"] == "b" * 40 and v["check_error"] == "Ingen forbindelse"

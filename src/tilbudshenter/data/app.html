@@ -30,6 +30,34 @@ header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; ju
 h1 { margin: 0; font-size: 24px; letter-spacing: -.01em; }
 .status { color: var(--muted); font-size: 14px; margin-top: 2px; }
 .status.stale { color: var(--error); }
+
+/* Mærket ved navnet: udgave, ny udgave og hentning af aviser */
+.ver { display: inline-block; position: relative; vertical-align: middle; margin-left: 6px; font-size: 12px; font-weight: 600; letter-spacing: 0; }
+.ver > summary { list-style: none; display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px;
+  cursor: pointer; user-select: none; border: 1px solid transparent; color: var(--muted); background: var(--surface-2); }
+.ver > summary::-webkit-details-marker { display: none; }
+.ver > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ver .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }
+.ver[data-kind="ok"] > summary { color: var(--accent); background: var(--accent-soft); }
+.ver[data-kind="busy"] > summary { color: var(--accent); background: var(--accent-soft); }
+.ver[data-kind="busy"] .dot { animation: pulse 1s infinite ease-in-out; }
+.ver[data-kind="new"] > summary, .ver[data-kind="warn"] > summary { color: var(--warn); background: var(--warn-soft); }
+.ver[data-kind="error"] > summary { color: var(--error); background: var(--error-soft); }
+@keyframes pulse { 50% { opacity: .25; transform: scale(.7); } }
+@media (prefers-reduced-motion: reduce) { .ver[data-kind="busy"] .dot { animation: none; } }
+.ver-panel { position: absolute; z-index: 30; top: calc(100% + 6px); left: 0; width: min(340px, calc(100vw - 32px));
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,.14);
+  padding: 12px 14px; font-weight: 400; font-size: 14px; color: var(--fg); }
+.ver-panel p { margin: 0 0 8px; }
+.ver-panel .muted { color: var(--muted); font-size: 13px; }
+.ver-panel a { color: var(--accent); }
+.ver-panel code { font-size: 13px; }
+.ver-panel .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+/* På smalle skærme går panelet fra venstre kant af overskriften, så det ikke stikker ud */
+@media (max-width: 640px) {
+  header > div:first-child { position: relative; }
+  .ver { position: static; }
+}
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 9px 14px; cursor: pointer; font-weight: 600; }
 .btn:hover { background: var(--surface-2); }
@@ -317,7 +345,10 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
 <main>
   <header>
     <div>
-      <h1>Tilbudshenter <span id="demo-tag" class="status" hidden>(demo)</span></h1>
+      <h1>Tilbudshenter <span id="demo-tag" class="status" hidden>(demo)</span><details class="ver" id="ver" hidden>
+        <summary><span class="dot"></span><span id="ver-text"></span></summary>
+        <div class="ver-panel" id="ver-panel"></div>
+      </details></h1>
       <div class="status" id="status">Indlæser…</div>
     </div>
     <div class="actions">
@@ -729,7 +760,9 @@ const store = {
 let siteData = null;
 async function loadSiteData() {
   if (!siteData) {
-    const res = await fetch("data.json", {cache: "no-cache"});
+    // ?v= kommer fra "Genindlæs" i mærket og henter tilbuddene uden om mellemlageret
+    const v = new URLSearchParams(location.search).get("v");
+    const res = await fetch(v ? `data.json?v=${encodeURIComponent(v)}` : "data.json", {cache: "no-cache"});
     if (!res.ok) throw new Error(`Kunne ikke hente tilbuddene (fejl ${res.status})`);
     siteData = await res.json();
     upgradeSiteSettings();
@@ -932,7 +965,8 @@ async function staticApi(path, body) {
   const s = siteSettings();
   if (path === "/api/state") {
     return {demo: false, scan: {running: false}, settings: s, catalog_count: siteData.catalog_count,
-      last_scan: siteData.last_scan, generated: siteData.generated, categories: siteData.categories};
+      last_scan: siteData.last_scan, generated: siteData.generated, categories: siteData.categories,
+      version: siteData.version || null};
   }
   if (path === "/api/offers") return {offers: siteOffers(s), papers: siteData.papers || {}};
   if (path === "/api/catalogs") {
@@ -1060,11 +1094,13 @@ async function refreshState() {
     + ` · ${s.catalog_count} aktive aviser`
     + (stale ? " · ikke opdateret som planlagt, så nogle tilbud kan mangle" : STATIC ? " · opdateres automatisk hver dag" : "")
     + (STATIC && s.settings.latitude != null ? ` · butikker inden for ${km(s.settings.radius_km)} af ${s.settings.place}` : "");
+  ver.state = s;
   renderScan(s.scan);
   return s;
 }
 
 function renderScan(scan) {
+  if (ver.state) { ver.state.scan = scan; renderVersion(); }
   const wasScanning = state.scanning;
   state.scanning = scan.running;
   $("btn-scan").disabled = scan.running;
@@ -1108,6 +1144,185 @@ async function startScan(force) {
     renderScan({running: true, done: 0, total: 0, message: "Finder aviser…"});
   } catch (e) { showMessage(`<div class="grow">${esc(e.message)}</div>`, "error"); }
 }
+
+// -- Udgave ----------------------------------------------------------
+// <version>
+// Mærket ved navnet: hvilken udgave der kører, om der er kommet en nyere,
+// og om der hentes aviser lige nu (afprøves i test_version_js.py)
+
+// Hvornår GitHub henter aviserne af sig selv, som cron i .github/workflows/side.yml
+const SCHEDULE_UTC = [[4, 17], [15, 17]];
+
+function nextScheduled(now) {
+  for (let day = 0; day < 2; day++) {
+    for (const [h, m] of SCHEDULE_UTC) {
+      const t = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + day, h, m));
+      if (t > now) return t;
+    }
+  }
+  return null;
+}
+
+function shortSha(sha) { return sha ? String(sha).slice(0, 7) : ""; }
+
+// v.page: udgaven siden er bygget fra, v.generated: hvornår tilbuddene i
+// siden er hentet, v.deployed: version.json lige nu (eller null), v.run:
+// seneste kørsel af workflowen på GitHub (eller null), v.local: appens
+// udgave og nyeste på GitHub, v.scanning: appen henter aviser
+function versionStatus(v) {
+  if (v.static) {
+    const page = v.page || {}, dep = v.deployed, run = v.run;
+    if (dep && dep.sha && page.sha && dep.sha !== page.sha) return {kind: "new", text: "Ny udgave klar", reload: true};
+    if (dep && dep.generated && v.generated && new Date(dep.generated) > new Date(v.generated)) {
+      return {kind: "new", text: "Nye tilbud klar", reload: true};
+    }
+    if (run && run.status && run.status !== "completed") {
+      return {kind: "busy", text: run.head_sha && page.sha && run.head_sha !== page.sha
+        ? "Henter aviser og ny udgave…" : "Henter tilbudsaviser…"};
+    }
+    if (run && run.conclusion && !["success", "cancelled", "skipped"].includes(run.conclusion)) {
+      return {kind: "error", text: "Opdatering fejlede"};
+    }
+    if (v.stale) return {kind: "warn", text: "Ikke opdateret"};
+    return {kind: "ok", text: "Seneste udgave"};
+  }
+  const l = v.local || {};
+  if (v.scanning) return {kind: "busy", text: "Henter tilbudsaviser…"};
+  if (l.sha && l.latest && l.latest !== l.sha) return {kind: "new", text: "Ny udgave på GitHub"};
+  if (l.dirty) return {kind: "warn", text: "Lokale ændringer"};
+  if (!l.sha) return {kind: "unknown", text: "Ukendt udgave"};
+  return {kind: "ok", text: l.latest ? "Seneste udgave" : `Udgave ${shortSha(l.sha)}`};
+}
+// </version>
+
+const ver = {state: null, deployed: null, run: null, github: null, checked: null, timer: null, wasBusy: false};
+
+function clock(iso) {
+  return new Date(iso).toLocaleTimeString("da-DK", {hour: "2-digit", minute: "2-digit"});
+}
+
+function versionInfo() {
+  const s = ver.state || {};
+  if (STATIC) {
+    return {static: true, page: window.TILBUDSHENTER_BUILD || s.version || {}, generated: s.generated,
+      deployed: ver.deployed, run: ver.run,
+      stale: !!(s.generated && Date.now() - new Date(s.generated) > STALE_HOURS * 3600e3)};
+  }
+  return {static: false, local: s.version || {}, scanning: !!(s.scan && s.scan.running)};
+}
+
+function commitLink(info) {
+  if (!info || !info.sha) return "ukendt";
+  const repo = info.repo || "simonhansen8/Tilbudshenter";
+  const date = info.date ? ` fra ${esc(timeAgo(info.date))}` : "";
+  return `<a href="https://github.com/${esc(repo)}/commit/${esc(info.sha)}" target="_blank" rel="noopener"><code>${esc(shortSha(info.sha))}</code></a>${date}`;
+}
+
+function renderVersion() {
+  const v = versionInfo(), st = versionStatus(v), s = ver.state || {};
+  const el = $("ver");
+  el.hidden = false;
+  el.dataset.kind = st.kind;
+  $("ver-text").textContent = st.text;
+  el.querySelector("summary").title = "Udgave, opdateringer og hentning af aviser";
+  const p = [];
+  if (v.static) {
+    const page = v.page || {}, run = v.run, dep = v.deployed;
+    p.push(`<p><b>Udgave:</b> ${commitLink(page)}</p>`);
+    p.push(`<p><b>Tilbuddene er hentet</b> ${esc(timeAgo(s.generated))}</p>`);
+    if (st.reload) {
+      p.push(`<p>${dep.sha !== page.sha ? "Der er udgivet en ny udgave af siden" : "Der er hentet nye tilbud"}, siden du åbnede den. Genindlæs for at se ${dep.sha !== page.sha ? "den" : "dem"}.</p>`);
+    }
+    if (run && run.status !== "completed") {
+      p.push(`<p>GitHub henter de nyeste aviser lige nu${run.run_started_at ? ` (startet kl. ${esc(clock(run.run_started_at))})` : ""}. Mærket skifter, når de er klar. <a href="${esc(run.html_url)}" target="_blank" rel="noopener">Se kørslen</a></p>`);
+    } else if (st.kind === "error") {
+      p.push(`<p>Den seneste opdatering (${esc(timeAgo(run.run_started_at || run.created_at))}) fejlede, så du ser tilbuddene fra sidste gang, det lykkedes. <a href="${esc(run.html_url)}" target="_blank" rel="noopener">Se fejlen på GitHub</a></p>`);
+    }
+    const next = nextScheduled(new Date());
+    if (next) p.push(`<p class="muted">Næste automatiske hentning: ca. ${esc(timeAgo(next.toISOString()))}</p>`);
+    if (ver.github === false) p.push(`<p class="muted">Kunne ikke spørge GitHub, om der hentes aviser lige nu.</p>`);
+    if (ver.checked) p.push(`<p class="muted">Tjekket kl. ${esc(clock(ver.checked))}</p>`);
+    p.push(`<div class="row">${st.reload ? `<button class="btn primary small" type="button" onclick="reloadSite()">Genindlæs</button>` : ""}
+      <button class="btn small" type="button" onclick="checkSite(true)">Tjek nu</button></div>`);
+  } else {
+    const l = v.local || {};
+    p.push(`<p><b>Udgave:</b> ${commitLink(l)}${l.dirty ? " med lokale ændringer, der ikke er gemt i git" : ""}</p>`);
+    if (v.scanning) p.push(`<p>Henter tilbudsaviser lige nu${s.scan.message ? `: ${esc(s.scan.message)}` : ""}.</p>`);
+    if (st.kind === "new") {
+      p.push(l.source === "git"
+        ? `<p>Der er en nyere udgave på GitHub (<code>${esc(shortSha(l.latest))}</code>). Hent den med <code>git pull</code> og start programmet igen.</p>`
+        : `<p>Der er en nyere udgave (<code>${esc(shortSha(l.latest))}</code>). Luk programmet og start det igen, så henter det selv den nye udgave.</p>`);
+    } else if (!l.sha) {
+      p.push(`<p class="muted">Udgaven kendes ikke, fordi programmet ikke er installeret med Installer.bat eller hentet med git. Det kan derfor ikke se, om der er en nyere udgave.</p>`);
+    }
+    if (l.check_error) p.push(`<p class="muted">Kunne ikke tjekke GitHub for en ny udgave: ${esc(l.check_error)}</p>`);
+    else if (l.checked) p.push(`<p class="muted">Tjekket for ny udgave kl. ${esc(clock(l.checked))}</p>`);
+    p.push(`<p class="muted">Tilbud sidst hentet: ${esc(timeAgo(s.last_scan))}</p>`);
+    if (l.sha) p.push(`<div class="row"><button class="btn small" type="button" onclick="checkLocal()">Tjek nu</button></div>`);
+  }
+  $("ver-panel").innerHTML = p.join("");
+}
+
+// Siden spørger med jævne mellemrum, om der er udgivet en ny udgave eller
+// nye tilbud (version.json), og om GitHub er i gang med at hente aviser.
+// GitHub tillader 60 spørgsmål i timen uden login, så der spørges højst
+// hvert andet minut, og kun mens siden er fremme.
+async function checkSite(manual) {
+  if (manual) $("ver-text").textContent = "Tjekker…";
+  try {
+    // Uden ?t= kan GitHub Pages svare med en kopi, der er op til 10 minutter gammel
+    const res = await fetch(`version.json?t=${Date.now()}`, {cache: "no-store"});
+    if (res.ok) ver.deployed = await res.json();
+  } catch (e) {}
+  const repo = (window.TILBUDSHENTER_BUILD || (ver.state && ver.state.version) || {}).repo || "simonhansen8/Tilbudshenter";
+  try {
+    const res = await fetch(`https://api.github.com/repos/${repo}/actions/workflows/side.yml/runs?per_page=1&branch=main`,
+      {headers: {Accept: "application/vnd.github+json"}, cache: "no-store"});
+    if (!res.ok) throw new Error(res.status);
+    ver.run = ((await res.json()).workflow_runs || [])[0] || null;
+    ver.github = true;
+  } catch (e) { ver.run = null; ver.github = false; }
+  ver.checked = new Date().toISOString();
+  renderVersion();
+  scheduleCheck();
+}
+
+function scheduleCheck() {
+  clearTimeout(ver.timer);
+  if (document.hidden) return;
+  const busy = !!(STATIC && ver.run && ver.run.status !== "completed");
+  // Lige efter en hentning går der et øjeblik, før GitHub Pages viser den nye side
+  const done = ver.wasBusy && !busy;
+  ver.wasBusy = busy;
+  ver.timer = setTimeout(STATIC ? checkSite : refreshVersion, (done ? 1.5 : busy ? 2 : STATIC ? 5 : 2) * 60e3);
+}
+
+async function refreshVersion() {
+  try { await refreshState(); } catch (e) {}
+  scheduleCheck();
+}
+
+async function checkLocal() {
+  $("ver-text").textContent = "Tjekker…";
+  try { await api("/api/check_update", {}); } catch (e) {}
+  await refreshVersion();
+}
+
+// Henter siden igen uden om GitHub Pages' mellemlager (?v= fjernes igen ved start)
+function reloadSite() {
+  const url = new URL(location.href);
+  url.searchParams.set("v", Date.now());
+  location.href = url.toString();
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) return clearTimeout(ver.timer);
+  if (!ver.state) return;
+  // Tilbage til siden: tjek med det samme, hvis det er mere end et minut siden
+  if (STATIC && (!ver.checked || Date.now() - new Date(ver.checked) > 60e3)) checkSite();
+  else if (!STATIC) refreshVersion();
+  else scheduleCheck();
+});
 
 // -- Tilbud -------------------------------------------------------------
 async function loadOffers() {
@@ -4597,6 +4812,11 @@ $("settings-form").addEventListener("submit", e => {
     loadPlanData(false).then(render).catch(() => {});
     // Første gang: hent tilbud med det samme
     if (!STATIC && !s.last_scan && !s.scan.running) startScan();
+    if (STATIC) {
+      const url = new URL(location.href);
+      if (url.searchParams.has("v")) { url.searchParams.delete("v"); history.replaceState(null, "", url.toString()); }
+      checkSite();
+    } else scheduleCheck();
     if (STATIC) {
       $("place-list").innerHTML = siteData.places.map(p => `<option value="${esc(placeName(p))}">`).join("");
       if (s.settings.latitude == null && siteData.places.length) {

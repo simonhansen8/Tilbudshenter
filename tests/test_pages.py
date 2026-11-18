@@ -133,3 +133,20 @@ def test_foetex_food_is_added_to_saved_choices():
     for stores in ([], ["Netto"]):  # Alle butikker, eller føtex ikke valgt
         other = Config(stores=list(stores), upgrades=["nye-butikker-2026-10"])
         assert upgrade_config(other) and other.stores == stores
+
+
+def test_site_has_version(tmp_path, monkeypatch):
+    from tilbudshenter import pages
+
+    build = {"sha": "c" * 40, "date": "2026-11-18T10:00:00+01:00", "dirty": False,
+             "repo": "simonhansen8/Tilbudshenter", "source": "git"}
+    monkeypatch.setattr(pages.version_info, "current", lambda: build)
+    out = tmp_path / "side"
+    assert main(["side", "--demo", "--ud", str(out)]) == 0
+    data = json.loads((out / "data.json").read_text("utf-8"))
+    assert data["version"] == build
+    # version.json er lille og fortæller en åben side, om der er nyt
+    assert json.loads((out / "version.json").read_text("utf-8")) == {**build, "generated": data["generated"]}
+    html = (out / "index.html").read_text("utf-8")
+    assert f'window.TILBUDSHENTER_BUILD = {json.dumps(build)};' in html
+    assert html.index("TILBUDSHENTER_BUILD") < html.index("const STATIC")

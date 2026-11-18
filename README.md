@@ -33,9 +33,34 @@ Første gang skal GitHub Pages slås til: *Settings → Pages*, vælg
 *Save*. Grenen oprettes af workflowen første gang, den kører.
 
 Siden bygges med `tilbudshenter side --ud side`, som henter aviserne og
-skriver `index.html`, `data.json` (tilbuddene) og `opskrifter.json` i mappen
+skriver `index.html`, `data.json` (tilbuddene), `opskrifter.json` og `version.json` i mappen
 `side`. Opskrifterne fylder det meste og hentes først, når madplanen eller
 ugeplanen åbnes, så forsiden åbner hurtigt på telefonen.
+
+### Mærket ved navnet
+
+Ved siden af *Tilbudshenter* øverst står et lille mærke, der fortæller, om du
+ser det nyeste:
+
+| Mærke | Betyder |
+| --- | --- |
+| **Seneste udgave** (grøn) | Du ser den nyeste udgave og de nyeste tilbud. |
+| **Henter tilbudsaviser…** (grøn, blinker) | GitHub henter aviserne lige nu (i appen: appen henter dem). |
+| **Henter aviser og ny udgave…** | Der er lavet ændringer i programmet, og siden bygges med dem. |
+| **Ny udgave klar** / **Nye tilbud klar** (gul) | Der er udgivet noget nyt, siden du åbnede siden. Tryk på mærket og *Genindlæs*. |
+| **Opdatering fejlede** (rød) | Den seneste kørsel på GitHub fejlede; du ser tilbuddene fra sidste gang, det lykkedes. |
+| **Ikke opdateret** (gul) | Siden er ikke bygget i over et døgn. |
+
+Tryk på mærket for at se udgaven (commit på GitHub), hvornår tilbuddene er
+hentet, hvornår de hentes næste gang, og et link til kørslen på GitHub. Siden
+tjekker af sig selv hvert 5. minut, mens den er åben, og med det samme, når du
+vender tilbage til den. Den spørger `version.json` på siden og GitHubs
+offentlige API om workflowen kører.
+
+I appen på computeren viser mærket **Seneste udgave**, **Ny udgave på GitHub**
+(start programmet igen, så henter det den selv), **Lokale ændringer** (der er
+rettet i `src` uden at gemme i git) eller **Henter tilbudsaviser…**. Appen
+spørger GitHub om nyeste udgave én gang i timen.
 
 Kræver Python 3.11 eller nyere. Der er ingen andre afhængigheder.
 
@@ -277,6 +302,7 @@ src/tilbudshenter/
   cli.py          kommandolinjen
   webapp.py       appen (lokal webserver); brugerfladen ligger i data/app.html
   pages.py        den statiske udgave af appen til GitHub Pages
+  version.py      hvilken udgave (commit) der kører; vises i mærket ved navnet
   notifikation.py besked til telefonen (ntfy) om tilbud på varerne i notifikationer.txt
   config.py       indlæsning af tilbudshenter.toml
   scanner.py      finder nye aviser og henter tilbud

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import threading
+import time
 import webbrowser
 from dataclasses import replace
 from datetime import datetime, timezone
@@ -29,8 +30,11 @@ from .scanner import scan
 from .selection import catalog_selected, store_selected
 from .sources.base import SourceError
 from .storage import Storage
+from . import updater, version as version_info
 
 DEFAULT_PORT = 8765
+# Så ofte der spørges GitHub, om der er kommet en ny udgave
+UPDATE_CHECK_SECONDS = 3600
 
 # Felter fra appens indstillinger -> Config-felter
 _LIST_FIELDS = {
@@ -52,6 +56,9 @@ class App:
         self.demo = demo
         self._lock = threading.Lock()
         self._scan = {"running": False, "done": 0, "total": 0, "message": "", "error": None, "result": None}
+        self.version = version_info.current()
+        # Nyeste udgave på GitHub; udfyldes af check_update
+        self._latest: dict = {"sha": None, "checked": None, "error": None}
         if not config_path.exists():
             save_config(example_config(), config_path)
 
@@ -79,9 +86,12 @@ class App:
             last = storage.last_scan()
         with self._lock:
             scan_state = dict(self._scan)
+            latest = dict(self._latest)
         return {
             "demo": self.demo,
             "scan": scan_state,
+            "version": {**self.version, "latest": latest["sha"], "checked": latest["checked"],
+                        "check_error": latest["error"]},
             "settings": settings_from_config(cfg),
             "catalog_count": len(catalogs),
             "last_scan": last.isoformat() if last else None,
@@ -190,6 +200,31 @@ class App:
                 storage.clear_plan_items()
             else:
                 raise ValueError(f"Ukendt handling: {action}")
+
+    # -- Udgave ---------------------------------------------------------
+    def check_update(self, fetch: updater.Fetch = updater.http_fetch) -> None:
+        """Spørger GitHub om nyeste udgave. Programmet opdaterer sig selv,
+        når det startes, så en nyere udgave betyder: start forfra."""
+        try:
+            sha = updater.latest_sha(updater.read_token(self.config_path.parent), fetch)
+            error = None
+            # En klon, der allerede har den nyeste commit med, er ikke bagud
+            if self.version["source"] == "git" and version_info.includes(sha):
+                sha = self.version["sha"]
+        except updater.UpdateError as exc:
+            sha, error = None, str(exc)
+        with self._lock:
+            self._latest = {"sha": sha or self._latest["sha"], "error": error,
+                            "checked": datetime.now(timezone.utc).isoformat()}
+
+    def watch_updates(self, interval: float = UPDATE_CHECK_SECONDS) -> None:
+        def loop() -> None:
+            while True:
+                self.check_update()
+                time.sleep(interval)
+
+        if self.version["sha"]:
+            threading.Thread(target=loop, daemon=True).start()
 
     # -- Handlinger -----------------------------------------------------
     def save_settings(self, data: dict) -> None:
@@ -387,6 +422,9 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/list":
                 self.app.change_list(data)
                 return self._json(self.app.shopping_list())
+            if path == "/api/check_update":
+                self.app.check_update()
+                return self._json({"ok": True})
             if path == "/api/import_recipe":
                 return self._json({"recipe": import_recipe(str(data.get("url", "")))})
         except (ValueError, TypeError) as exc:
@@ -424,6 +462,8 @@ def make_server(app: App, port: int = DEFAULT_PORT, tries: int = 10) -> Threadin
 
 def run(config_path: Path, demo: bool = False, port: int = DEFAULT_PORT, open_browser: bool = True) -> None:
     app = App(config_path, demo=demo)
+    if not demo:
+        app.watch_updates()
     server = make_server(app, port)
     url = f"http://127.0.0.1:{server.server_address[1]}/"
     print(f"Tilbudshenter kører på {url}")
