@@ -429,12 +429,33 @@ plan giver nye retter.
   en dag: retter over 45 minutter lægges i weekenden og de hurtige på
   hverdagene. **↑** og **↓** flytter en ret, **Byt ret** viser fire andre
   retter, der passer ind i planen (pris pr. person, tid og hvor mange varer
-  der er på tilbud), at vælge imellem, og **Ny madplan** giver helt nye retter.
+  der er på tilbud), at vælge imellem, eller søg en hvilken som helst ret frem
+  og vælg den selv (den bliver på planen, også uden tilbud). **Ny madplan**
+  giver helt nye retter.
 - Retterne står på deres dato. Åbner du planen senere på ugen, er de dage,
   der er gået, væk, og resten står, hvor de stod, så de passer til det, du
   har købt. Først når alle dagene er gået, laves en ny plan.
 - Øverst står også, hvad der er tilovers af pakkerne efter ugen (fx "400 g
-  ris, citron (ca. 4 stk)"), og hvilke tilbud der først kan købes senere.
+  ris, citron (ca. 4 stk)"), og hvilke tilbud der først kan købes senere. Er
+  der meget tilovers af en vare, der ikke holder sig (fx kyllingebryst eller
+  spinat for mindst 10 kr), foreslår **Brug resterne** en ret, der bruger det,
+  som en dag mere på planen.
+- Retterne vælges, så ugen som helhed bliver billigst: retter, der deler
+  pakker (også ris, løg og andre varer uden tilbud), foretrækkes, og samme
+  hovedvare må bruges i to forskellige retter, når den anden bruger resten
+  af pakken (fx bolognese og chili af samme pakke hakket kød). Til 1-2
+  personer kan **Lav dobbelte portioner** gøre ugen billigere; det
+  beholdes kun, når det gør.
+- Holdbare rester (ris, pasta, løg, kartofler, dåser ...) står i næste uges
+  plan under **Det har jeg allerede** som "(rest)", så de bliver brugt.
+- **Opskrift** (eller et tryk på rettens navn) viser det, du skal bruge,
+  regnet om til planens antal personer, det, der skal være i skabet, og
+  fremgangsmåden. For de hentede opskrifter står fremgangsmåden hos
+  madsiden, som der linkes til (teksten er madsidens og gemmes ikke).
+  Bladr mellem dagene med **Dagen før** og **Dagen efter**.
+- På forsiden står dagens ret fra madplanen ("I aften: ..."; efter kl. 20
+  morgendagens) med en knap til opskriften. Dagen efter en dobbelt portion
+  står resten som "Rester fra i går", og der skal ikke købes noget til den.
 - **Dobbelt portion** laver retten til to dage, så resten spises dagen efter.
 - **Det har jeg allerede**: skriv, hvad du har i køleskabet eller skabet
   (eller tryk **har jeg** ved en vare). Retter, der bruger det, kommer
@@ -474,10 +495,11 @@ fx kødet, altid være på tilbud eller noget, du har derhjemme.
 
 Madplanen huskes i browseren, ligesom indkøbslisten.
 
-### Ugeplan
+### Planlæg kommende uger (ugeplan)
 
-Knappen **Ugeplan** viser alle opskrifterne, så du selv kan vælge retter
-til en uge. Ugerne har ugenummeret fra kalenderen (ISO-uger, som i
+Knappen **Planlæg kommende uger** nederst i madplanen viser alle
+opskrifterne, så du selv kan vælge retter til denne og de kommende uger
+(madplanen vælger dem for dig ud fra ugens tilbud). Ugerne har ugenummeret fra kalenderen (ISO-uger, som i
 Danmark), og du bladrer fra denne uge og op til 12 uger frem. Søg efter en
 ret eller ingrediens, vælg slags, og tryk **+ uge 42** for at gemme retten
 i ugen. Retterne i ugen sættes i den rækkefølge, du har lyst til at spise

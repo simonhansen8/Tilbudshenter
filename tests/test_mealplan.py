@@ -134,8 +134,9 @@ def test_slices_are_grams():
 
 def test_imported_recipes_build():
     # Samlingen fra madsiderne skrives af GitHub; næsten alle opskrifter i den skal
-    # kunne bruges. Skærpes reglerne, falder enkelte ældre opskrifter fra.
-    assert len(imported_recipes()) >= 0.995 * len(load_imported())
+    # kunne bruges. Skærpes reglerne, falder enkelte ældre opskrifter fra (fx
+    # HelloFresh' delesnacks og retter med fisk, der ikke kan købes som tilbud).
+    assert len(imported_recipes()) >= 0.99 * len(load_imported())
     for r in imported_recipes():
         assert r.source.startswith("http") and any(i.main for i in r.items)
 
@@ -245,8 +246,10 @@ def test_meat_and_fish_are_never_vegetarian():
         recipe, why = recipe_from_lines("x", "Pasta med grønt", veg + [line])
         assert recipe and recipe.kind == "vegetar", (line, why)
     # Kød og fisk, ordlisten ikke kendte: kan ikke prissættes, så retten springes over
-    for line in ["4 helleflyndersteaks", "2 hele fasaner", "600 g havtaskefilet", "1 kg revelsben"]:
+    for line in ["2 hele fasaner", "600 g havtaskefilet", "1 kg revelsben"]:
         assert recipe_from_lines("x", "Ret", veg + [line])[0] is None, line
+    # Hvid fisk som helleflynder, aborre og multe købes som torsk eller anden hvid fisk
+    assert recipe_from_lines("x", "Ret", veg + ["4 helleflyndersteaks"])[0].kind == "fisk"
     # ... eller genkendes som pølser, bacon og bøf
     assert recipe_from_lines("x", "Biksemad", veg + ["1 pakke GØL Frankfurter"])[0].kind == "gris"
     assert recipe_from_lines("x", "Carbonara", veg + ["150 g guanciale"])[0].kind == "gris"
@@ -283,3 +286,16 @@ def test_desserts_and_breakfast_are_not_dinner():
     assert not is_dinner({"name": "Sprøde kranse med marcipan", "category": ""})
     assert not is_dinner({"name": "Rustikke gulerodsbrud 6 boller | færdig dej", "category": ""})
     assert is_dinner({"name": "Boller i karry", "category": "Aftensmad"})
+
+
+def test_less_common_fish_is_fish_not_vegetarian():
+    from tilbudshenter.mealplan import line_keys, parse_line, recipe_from_lines
+
+    recipe, why = recipe_from_lines("x", "Kartoffelstegt multe med kantarelsauce",
+                                    ["4 multefileter", "500 g kartofler", "200 g champignon", "2 dl fløde"], 4)
+    assert recipe and recipe.kind == "fisk", why
+    # Østerssauce er ikke østers, og "lange strimler" er ikke fisken lange
+    assert line_keys(parse_line("2 spsk østerssauce")[2]) == []
+    r2, why2 = recipe_from_lines("x", "Kyllingespyd", ["600 g kyllingebryst", "8 bambusspyd, ca. 20 cm lange",
+                                                       "2 spsk østerssauce", "300 g ris"], 4)
+    assert r2, why2
