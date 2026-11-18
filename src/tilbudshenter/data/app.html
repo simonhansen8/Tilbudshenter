@@ -60,14 +60,36 @@ select { padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; 
 .chip .n { color: var(--muted); margin-left: 4px; }
 .chip.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
 .chip.on .n { color: inherit; opacity: .7; }
-.filter-menu { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); margin-top: 4px; }
-.filter-menu > summary { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; padding: 10px 14px; cursor: pointer; list-style: none; user-select: none; }
-.filter-menu > summary::-webkit-details-marker { display: none; }
-.filter-menu > summary::before { content: "▸"; color: var(--muted); transition: transform .15s; }
-.filter-menu[open] > summary::before { transform: rotate(90deg); }
-.filter-menu > summary b { font-weight: 650; }
-.filter-menu .sum { color: var(--muted); font-size: 13px; flex: 1 1 200px; }
-.filter-menu .body { padding: 0 14px 12px; border-top: 1px solid var(--line); }
+.chip.zero:not(.on) { opacity: .5; }
+
+/* Filtrene: knap, aktive filtre som mærker, og panelet med valgene */
+.viewbar { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; margin: 0 0 8px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 2px; }
+.seg button { border: none; background: none; border-radius: 8px; padding: 6px 12px; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.filter-btn { display: inline-flex; align-items: center; gap: 6px; }
+.filter-btn[aria-expanded="true"] { background: var(--surface-2); }
+.filter-btn .n { background: var(--accent); color: var(--accent-fg); border-radius: 99px; min-width: 20px; padding: 0 6px; font-size: 12px; line-height: 20px; text-align: center; }
+.active-filters { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; flex: 1 1 260px; }
+.pill { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent);
+  border-radius: 999px; padding: 3px 6px 3px 11px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.pill .x { font-size: 15px; line-height: 1; opacity: .8; padding: 0 3px; }
+.pill:hover .x { opacity: 1; }
+.filter-panel { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 4px 14px 12px; margin: 0 0 8px; }
+.fgroup { margin-top: 10px; }
+.fgroup.off > :not(.flabel) { opacity: .45; pointer-events: none; }
+.flabel { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; font-size: 13px; font-weight: 650; margin-bottom: 6px; }
+.flabel .note { color: var(--muted); font-weight: 400; }
+.flabel .link { font-weight: 400; }
+.frow { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-end; margin-top: 12px; }
+.frow label.field select, .frow label.field input { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
+.frow label.field input { width: 140px; }
+.frow .check { padding-bottom: 8px; }
+.panel-foot { display: flex; gap: 12px; align-items: center; justify-content: flex-end; margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); }
+.basics-box { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 10px 14px 12px; margin: 0 0 8px; }
+.basics-box .flabel { margin-bottom: 4px; }
+.hidden-note { color: var(--muted); }
+.empty .fixes { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 14px; }
 
 .count { color: var(--muted); font-size: 14px; margin: 18px 0 10px; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
@@ -302,7 +324,7 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
 </style>
 </head>
 <body>
-<main>
+<main id="main">
   <header>
     <div>
       <h1>Tilbudshenter <span id="demo-tag" class="status" hidden>(demo)</span></h1>
@@ -327,36 +349,75 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
 
   <section id="filters" hidden>
     <div class="toolbar">
-      <input class="search" id="search" type="search" placeholder="Søg efter vare, fx kylling eller kaffe">
-      <select id="sort" aria-label="Sortering" title="Største rabat først: rabat i procent ift. normalprisen. Favoritter og laveste pris i flere uger rykker lidt op. Med Kun mine basisvarer kommer laveste pris pr. kg/l først.">
+      <input class="search" id="search" type="search" placeholder="Søg efter vare, fx kylling eller kaffe" autocomplete="off">
+      <select id="sort" aria-label="Sortering" title="Største rabat først: rabat i procent ift. normalprisen. Favoritter og laveste pris i flere uger rykker lidt op. Under Mine basisvarer kommer laveste pris pr. kg/l først.">
         <option value="best">Største rabat først</option>
         <option value="unit">Laveste pris pr. kg/l</option>
         <option value="price">Laveste pris</option>
         <option value="store">Butik, som i avisen</option>
       </select>
-      <label class="check"><input type="checkbox" id="known-only"> Kun kendt rabat</label>
-      <label class="check" title="Tilbud der kræver Lidl Plus, kædens app eller medlemskab"><input type="checkbox" id="hide-member"> Skjul medlems- og app-priser</label>
-      <label class="check" title="Vis kun tilbud på de varer, du selv har valgt under Filtre"><input type="checkbox" id="basics-only"> Kun mine basisvarer</label>
     </div>
-    <details class="filter-menu" id="filter-menu">
-      <summary><b>Filtre</b> <span class="sum" id="filter-sum"></span></summary>
-      <div class="body">
-        <div class="group-label">Periode</div>
-        <div class="chips" id="period-chips"></div>
-        <div class="group-label">Butik <button class="link" data-all="stores">Vis alle</button></div>
+    <div class="viewbar" id="viewbar">
+      <div class="seg" role="group" aria-label="Visning">
+        <button type="button" data-view-mode="all" aria-pressed="true">Alle tilbud</button>
+        <button type="button" data-view-mode="basics" aria-pressed="false" title="Alle tilbud på de varer, du altid køber, samlet vare for vare">Mine basisvarer</button>
+      </div>
+      <button type="button" class="btn filter-btn" id="btn-filters" aria-expanded="false" aria-controls="filter-panel">Filtre <span class="n" id="filter-n" hidden></span></button>
+      <div class="active-filters" id="active-filters"></div>
+    </div>
+    <div class="basics-box" id="basics-box" hidden>
+      <div class="flabel" id="basics">Mine basisvarer <button type="button" class="link" id="btn-basics-clear" hidden>Ryd</button></div>
+      <p class="hint" style="margin:0 0 6px">Varer du altid køber. Alle tilbud på dem vises samlet vare for vare, billigste pr. kg eller liter først.
+        Et minus udelader noget: <i>mælk -kakao</i>.</p>
+      <div class="chips" id="basics-chips"></div>
+      <form class="add-own" id="basics-form" style="margin-top:8px">
+        <input id="basics-input" placeholder="fx mælk, smør, kaffe, bananer" autocomplete="off" aria-label="Tilføj basisvarer">
+        <button class="btn small">Tilføj</button>
+      </form>
+    </div>
+    <div class="filter-panel" id="filter-panel" hidden>
+      <div class="fgroup" id="fg-store">
+        <div class="flabel">Butik <span class="note">Vælg en eller flere</span>
+          <button type="button" class="link" id="btn-more-stores" title="Hvilke kæder og aviser der hentes, og hvor du handler">Flere kæder og aviser</button></div>
         <div class="chips" id="store-chips"></div>
-        <div class="group-label">Kategori <button class="link" data-all="cats">Vis alle</button> <button class="link" data-reset="cats">Mine kategorier</button></div>
+      </div>
+      <div class="fgroup" id="fg-cat">
+        <div class="flabel">Kategori <button type="button" class="link" id="btn-food">Kun mad og drikke</button>
+          <span class="note" id="fg-cat-note" hidden>Gælder ikke under Mine basisvarer</span></div>
         <div class="chips" id="cat-chips"></div>
-        <div class="group-label" id="basics">Mine basisvarer <button class="link" id="btn-basics-clear" hidden>Ryd</button></div>
-        <p class="hint" style="margin:0 0 6px">Varer du altid køber. Sæt flueben ved <b>Kun mine basisvarer</b> for at se alle tilbud på dem, samlet vare for vare.
-          Et minus udelader noget: <i>mælk -kakao</i>.</p>
-        <div class="chips" id="basics-chips"></div>
-        <form class="add-own" id="basics-form" style="margin-top:8px">
-          <input id="basics-input" placeholder="fx mælk, smør, kaffe, bananer" autocomplete="off" aria-label="Tilføj basisvarer">
-          <button class="btn small">Tilføj</button>
+      </div>
+      <div class="fgroup">
+        <div class="flabel">Gælder</div>
+        <div class="chips" id="period-chips"></div>
+      </div>
+      <div class="frow">
+        <label class="field" id="fg-discount">Rabat
+          <select id="f-discount" title="Mange aviser oplyser ingen normalpris, så rabatten ikke kendes. Mindst x % viser kun tilbud med kendt eller anslået rabat.">
+            <option value="all">Alle tilbud</option>
+            <option value="known">Kun med kendt rabat</option>
+            <option value="10">Mindst 10 % rabat</option>
+            <option value="20">Mindst 20 % rabat</option>
+            <option value="30">Mindst 30 % rabat</option>
+            <option value="40">Mindst 40 % rabat</option>
+            <option value="50">Mindst 50 % rabat</option>
+          </select>
+        </label>
+        <label class="field">Højeste pris (kr) <input id="f-max-price" type="number" inputmode="decimal" min="0" step="any" placeholder="Ingen grænse"></label>
+        <label class="check" title="Tilbud der kræver Lidl Plus, kædens app eller medlemskab"><input type="checkbox" id="f-hide-member"> Skjul medlems- og app-priser</label>
+      </div>
+      <div class="fgroup">
+        <div class="flabel">Skjul varer <span class="note">Tilbud der nævner ordet, vises ikke</span></div>
+        <div class="chips" id="exclude-chips"></div>
+        <form class="add-own" id="exclude-form" style="margin-top:8px">
+          <input id="exclude-input" placeholder="fx øl, energidrik" autocomplete="off" aria-label="Skjul tilbud der nævner">
+          <button class="btn small">Skjul</button>
         </form>
       </div>
-    </details>
+      <div class="panel-foot">
+        <button type="button" class="link" id="btn-reset-panel">Nulstil alle filtre</button>
+        <button type="button" class="btn small primary" id="btn-filters-done">Vis tilbud</button>
+      </div>
+    </div>
   </section>
 
   <div class="count"><span id="count"></span><button class="link" id="btn-fold-all" hidden></button></div>
@@ -434,19 +495,10 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
       </fieldset>
 
       <fieldset>
-        <legend>Kategorier</legend>
-        <p class="hint">Vælg de typer tilbud, du som udgangspunkt vil se.</p>
-        <div class="cat-grid" id="s-cats"></div>
-      </fieldset>
-
-      <fieldset>
-        <legend>Filtre</legend>
+        <legend>Favoritter</legend>
+        <p class="hint">Favoritter rykkes op på listen. Hvilke tilbud du ser, vælger du under <b>Filtre</b> over tilbuddene.</p>
         <div class="fields">
-          <label class="field">Mindste rabat (%) <input id="s-min-discount" type="number" step="1" min="0" max="100"></label>
-          <label class="field">Højeste pris (kr) <input id="s-max-price" type="number" step="any" min="0" placeholder="Ingen grænse"></label>
-          <label class="field wide">Udelad tilbud der nævner (adskil med komma) <input id="s-exclude-words" placeholder="fx øl, energidrik"></label>
-          <label class="field wide">Favoritter, som rykkes op på listen (adskil med komma) <input id="s-favorites" placeholder="fx kyllingebryst, skyr"></label>
-          <label class="check wide"><input type="checkbox" id="s-known-only"> Vis kun tilbud, hvor rabatten kendes</label>
+          <label class="field wide">Favoritter (adskil med komma) <input id="s-favorites" placeholder="fx kyllingebryst, skyr"></label>
         </div>
       </fieldset>
     </div>
@@ -646,11 +698,12 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
 const $ = (id) => document.getElementById(id);
 const PAGE = 120;
 const state = {
-  offers: [], settings: null, categories: [], stores: new Set(), cats: new Set(),
+  offers: [], settings: null, categories: [],
   folded: [],
-  q: "", sort: "best", knownOnly: false, hideMember: false, limit: PAGE, catalogList: null, scanning: false,
-  periods: new Set(["now", "later"]), list: [], papers: {},
+  q: "", sort: "best", limit: PAGE, catalogList: null, scanning: false,
+  list: [], papers: {},
   basics: {items: [], on: false},
+  f: null,  // filtrene, se emptyFilters
 };
 
 // "now": gælder i dag, "later": avisen starter først om nogle dage
@@ -821,14 +874,11 @@ function currentPosition() {
   });
 }
 
+// Tilbuddene fra de valgte kæder og aviser i nærheden. Pris, rabat,
+// kategori og skjulte varer er filtre over tilbuddene (se <filters>).
 function siteOffers(s) {
-  let offers = siteData.offers.filter(o => {
-    const text = `${o.heading} ${o.description}`;
-    return storeSelected(o.dealer, s) && storeNearby(o.dealer, s) && !catalogExcluded(o.dealer, o.catalog_label || "", s.exclude_catalogs) &&
-      (s.max_price == null || o.price <= s.max_price) &&
-      (!s.include_keywords.length || containsAny(text, s.include_keywords)) &&
-      !containsAny(text, s.exclude_keywords);
-  });
+  let offers = siteData.offers.filter(o =>
+    storeSelected(o.dealer, s) && storeNearby(o.dealer, s) && !catalogExcluded(o.dealer, o.catalog_label || "", s.exclude_catalogs));
   if (s.favorites.length) {
     offers = offers.map(o => {
       const fav = containsAny(`${o.heading} ${o.description}`, s.favorites);
@@ -943,14 +993,13 @@ function showMessage(html, kind) {
 
 // Små valg i appen, som huskes i browseren
 function savePrefs() {
-  try { localStorage.setItem("tilbudshenter.prefs", JSON.stringify({hideMember: state.hideMember, sort: state.sort})); } catch (e) {}
+  try { localStorage.setItem("tilbudshenter.prefs", JSON.stringify({sort: state.sort})); } catch (e) {}
 }
 // Mine basisvarer: ord som "mælk" og "kaffe" og om filteret er slået til
 function saveBasics() { store.set("basics", state.basics); }
 function loadBasics() {
   const b = store.get("basics", {});
   state.basics = {items: Array.isArray(b.items) ? b.items.filter(w => typeof w === "string" && w.trim()) : [], on: !!b.on};
-  $("basics-only").checked = state.basics.on;
   renderBasics();
 }
 // Sammenklappede grupper (se foldKey)
@@ -977,32 +1026,141 @@ function basicsMatchers() {
 }
 
 function loadPrefs() {
-  try {
-    const p = JSON.parse(localStorage.getItem("tilbudshenter.prefs") || "{}");
-    state.hideMember = !!p.hideMember;
-    if (p.sort && [...$("sort").options].some(o => o.value === p.sort)) state.sort = p.sort;
-  } catch (e) {}
-  $("hide-member").checked = state.hideMember;
+  const p = store.get("prefs", {});
+  if (p.sort && [...$("sort").options].some(o => o.value === p.sort)) state.sort = p.sort;
   $("sort").value = state.sort;
 }
 
-// Filtrene (periode, butikker, kategorier og "kun kendt rabat") huskes i
-// browseren. Butikker og kategorier gemmes som dem, der er slået fra, så nye
-// butikker og kategorier vises, indtil de selv bliver fravalgt.
-const FILTERS_VERSION = 2;
-function savedFilters() { return store.get("filters", {}); }
+// <filters>
+// Filtrene over tilbuddene. Et tomt valg betyder "alle": vælger man Netto,
+// ser man kun Netto, og trykker man på Alle (eller fjerner mærket), ser man
+// det hele igen. Hvert filter, der er slået til, står som et mærke over
+// tilbuddene og fjernes med ét tryk, så intet er skjult, uden at man kan se
+// hvorfor. Valgene huskes i browseren under tilbudshenter.filters.
+const FILTERS_VERSION = 3;
+// Kategorier, der ikke er mad eller drikke (til "Kun mad og drikke")
+const NOT_FOOD_CATS = new Set(["husholdning", "personlig_pleje", "baby", "dyr", "nonfood"]);
+const DISCOUNT_STEPS = ["10", "20", "30", "40", "50"];
+function emptyFilters() {
+  return {stores: new Set(), cats: new Set(), periods: new Set(), discount: "all", maxPrice: null, hideMember: false, exclude: []};
+}
 function saveFilters() {
-  if (!state.offers.length) return;
-  const dealers = new Set(state.offers.map(o => o.dealer));
+  const f = state.f;
   store.set("filters", {
-    v: FILTERS_VERSION,
-    periods: [...state.periods],
-    hiddenStores: [...dealers].filter(d => !state.stores.has(d)),
-    hiddenCats: state.categories.map(c => c.key).filter(k => !state.cats.has(k)),
-    knownOnly: state.knownOnly,
-    open: $("filter-menu").open,
+    v: FILTERS_VERSION, stores: [...f.stores], cats: [...f.cats], periods: [...f.periods], discount: f.discount,
+    maxPrice: f.maxPrice, hideMember: f.hideMember, exclude: f.exclude, panel: !$("filter-panel").hidden,
   });
 }
+// Første gang med de nye filtre: "udelad ord", højeste pris og "kun kendt
+// rabat" fra indstillingerne og "skjul medlemspriser" tages med, så de kan
+// ses og fjernes. De gamle butiks- og kategorivalg kom mest fra
+// standardvalget (kun 8 af kategorierne) og bruges ikke.
+function loadFilters() {
+  const saved = store.get("filters", {}), f = emptyFilters();
+  const strings = v => Array.isArray(v) ? v.filter(x => typeof x === "string" && x) : [];
+  if (saved.v === FILTERS_VERSION) {
+    f.stores = new Set(strings(saved.stores));
+    f.cats = new Set(strings(saved.cats));
+    f.periods = new Set(strings(saved.periods).filter(p => p === "now" || p === "later"));
+    if (saved.discount === "known" || DISCOUNT_STEPS.includes(saved.discount)) f.discount = saved.discount;
+    if (typeof saved.maxPrice === "number" && saved.maxPrice > 0) f.maxPrice = saved.maxPrice;
+    f.hideMember = !!saved.hideMember;
+    f.exclude = strings(saved.exclude);
+    $("filter-panel").hidden = !saved.panel;
+  } else {
+    const s = state.settings || {};
+    f.exclude = strings(s.exclude_keywords);
+    if (s.max_price > 0) f.maxPrice = s.max_price;
+    if (s.only_known_discount) f.discount = "known";
+    f.hideMember = !!store.get("prefs", {}).hideMember;
+  }
+  state.f = f;
+}
+// Butikker og kategorier, der ikke findes i de aktuelle aviser, fjernes fra
+// valget, så et gammelt valg aldrig skjuler alt
+function pruneFilters() {
+  const dealers = new Set(state.offers.map(o => o.dealer)), cats = new Set(state.categories.map(c => c.key));
+  state.f.stores = new Set([...state.f.stores].filter(d => dealers.has(d)));
+  state.f.cats = new Set([...state.f.cats].filter(k => cats.has(k)));
+}
+function storeOn(dealer) { return !state.f || !state.f.stores.size || state.f.stores.has(dealer); }
+// Mange valgt = alle valgt: så er filteret slået fra
+function toggleIn(set, value, all) {
+  set.has(value) ? set.delete(value) : set.add(value);
+  if (all.length && all.every(v => set.has(v))) set.clear();
+}
+function foodCats() { return state.categories.map(c => c.key).filter(k => !NOT_FOOD_CATS.has(k)); }
+function isFoodOnly(cats) { const food = foodCats(); return cats.size === food.length && food.every(k => cats.has(k)); }
+
+// Hvert filter har sin bit; failMask siger, hvilke filtre et tilbud ikke
+// klarer. Så kan der tælles, hvor mange tilbud hvert valg ville give.
+const FB = {store: 1, cat: 2, period: 4, discount: 8, price: 16, member: 32, exclude: 64};
+function discountOk(o, d) {
+  if (d === "all") return true;
+  if (o.known_discount === null || o.known_discount === undefined) return false;
+  return d === "known" || o.known_discount >= Number(d);
+}
+// "Skjul varer": samme regler som søgningen, og et ord skjuler også ord, der
+// begynder med det ("øko" skjuler "økologisk")
+function excludeTest() {
+  const words = state.f.exclude;
+  if (!words.length) return null;
+  const matchers = words.map(w => searchFor(w)).filter(Boolean), idx = searchFor.idx;
+  const starts = words.flatMap(w => searchWords(w)).filter(x => x.length >= 3);
+  return o => {
+    const {head, desc} = idx.words.get(o);
+    return starts.some(x => head.some(w => w.startsWith(x)) || desc.some(w => w.startsWith(x))) || matchers.some(m => m(o) >= 0);
+  };
+}
+function failMask(o, basics, excluded) {
+  const f = state.f;
+  let m = 0;
+  if (f.stores.size && !f.stores.has(o.dealer)) m |= FB.store;
+  if (!basics && f.cats.size && !f.cats.has(o.category)) m |= FB.cat;
+  if (f.periods.size && !f.periods.has(period(o))) m |= FB.period;
+  if (!basics && !discountOk(o, f.discount)) m |= FB.discount;
+  if (f.maxPrice != null && o.price > f.maxPrice) m |= FB.price;
+  if (f.hideMember && o.member) m |= FB.member;
+  if (excluded && excluded(o)) m |= FB.exclude;
+  return m;
+}
+// De filtre, der er slået til, som mærker: {bit, label, clear}. Under Mine
+// basisvarer gælder kategori og rabat ikke og vises ikke.
+function activeFilters() {
+  const f = state.f, basics = state.basics.on, out = [];
+  const catName = k => (state.categories.find(c => c.key === k) || {}).name || k;
+  const many = (set, bit, one, word) => {
+    if (!set.size) return;
+    if (set.size <= 3) for (const v of set) out.push({bit, label: one(v), clear: () => set.delete(v)});
+    else out.push({bit, label: `${set.size} ${word}`, clear: () => set.clear()});
+  };
+  many(f.stores, FB.store, v => v, "butikker");
+  if (!basics) {
+    if (isFoodOnly(f.cats)) out.push({bit: FB.cat, label: "Mad og drikke", clear: () => f.cats.clear()});
+    else many(f.cats, FB.cat, catName, "kategorier");
+  }
+  if (f.periods.size === 1) out.push({bit: FB.period, label: f.periods.has("now") ? "Gælder nu" : "Starter senere", clear: () => f.periods.clear()});
+  if (!basics && f.discount !== "all") {
+    out.push({bit: FB.discount, label: f.discount === "known" ? "Kendt rabat" : `Mindst ${f.discount} % rabat`, clear: () => { f.discount = "all"; }});
+  }
+  if (f.maxPrice != null) out.push({bit: FB.price, label: `Højst ${f.maxPrice.toLocaleString("da-DK", {maximumFractionDigits: 2})} kr`, clear: () => { f.maxPrice = null; }});
+  if (f.hideMember) out.push({bit: FB.member, label: "Uden medlemspriser", clear: () => { f.hideMember = false; }});
+  for (const w of f.exclude) out.push({bit: FB.exclude, label: `Skjuler ${w}`, clear: () => { f.exclude = f.exclude.filter(x => x !== w); }});
+  return out;
+}
+// Det man kan gøre, når filtrene skjuler alt: hvert filter slået fra for sig
+const FILTER_FIX = [
+  [FB.store, "Alle butikker", f => f.stores.clear()], [FB.cat, "Alle kategorier", f => f.cats.clear()],
+  [FB.period, "Nu og senere", f => f.periods.clear()], [FB.discount, "Alle rabatter", f => { f.discount = "all"; }],
+  [FB.price, "Ingen prisgrænse", f => { f.maxPrice = null; }], [FB.member, "Vis medlemspriser", f => { f.hideMember = false; }],
+  [FB.exclude, "Vis skjulte varer", f => { f.exclude = []; }],
+];
+function resetFilters() {
+  const panel = state.f ? !$("filter-panel").hidden : false;
+  state.f = emptyFilters();
+  $("filter-panel").hidden = !panel;
+}
+// </filters>
 
 function splitList(text) { return text.split(",").map(s => s.trim()).filter(Boolean); }
 
@@ -1079,42 +1237,14 @@ async function startScan(force) {
 // -- Tilbud -------------------------------------------------------------
 async function loadOffers() {
   const data = await api("/api/offers");
-  const before = new Set(state.offers.map(o => o.dealer));
   // Udløbne tilbud vises ikke, også selvom siden ikke er hentet igen siden
   const now = new Date();
   state.offers = data.offers.filter(o => !o.run_till || new Date(o.run_till) >= now);
   state.papers = data.papers || {};
-  const stores = new Set(state.offers.map(o => o.dealer));
-  if (!loadOffers.didInit) {
-    // Første gang: de gemte filtre, ellers standardvalgene
-    const f = savedFilters();
-    // Før version 2 kunne et skift af placering gemme kæder som skjulte, uden
-    // at brugeren havde valgt det; de gamle skjulte kæder bruges derfor ikke
-    const hidden = new Set(f.v >= FILTERS_VERSION ? f.hiddenStores || [] : []);
-    state.stores = new Set([...stores].filter(s => !hidden.has(s)));
-    if (Array.isArray(f.periods)) state.periods = new Set(f.periods.filter(p => p === "now" || p === "later"));
-    if (Array.isArray(f.hiddenCats)) {
-      const hiddenCats = new Set(f.hiddenCats);
-      state.cats = new Set(state.categories.map(c => c.key).filter(k => !hiddenCats.has(k)));
-    } else resetCats();
-    state.knownOnly = typeof f.knownOnly === "boolean" ? f.knownOnly : state.settings.only_known_discount;
-    $("filter-menu").open = !!f.open;
-    loadOffers.didInit = true;
-  } else {
-    // Kæder, der først kommer med nu (fx efter en ny placering), vises; kun
-    // dem, brugeren selv har slået fra, forbliver skjult
-    state.stores = new Set([...stores].filter(s => state.stores.size === 0 || state.stores.has(s) || !before.has(s)));
-  }
-  if (state.stores.size === 0) state.stores = stores;
-  if (state.periods.size === 0) state.periods = new Set(["now", "later"]);
-  $("known-only").checked = state.knownOnly;
+  if (!state.f) loadFilters();
+  pruneFilters();
   state.limit = PAGE;
   render();
-}
-
-function resetCats() {
-  const chosen = state.settings.categories;
-  state.cats = new Set(chosen.length ? chosen : state.categories.map(c => c.key));
 }
 
 // <search> Søgning og "Mine basisvarer" bruger de samme regler. Et søgeord skal
@@ -1272,29 +1402,31 @@ function searchFor(query) {
   return searchMatcher(query, searchFor.idx);
 }
 
-// Med "Kun mine basisvarer" vises alle tilbud på varerne uanset kategori og
-// mindste rabat, grupperet vare for vare; filtered.basicOf siger hvilken.
+// Under "Mine basisvarer" vises alle tilbud på varerne uanset kategori og
+// rabat, grupperet vare for vare; filtered.basicOf siger hvilken.
+// filtered.pool er tilbuddene, der passer til søgningen, og filtered.masks
+// de filtre, hvert af dem ikke klarer (til tællingerne ved filtrene).
 function filtered() {
   const match = searchFor(state.q), tier = new Map();
-  const minDiscount = state.settings.min_discount_pct || 0;
   const basics = basicsMatchers(), basicOf = new Map();
-  let list = state.offers.filter(o =>
-    // En søgning leder i alle kategorier: "øl" og "toiletpapir" skal findes, selvom kategorien er fravalgt
-    state.stores.has(o.dealer) && (basics || match || state.cats.has(o.category)) && state.periods.has(period(o)) &&
-    (!state.hideMember || !o.member) &&
-    (!state.knownOnly || o.known_discount !== null) &&
-    (basics || o.known_discount === null || o.known_discount >= minDiscount || o.reasons.some(r => r.startsWith("favorit"))));
+  // Først det, man leder efter (søgningen eller basisvarerne), så filtrene
+  let pool = state.offers;
   if (basics) {
-    list = list.filter(o => {
+    pool = pool.filter(o => {
       // En basisvare viser kun den rigtige vare, ikke is med smag af banan
       const i = basics.findIndex(b => { const t = b.match(o); return t === 0 || t === 1; });
       if (i >= 0) basicOf.set(o, i);
       return i >= 0;
     });
   }
+  if (match) pool = pool.filter(o => { tier.set(o, match(o)); return tier.get(o) >= 0; });
+  const excluded = excludeTest(), masks = new Map();
+  for (const o of pool) masks.set(o, failMask(o, !!basics, excluded));
+  let list = pool.filter(o => !masks.get(o));
   filtered.basics = basics;
   filtered.basicOf = basicOf;
-  if (match) list = list.filter(o => { tier.set(o, match(o)); return tier.get(o) >= 0; });
+  filtered.pool = pool;
+  filtered.masks = masks;
   const by = {
     unit: (a, b) => perKg(a) - perKg(b) || a.price - b.price,
     price: (a, b) => a.price - b.price,
@@ -1382,7 +1514,7 @@ function paperHead(o, n) {
   const p = state.papers[o.catalog_id] || {};
   const label = p.label || o.catalog_label || "";
   const url = paperUrl(o.catalog_id);
-  const only = state.stores.size > 1
+  const only = state.f.stores.size !== 1
     ? `<button class="link" data-only-store="${esc(o.dealer)}">Vis kun ${esc(o.dealer)}</button>` : "";
   return `<div class="paper-head">${foldTitle(foldKey.paper(o), o.dealer)}
     <span class="sub">${label ? esc(label) + " · " : ""}${esc(o.period_text)} · ${n} tilbud</span>
@@ -1390,37 +1522,72 @@ function paperHead(o, n) {
 }
 
 function chip(kind, value, label, n, on) {
-  return `<button class="chip${on ? " on" : ""}" data-kind="${kind}" data-value="${esc(value)}">${esc(label)}<span class="n">${n}</span></button>`;
+  return `<button type="button" class="chip${on ? " on" : ""}${n ? "" : " zero"}" data-kind="${kind}" data-value="${esc(value)}"
+    aria-pressed="${on}">${esc(label)}<span class="n">${n}</span></button>`;
 }
 
-function renderChips() {
-  const storeCounts = {}, catCounts = {};
-  for (const o of state.offers) {
-    storeCounts[o.dealer] = (storeCounts[o.dealer] || 0) + 1;
-    catCounts[o.category] = (catCounts[o.category] || 0) + 1;
+// Panelet og mærkerne. Tallet ved hvert valg er, hvor mange tilbud man får
+// med det valg og de andre filtre, som de står (og søgningen).
+function renderFilters() {
+  const f = state.f, basics = state.basics.on;
+  const pool = filtered.pool || [], masks = filtered.masks || new Map();
+  const counts = (bit, key) => {
+    const n = {};
+    let all = 0;
+    for (const o of pool) {
+      if (masks.get(o) & ~bit) continue;
+      const k = key(o); n[k] = (n[k] || 0) + 1; all++;
+    }
+    return {n, all};
+  };
+  const allChip = (kind, set, all) =>
+    `<button type="button" class="chip${set.size ? "" : " on"}" data-kind="${kind}" data-value="" aria-pressed="${!set.size}">Alle<span class="n">${all}</span></button>`;
+
+  const st = counts(FB.store, o => o.dealer);
+  const dealers = [...new Set(state.offers.map(o => o.dealer))].sort((a, b) => a.localeCompare(b, "da"));
+  $("store-chips").innerHTML = allChip("stores", f.stores, st.all)
+    + dealers.map(d => chip("stores", d, d, st.n[d] || 0, f.stores.has(d))).join("");
+
+  const ct = counts(FB.cat, o => o.category);
+  const present = new Set(state.offers.map(o => o.category));
+  $("cat-chips").innerHTML = allChip("cats", f.cats, ct.all)
+    + state.categories.filter(c => present.has(c.key)).map(c => chip("cats", c.key, c.name, ct.n[c.key] || 0, f.cats.has(c.key))).join("");
+  $("fg-cat").classList.toggle("off", basics);
+  $("fg-cat-note").hidden = !basics;
+  $("btn-food").hidden = basics || isFoodOnly(f.cats);
+
+  const pt = counts(FB.period, period);
+  $("period-chips").innerHTML = allChip("periods", f.periods, pt.all)
+    + [["now", "Gælder nu"], ["later", "Starter senere"]].map(([k, label]) => chip("periods", k, label, pt.n[k] || 0, f.periods.has(k))).join("");
+
+  // Rabatvalget med antal tilbud ved hvert trin
+  const dt = pool.filter(o => !(masks.get(o) & ~FB.discount));
+  for (const opt of $("f-discount").options) {
+    const n = dt.filter(o => discountOk(o, opt.value)).length;
+    opt.textContent = opt.textContent.replace(/ \(\d+\)$/, "") + ` (${n})`;
   }
-  $("store-chips").innerHTML = Object.keys(storeCounts).sort((a, b) => a.localeCompare(b, "da"))
-    .map(s => chip("stores", s, s, storeCounts[s], state.stores.has(s))).join("");
-  const periodCounts = {now: 0, later: 0};
-  for (const o of state.offers) periodCounts[period(o)]++;
-  $("period-chips").innerHTML = [["now", "Gælder nu"], ["later", "Starter senere"]]
-    .map(([k, label]) => chip("periods", k, label, periodCounts[k], state.periods.has(k))).join("");
-  $("cat-chips").innerHTML = state.categories.filter(c => catCounts[c.key])
-    .map(c => chip("cats", c.key, c.name, catCounts[c.key], state.cats.has(c.key))).join("");
-  // Kort oversigt, så filtrene kan ses, når menuen er lukket
-  const allStores = Object.keys(storeCounts).sort((a, b) => a.localeCompare(b, "da"));
-  const onStores = allStores.filter(s => state.stores.has(s));
-  const allCats = state.categories.filter(c => catCounts[c.key]), onCats = allCats.filter(c => state.cats.has(c.key));
-  const periodText = state.periods.size === 2 ? "Gælder nu og senere"
-    : state.periods.has("now") ? "Gælder nu" : state.periods.has("later") ? "Starter senere" : "Ingen periode";
-  const storeText = onStores.length === allStores.length ? "Alle butikker"
-    : onStores.length <= 3 ? onStores.join(", ") || "Ingen butikker"
-    : `${onStores.length} af ${allStores.length} butikker`;
-  const catText = onCats.length === allCats.length ? "alle kategorier"
-    : onCats.length <= 2 ? onCats.map(c => c.name).join(", ") || "ingen kategorier"
-    : `${onCats.length} af ${allCats.length} kategorier`;
-  $("filter-sum").textContent = [periodText, storeText, state.basics.on && state.basics.items.length
-    ? `mine ${state.basics.items.length} basisvarer` : catText].join(" · ");
+  $("f-discount").value = f.discount;
+  $("f-discount").disabled = basics;
+  $("fg-discount").title = basics ? "Gælder ikke under Mine basisvarer" : "";
+  if (document.activeElement !== $("f-max-price")) $("f-max-price").value = f.maxPrice ?? "";
+  $("f-hide-member").checked = f.hideMember;
+  $("exclude-chips").innerHTML = f.exclude.map(w =>
+    `<button class="chip on" type="button" data-exclude="${esc(w)}" title="Vis ${esc(w)} igen">${esc(w)} <span class="n">×</span></button>`).join("")
+    || `<span class="hint" style="margin:0">Ingen varer er skjult.</span>`;
+
+  // Mærkerne for de filtre, der er slået til
+  const active = activeFilters();
+  renderFilters.active = active;
+  $("active-filters").innerHTML = active.map((a, i) =>
+    `<button type="button" class="pill" data-pill="${i}" title="Fjern filteret">${esc(a.label)}<span class="x" aria-hidden="true">×</span></button>`).join("")
+    + (active.length > 1 ? `<button type="button" class="link" data-reset-all>Nulstil alle</button>` : "");
+  $("filter-n").hidden = !active.length;
+  $("filter-n").textContent = active.length;
+  $("btn-filters").setAttribute("aria-expanded", String(!$("filter-panel").hidden));
+  for (const b of document.querySelectorAll("[data-view-mode]")) b.setAttribute("aria-pressed", String((b.dataset.viewMode === "basics") === basics));
+  $("basics-box").hidden = !basics;
+  const shown = pool.filter(o => !masks.get(o)).length;
+  $("btn-filters-done").textContent = `Vis ${shown} tilbud`;
 }
 
 // <normalpris>
@@ -1502,20 +1669,25 @@ function render() {
       : "Der er ingen tilbud endnu.<br><br><button class='btn primary' onclick='startScan()'>Hent nye tilbud</button>";
     return;
   }
-  renderChips();
   const list = filtered();
-  $("empty").hidden = list.length > 0;
-  $("empty").textContent = "Ingen tilbud matcher dine filtre.";
+  renderFilters();
   const shown = list.slice(0, state.limit);
   const basics = filtered.basics;
   $("btn-fold-all").hidden = true;
+  renderEmpty(list);
+  if (state.basics.on && !basics) {
+    $("count").textContent = "";
+    $("grid").innerHTML = ""; $("btn-more").hidden = true;
+    $("empty").hidden = false;
+    $("empty").innerHTML = "Skriv de varer, du altid køber, fx mælk, smør og kaffe. Så ser du alle tilbud på dem her, samlet vare for vare.";
+    return;
+  }
   if (basics) {
     const bo = filtered.basicOf, groups = basics.map(() => []);
     for (const o of list) groups[bo.get(o)].push(o);
     const missing = basics.filter((b, i) => !groups[i].length).map(b => b.word);
-    $("count").textContent = `${list.length} tilbud på ${basics.length - missing.length} af dine ${basics.length} basisvarer`
-      + (missing.length ? `. Ingen tilbud på: ${missing.join(", ")}` : "");
-    $("empty").textContent = "Ingen tilbud på dine basisvarer lige nu.";
+    $("count").innerHTML = esc(`${list.length} tilbud på ${basics.length - missing.length} af dine ${basics.length} basisvarer`
+      + (missing.length ? `. Ingen tilbud på: ${missing.join(", ")}` : "")) + hiddenNote(list);
     const word = o => basics[bo.get(o)].word;
     renderGroups(list, o => bo.get(o), o => foldKey.basic(word(o)), o => basicHead(word(o), groups[bo.get(o)]));
     return;
@@ -1525,15 +1697,41 @@ function render() {
     const byPaper = new Map();
     for (const o of list) byPaper.set(o.catalog_id, (byPaper.get(o.catalog_id) || 0) + 1);
     const shownCount = renderGroups(list, o => o.catalog_id, foldKey.paper, o => paperHead(o, byPaper.get(o.catalog_id)));
-    $("count").textContent = `Viser ${shownCount} af ${list.length} tilbud`
-      + (list.length < state.offers.length ? ` (${state.offers.length} i alt)` : "");
+    $("count").innerHTML = esc(countText(shownCount, list.length)) + hiddenNote(list);
     return;
   }
-  $("count").textContent = `Viser ${shown.length} af ${list.length} tilbud`
-    + (searchFor(state.q) ? " i alle kategorier" : "")
-    + (list.length < state.offers.length ? ` (${state.offers.length} i alt)` : "");
+  $("count").innerHTML = esc(countText(shown.length, list.length)) + hiddenNote(list);
   $("grid").innerHTML = shown.map(card).join("");
   $("btn-more").hidden = list.length <= state.limit;
+}
+
+function countText(shown, total) {
+  const what = state.q.trim() ? ` med "${state.q.trim()}"` : "";
+  return shown < total ? `Viser ${shown} af ${total} tilbud${what}` : `${total} tilbud${what}`;
+}
+// Hvor mange tilbud filtrene skjuler, med en vej tilbage
+function hiddenNote(list) {
+  const hidden = (filtered.pool || []).length - list.length;
+  return hidden > 0 ? ` <span class="hidden-note">· ${hidden} skjult af filtrene</span>` : "";
+}
+// Når filtrene skjuler alt: forslag til, hvad man kan slå fra, og hvor mange
+// tilbud det giver
+function renderEmpty(list) {
+  $("empty").hidden = list.length > 0;
+  if (list.length) return;
+  const pool = filtered.pool || [], masks = filtered.masks || new Map();
+  const what = state.q.trim() ? `"${esc(state.q.trim())}"` : "";
+  if (!pool.length) {
+    $("empty").innerHTML = state.basics.on ? "Ingen tilbud på dine basisvarer lige nu."
+      : what ? `Ingen tilbud matcher ${what}. <div class="fixes"><button class="btn small" data-clear-search>Ryd søgningen</button></div>` : "Ingen tilbud.";
+    return;
+  }
+  const fixes = FILTER_FIX.map(([bit, label], i) => {
+    const n = pool.filter(o => !(masks.get(o) & ~bit)).length;
+    return n ? `<button class="btn small" data-fix="${i}">${label} (${n})</button>` : "";
+  }).join("");
+  $("empty").innerHTML = `Filtrene skjuler alle ${pool.length} tilbud${what ? ` med ${what}` : ""}.
+    <div class="fixes">${fixes}<button class="btn small primary" data-reset-all>Nulstil alle filtre</button></div>`;
 }
 
 // -- Et enkelt tilbud ---------------------------------------------------
@@ -2163,7 +2361,7 @@ function dietRecipe(r) {
 // Tilbud der kan bruges i madplanen, efter ingrediens. Billigste pr. kg
 // eller liter først; stykpriser til sidst efter pris.
 function planUsable(o) {
-  return o.ingredients && state.stores.has(o.dealer) && !(state.hideMember && o.member);
+  return o.ingredients && storeOn(o.dealer) && !(state.f?.hideMember && o.member);
 }
 
 // Tilbuddets pris pr. kg som ingrediensen k, eller null hvis den ikke kendes
@@ -3306,7 +3504,7 @@ function weekPersons() { return Number(store.get("weekpersons", 0)) || store.get
 // Rettens tilbud gemmes pr. opskrift (egne opskrifter laves på ny, når de ændres)
 const weekOffers = {key: "", index: null, recipes: new WeakMap()};
 function weekIndex() {
-  const w = shownWeek(), key = `${w.key}|${state.offers.length}|${[...state.stores].join()}`;
+  const w = shownWeek(), key = `${w.key}|${state.offers.length}|${[...(state.f?.stores || [])].join()}|${state.f?.hideMember}`;
   if (weekOffers.key !== key) {
     const m = w.monday, start = new Date(m.getFullYear(), m.getMonth(), m.getDate());
     const first = new Date(Math.max(start, new Date(new Date().setHours(0, 0, 0, 0))));
@@ -3911,14 +4109,7 @@ function openSettings() {
     renderPlace();
   }
   $("s-excl-catalogs").value = s.exclude_catalogs.join(", ");
-  $("s-min-discount").value = s.min_discount_pct;
-  $("s-max-price").value = s.max_price ?? "";
-  $("s-exclude-words").value = s.exclude_keywords.join(", ");
   $("s-favorites").value = s.favorites.join(", ");
-  $("s-known-only").checked = s.only_known_discount;
-  const chosen = new Set(s.categories);
-  $("s-cats").innerHTML = state.categories.map(c =>
-    `<label class="check"><input type="checkbox" value="${esc(c.key)}" ${!chosen.size || chosen.has(c.key) ? "checked" : ""}> ${esc(c.name)}</label>`).join("");
   state.catalogList = null;
   $("store-list").innerHTML = s.stores.length
     ? `<p class="hint">Valgte butikker: ${esc(s.stores.join(", "))}</p>` : `<p class="hint">Alle butikker er valgt.</p>`;
@@ -3987,19 +4178,12 @@ function toggleCatalog(dealer, label, on) {
 
 async function saveSettings() {
   const s = state.settings;
-  const cats = [...$("s-cats").querySelectorAll("input")];
-  const chosenCats = cats.filter(c => c.checked).map(c => c.value);
   const body = {
     ...(STATIC
       ? {latitude: state.loc.latitude, longitude: state.loc.longitude, place: state.loc.place, radius_km: $("s-place-radius").value}
       : {latitude: $("s-lat").value, longitude: $("s-lng").value, radius_km: $("s-radius").value}),
     exclude_catalogs: splitList($("s-excl-catalogs").value),
-    categories: chosenCats.length === cats.length ? [] : chosenCats,
-    min_discount_pct: $("s-min-discount").value || 0,
-    max_price: $("s-max-price").value,
-    exclude_keywords: splitList($("s-exclude-words").value),
     favorites: splitList($("s-favorites").value),
-    only_known_discount: $("s-known-only").checked,
   };
   if (state.catalogList) {
     const chosen = state.catalogList.filter(st => st.selected).map(st => st.name);
@@ -4011,11 +4195,7 @@ async function saveSettings() {
   try {
     await api("/api/settings", body);
     await refreshState();
-    // Nye standardvalg i indstillingerne slår igennem i filtrene
-    resetCats();
-    state.knownOnly = state.settings.only_known_discount;
     await loadOffers();
-    saveFilters();
     // Spørgsmålet "Hvor handler du?" er besvaret
     if (STATIC && state.settings.latitude != null) showMessage("");
     if (storesChanged && !STATIC) {
@@ -4056,7 +4236,7 @@ $("grid").addEventListener("click", e => {
   const fold = e.target.closest("[data-fold]");
   if (fold) { setFolded([fold.dataset.fold], !isFolded(fold.dataset.fold)); render(); return; }
   const only = e.target.closest("[data-only-store]");
-  if (only) { state.stores = new Set([only.dataset.onlyStore]); state.limit = PAGE; saveFilters(); render(); window.scrollTo({top: $("filters").offsetTop}); return; }
+  if (only) { state.f.stores = new Set([only.dataset.onlyStore]); filtersChanged(); window.scrollTo({top: $("filters").offsetTop}); return; }
   if (e.target.closest("a")) return;
   const b = e.target.closest("[data-list]");
   if (b) {
@@ -4107,18 +4287,59 @@ $("btn-fold-all").addEventListener("click", e => {
 });
 $("search").addEventListener("input", e => { state.q = e.target.value; state.limit = PAGE; render(); });
 $("sort").addEventListener("change", e => { state.sort = e.target.value; savePrefs(); render(); });
-$("known-only").addEventListener("change", e => { state.knownOnly = e.target.checked; saveFilters(); render(); });
-$("filter-menu").addEventListener("toggle", saveFilters);
-$("hide-member").addEventListener("change", e => { state.hideMember = e.target.checked; savePrefs(); render(); });
-$("basics-only").addEventListener("change", e => {
-  state.basics.on = e.target.checked; saveBasics(); state.limit = PAGE; render();
-  if (state.basics.on && !state.basics.items.length) {
-    $("filter-menu").open = true;
-    $("basics").scrollIntoView({block: "center"});
-    $("basics-input").focus();
-    toast("Skriv dine basisvarer, fx mælk, smør og kaffe");
+
+// -- Filtre -----------------------------------------------------------------
+function filtersChanged() { state.limit = PAGE; saveFilters(); render(); }
+$("btn-filters").addEventListener("click", () => { $("filter-panel").hidden = !$("filter-panel").hidden; saveFilters(); renderFilters(); });
+$("btn-filters-done").addEventListener("click", () => {
+  $("filter-panel").hidden = true; saveFilters(); renderFilters();
+  if ($("viewbar").getBoundingClientRect().top < 0) $("viewbar").scrollIntoView({block: "start", behavior: "smooth"});
+});
+$("btn-reset-panel").addEventListener("click", () => { resetFilters(); filtersChanged(); });
+$("btn-more-stores").addEventListener("click", openSettings);
+$("btn-food").addEventListener("click", () => { state.f.cats = new Set(foodCats()); filtersChanged(); });
+$("filter-panel").addEventListener("click", e => {
+  const c = e.target.closest(".chip[data-kind]");
+  if (c) {
+    const set = state.f[c.dataset.kind], v = c.dataset.value;
+    const all = {stores: [...new Set(state.offers.map(o => o.dealer))], cats: [...new Set(state.offers.map(o => o.category))], periods: ["now", "later"]}[c.dataset.kind];
+    if (!v) set.clear(); else toggleIn(set, v, all);
+    filtersChanged(); return;
+  }
+  const x = e.target.closest("[data-exclude]");
+  if (x) { state.f.exclude = state.f.exclude.filter(w => w !== x.dataset.exclude); filtersChanged(); }
+});
+$("f-discount").addEventListener("change", e => { state.f.discount = e.target.value; filtersChanged(); });
+$("f-max-price").addEventListener("input", e => {
+  const n = Number(String(e.target.value).replace(",", "."));
+  state.f.maxPrice = e.target.value !== "" && n > 0 ? n : null;
+  clearTimeout(filtersChanged.timer); filtersChanged.timer = setTimeout(filtersChanged, 250);
+});
+$("f-max-price").addEventListener("change", () => { clearTimeout(filtersChanged.timer); filtersChanged(); });
+$("f-hide-member").addEventListener("change", e => { state.f.hideMember = e.target.checked; filtersChanged(); });
+$("exclude-form").addEventListener("submit", e => {
+  e.preventDefault();
+  const have = new Set(state.f.exclude.map(w => w.toLowerCase()));
+  for (const w of splitList($("exclude-input").value)) if (!have.has(w.toLowerCase())) { state.f.exclude.push(w); have.add(w.toLowerCase()); }
+  $("exclude-input").value = "";
+  filtersChanged();
+});
+// Mærkerne over tilbuddene og knapperne, når filtrene skjuler alt
+$("main").addEventListener("click", e => {
+  const pill = e.target.closest("[data-pill]");
+  if (pill) { (renderFilters.active[Number(pill.dataset.pill)] || {clear() {}}).clear(); filtersChanged(); return; }
+  if (e.target.closest("[data-reset-all]")) { resetFilters(); filtersChanged(); return; }
+  const fix = e.target.closest("[data-fix]");
+  if (fix) { FILTER_FIX[Number(fix.dataset.fix)][2](state.f); filtersChanged(); return; }
+  if (e.target.closest("[data-clear-search]")) { state.q = ""; $("search").value = ""; state.limit = PAGE; render(); return; }
+  const mode = e.target.closest("[data-view-mode]");
+  if (mode) {
+    state.basics.on = mode.dataset.viewMode === "basics"; saveBasics(); state.limit = PAGE; render();
+    if (state.basics.on && !state.basics.items.length) $("basics-input").focus();
   }
 });
+
+// -- Mine basisvarer ----------------------------------------------------
 $("basics-form").addEventListener("submit", e => {
   e.preventDefault();
   addBasics($("basics-input").value);
@@ -4132,19 +4353,6 @@ $("basics-chips").addEventListener("click", e => {
 });
 $("btn-basics-clear").addEventListener("click", () => {
   state.basics.items = []; saveBasics(); renderBasics(); render();
-});
-$("filters").addEventListener("click", e => {
-  const c = e.target.closest(".chip[data-kind]");
-  if (c) {
-    const set = state[c.dataset.kind];
-    set.has(c.dataset.value) ? set.delete(c.dataset.value) : set.add(c.dataset.value);
-    state.limit = PAGE; saveFilters(); render(); return;
-  }
-  if (e.target.dataset.all === "stores") state.stores = new Set(state.offers.map(o => o.dealer));
-  else if (e.target.dataset.all === "cats") state.cats = new Set(state.categories.map(c => c.key));
-  else if (e.target.dataset.reset === "cats") resetCats();
-  else return;
-  saveFilters(); render();
 });
 $("store-list").addEventListener("change", e => {
   const t = e.target;
