@@ -13,7 +13,8 @@ def test_demo_end_to_end(tmp_path, monkeypatch, capsys):
     reports = tmp_path / "rapporter" / "demo"
     assert (reports / "seneste.html").exists()
     data = json.loads((reports / "seneste.json").read_text("utf-8"))
-    assert data["offers"] and all(o["category"] != "oel_og_vin" for o in data["offers"])
+    # Rapporten viser alle kategorier som standard, også øl og vin
+    assert data["offers"] and "oel_og_vin" in {o["category"] for o in data["offers"]}
 
     assert main(["scan", "--demo"]) == 0
     assert "Ingen nye aviser" in capsys.readouterr().out

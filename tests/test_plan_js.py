@@ -1,4 +1,4 @@
-"""Madplanens dage og slags ret (mellem "// <plan-days>" og "// </plan-days>"
+"""Madplanens dage og lange retter (mellem "// <plan-days>" og "// </plan-days>"
 i app.html), kørt i Node."""
 
 import json
@@ -41,18 +41,6 @@ def run_js(code: str, plan: dict | None = None) -> object:
     )
     out = subprocess.run([node, "-"], input=script, capture_output=True, text=True, encoding="utf-8", check=True)
     return json.loads(out.stdout)
-
-
-def test_dish_types_keep_the_week_varied():
-    names = ["Gammeldags frikadeller", "Blomkålsfrikadeller", "Frikadeller alá mormor", "Spinattærte uden bund",
-             "Quiche med græskar, spinat og feta", "Kylling med kartoffelsalat", "Pasta med laks", "Cremet tagliatelle med laks",
-             "Kartoffel- og porresuppe"]
-    got = run_js(f"{json.dumps(names, ensure_ascii=False)}.map(name => dishType({{name}}))")
-    assert got[0] == got[1] == got[2] >= 0
-    assert got[3] == got[4] >= 0 and got[3] != got[0]
-    assert got[5] == -1
-    assert got[6] == got[7] >= 0
-    assert got[8] >= 0 and len({got[0], got[3], got[6], got[8]}) == 4
 
 
 def test_free_days_keep_the_other_dishes_in_place():

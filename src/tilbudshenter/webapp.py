@@ -93,14 +93,15 @@ class App:
     def offers(self) -> dict:
         """Alle aktuelle tilbud fra de valgte butikker og aviser.
 
-        Kategori- og rabatvalg anvendes i browseren, så de kan slås til og
-        fra uden at hente igen.
+        Kategori, rabat, pris og skjulte varer er filtre i browseren, så de
+        kan ses og slås til og fra uden at hente igen.
         """
         cfg = self.config()
         categorizer = self.categorizer(cfg)
         wide = replace(
             cfg, categories=[], exclude_categories=[], min_discount_pct=0.0,
-            only_known_discount=False, top_n=0, per_category=0,
+            only_known_discount=False, max_price=None, include_keywords=[], exclude_keywords=[],
+            top_n=0, per_category=0,
         )
         now = datetime.now(timezone.utc)
         with Storage(cfg.database) as storage:
@@ -182,6 +183,13 @@ class App:
                                          str(data.get("dealer") or "")[:60] or None, price, plan=bool(data.get("plan")))
             elif action == "check":
                 storage.set_list_checked(str(data.get("id", "")), bool(data.get("checked")))
+            elif action == "count":
+                try:
+                    storage.set_list_count(str(data.get("id", "")), int(data.get("count") or 1))
+                except (TypeError, ValueError) as exc:
+                    raise ValueError("Ugyldigt antal") from exc
+            elif action == "dealer":
+                storage.set_list_dealer(str(data.get("id", "")), str(data.get("dealer") or "")[:60] or None)
             elif action == "remove":
                 storage.remove_from_list(str(data.get("id", "")))
             elif action == "clear":

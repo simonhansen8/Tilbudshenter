@@ -87,23 +87,31 @@ I appen kan du:
 
 - hente nye tilbud med knappen **Hent nye tilbud** (første gang sker det
   automatisk),
-- søge og filtrere på butik og kategori, sortere efter rabat eller pris pr. kg
-  (en søgning leder i alle kategorier, så fx "øl" findes, selvom kategorien er fravalgt),
+- søge og filtrere (se *Filtre* nedenfor) og sortere efter rabat eller pris pr. kg,
 - trykke på et tilbud for at se et stort billede, hele siden i avisen med
   tilbuddet markeret og en knap til den rigtige tilbudsavis på eTilbudsavis,
 - vise tilbuddene butik for butik i samme rækkefølge som i tilbudsavisen
   (sortering *Butik, som i avisen*),
-- vælge mellem tilbud der gælder nu, og dem der starter senere,
-- se hvilke tilbud der kræver Lidl Plus, kædens app eller medlemskab (og skjule dem),
+- se hvilke tilbud der kræver Lidl Plus, kædens app eller medlemskab,
 - se normalprisen ved hvert tilbud, og om tilbuddet faktisk er billigere: butikkens
   egen normalpris, når avisen oplyser den, ellers basisprisen (madplanens hyldepris
   uden tilbud, se nedenfor) for almindelige basisvarer som hakket oksekød, mælk og kartofler.
   For de fleste andre varer oplyser aviserne ingen normalpris, og så står der
   *Normalpris ukendt*,
-- lægge tilbud og egne varer på en **indkøbsliste**, delt op efter butik og afdeling, som
-  kan kopieres, sendes som mail eller udskrives,
+- lægge tilbud og egne varer på en **indkøbsliste**, delt op efter butik og afdeling.
+  Øverst står, hvor mange varer der mangler, og hvad de koster. Det, du sætter
+  hak ved, flytter ned **I kurven**, så det, der mangler, står øverst. Hver vare
+  fylder én linje (tryk på noten for at se mængder og retter), og "fra fre."
+  eller "sidste dag i morgen" står ved tilbud, hvor det betyder noget. En vare,
+  du fjerner, kan lægges tilbage med **Fortryd**, og samme egen vare kommer kun
+  på én gang. Antallet rettes med **−** og **+** (under 1 fjernes varen). Egne
+  varer kan få en butik, når de tilføjes (valget huskes), og flyttes til en
+  anden butik bagefter; de kommer i den afdeling, hvor ordet oftest står blandt
+  tilbuddene (toiletpapir under husholdning, tandpasta under personlig pleje). **Del listen** bruger telefonens deling (ellers kopieres den); den
+  delte tekst er kort, kun det, der mangler, med en samlet pris. Listen kan også
+  sendes som mail eller udskrives,
 - lave en **madplan** ud fra ugens tilbud (se nedenfor),
-- vælge butikker, aviser, kategorier og din placering under **Indstillinger**.
+- vælge kæder, aviser, favoritter og din placering under **Indstillinger**.
 
 Appen kører kun på din egen computer. Luk konsolvinduet for at stoppe den.
 Vil du prøve med demodata uden internet: `tilbudshenter app --demo`.
@@ -179,6 +187,10 @@ favoritter = ["kyllingebryst", "skyr"]
 
 En ny konfiguration vælger Netto, REMA 1000, Lidl, føtex, Bilka,
 365discount og Coops kæder (Kvickly, SuperBrugsen, Brugsen, MENY og SPAR).
+Alle kategorier er valgt. Står en ældre konfiguration stadig med det gamle
+standardvalg (kød, fisk, mejeri, frugt og grønt, brød, kolonial, frost og
+kaffe og te), vælges alle kategorier én gang; har du selv rettet listen,
+beholdes den.
 Kør `tilbudshenter butikker` for at se de præcise navne på butikker og
 aviser i dit område. Listen viser også, hvilke der er valgt med de nuværende
 indstillinger. Butiksnavne matches uden hensyn til store/små bogstaver, og et
@@ -198,12 +210,39 @@ noegleord = ["havregryn", "müsli", "skyr"]
 noegleord = ["tatar"]          # ekstra nøgleord til en eksisterende kategori
 ```
 
+### Filtre
+
+Som udgangspunkt vises alle tilbud fra dine kæder. Knappen **Filtre** over
+tilbuddene åbner valgene:
+
+- **Butik**, **Kategori** og **Gælder** (nu eller senere): tryk på det, du vil
+  se, fx Netto. Så vises kun Netto, og et tryk mere på fx Lidl tager Lidl med.
+  **Alle** slår filteret fra. **Kun mad og drikke** vælger alle kategorier
+  undtagen husholdning, personlig pleje, baby, dyr og non-food.
+- **Rabat**: alle tilbud, kun dem med kendt rabat, eller mindst 10-50 % rabat.
+  Mange aviser oplyser ingen normalpris; de tilbud vises kun under *Alle tilbud*.
+- **Højeste pris**, **Skjul medlems- og app-priser** og **Skjul varer**
+  (tilbud der nævner fx "øl" eller "øko", med samme regler som søgningen).
+
+Tallet ved hvert valg er, hvor mange tilbud man får med det. Hvert filter, der
+er slået til, står som et mærke ved siden af knappen og fjernes med ét tryk, og
+**Nulstil alle** viser alt igen. Under tilbuddene står, hvor mange filtrene
+skjuler, og skjuler de alt, foreslås det, hvad man kan slå fra. Søgningen
+bruger også filtrene. Filtrene huskes i browseren. Hvilke kæder og aviser der
+hentes, vælges under *Indstillinger* (linket *Flere kæder og aviser*).
+
+Har du `udelad_ord` eller `max_pris` i `tilbudshenter.toml`, bliver de til filtre
+første gang, appen åbnes med de nye filtre, så de kan ses og fjernes. I
+appen bruges `[kategorier]`, `min_rabat_procent`, `kun_kendt_rabat` og
+`skal_indeholde` ikke;
+de gælder kun rapporterne fra `tilbudshenter scan` og `tilbudshenter tilbud`.
+
 ### Mine basisvarer
 
-Under **Filtre** kan du skrive de varer, du altid køber, fx mælk, smør, kaffe
-og bananer. Sæt flueben ved **Kun mine basisvarer**, så vises alle tilbud på
-dem samlet vare for vare, med den billigste pr. kg eller liter først. Kategorier
-og mindste rabat gælder ikke her, og varer uden tilbud nævnes over listen.
+Vælg **Mine basisvarer** over tilbuddene, og skriv de varer, du altid køber,
+fx mælk, smør, kaffe og bananer. Så vises alle tilbud på dem samlet vare for
+vare, med den billigste pr. kg eller liter først. Kategori og rabat gælder ikke
+her (butik, periode, pris og skjulte varer gør), og varer uden tilbud nævnes over listen.
 Varen skal stå i tilbuddets overskrift som et helt ord eller sidst i et
 sammensat ord: "mælk" finder "letmælk", men ikke "mælkedrik" eller
 "smørrebrød". Et minus udelader noget: `mælk -kakao`. Listen gemmes i
@@ -241,8 +280,9 @@ Mange kæder (fx Netto og REMA 1000) oplyser sjældent en normalpris, og
 derfor er sammenligningen med andre butikker vigtig for dem. Anslåede
 rabatter vises med "ca." og en ramme i stedet for fyldt mærke. Tilbud,
 hvor rabatten ikke kendes, vises efter dem med kendt rabat, sorteret efter
-kategori og enhedspris. Sæt `kun_kendt_rabat = true` for at skjule dem.
-`min_rabat_procent` skjuler tilbud, hvis kendte rabat er lavere.
+kategori og enhedspris. I appen skjules de med filteret **Rabat**; i
+rapporterne med `kun_kendt_rabat = true`. `min_rabat_procent` skjuler tilbud i
+rapporterne, hvis kendte rabat er lavere.
 
 ## Rapporter
 
@@ -418,11 +458,12 @@ plan giver nye retter.
   at tage to timer. **↑** og **↓** flytter en ret (starter et tilbud først
   senere, står det, hvis retten så koster mere), **Byt ret** viser fire andre
   retter, der passer ind i planen og har tilbud på dagen (pris pr. person,
-  tid og hvor mange varer der er på tilbud), at vælge imellem, og **Ny
-  madplan** giver helt nye retter.
+  tid og hvor mange varer der er på tilbud), at vælge imellem, eller søg en
+  hvilken som helst ret frem og vælg den selv (den bliver på planen, også
+  uden tilbud). **Ny madplan** giver helt nye retter.
 - **Ikke aftensmad** ved en ret skjuler den for altid (tilbehør, frokost
   eller en snack, som reglerne ikke fangede), og dagen får en anden ret.
-  Skjulte retter findes under **Ugeplan → Skjulte retter**, hvor **Vis igen**
+  Skjulte retter findes under **Planlæg kommende uger** (slags: Skjulte retter), hvor **Vis igen**
   fortryder. Listen gemmes i browseren.
 - Under **Indkøb** vælger du **Til hver ret** (standard: et tilbud bruges
   på en dag, hvor det gælder, så du handler flere gange om ugen) eller **Alt
@@ -445,10 +486,29 @@ plan giver nye retter.
   før"). Åbner du planen senere på ugen, er de dage, der er gået, væk, og
   resten står, hvor de stod; det, der er tilbage af pakkerne fra de spiste
   retter, bruges stadig i de næste og købes ikke igen. Var gårsdagens ret en
-  dobbelt portion, står der rester i dag. Først når alle dagene er gået,
+  dobbelt portion, står resten på planen i dag og koster ingenting. Først når alle dagene er gået,
   laves en ny plan.
 - Øverst står også, hvad der er tilovers af pakkerne efter ugen (fx "400 g
-  ris, citron (ca. 4 stk)"), og hvilke tilbud der først kan købes senere.
+  ris, citron (ca. 4 stk)"), og hvilke tilbud der først kan købes senere. Er
+  der meget tilovers af en vare, der ikke holder sig (fx kyllingebryst eller
+  spinat for mindst 10 kr), foreslår **Brug resterne** en ret, der bruger det,
+  som en dag mere på planen.
+- Retterne vælges, så ugen som helhed bliver billigst: retter, der deler
+  pakker (også ris, løg og andre varer uden tilbud), foretrækkes, og samme
+  hovedvare må bruges i to forskellige retter, når den anden bruger resten
+  af pakken (fx bolognese og chili af samme pakke hakket kød). Til 1-2
+  personer kan **Lav dobbelte portioner** gøre ugen billigere; det
+  beholdes kun, når det gør.
+- Holdbare rester (ris, pasta, løg, kartofler, dåser ...) står i næste uges
+  plan under **Det har jeg allerede** som "(rest)", så de bliver brugt.
+- **Opskrift** (eller et tryk på rettens navn) viser det, du skal bruge,
+  regnet om til planens antal personer, det, der skal være i skabet, og
+  fremgangsmåden. For de hentede opskrifter står fremgangsmåden hos
+  madsiden, som der linkes til (teksten er madsidens og gemmes ikke).
+  Bladr mellem dagene med **Dagen før** og **Dagen efter**.
+- På forsiden står dagens ret fra madplanen ("I aften: ..."; efter kl. 20
+  morgendagens) med en knap til opskriften. Dagen efter en dobbelt portion
+  står resten som "Rester fra i går", og der skal ikke købes noget til den.
 - **Dobbelt portion** laver retten til to dage, så resten spises dagen efter.
 - **Det har jeg allerede**: skriv, hvad du har i køleskabet eller skabet
   (eller tryk **har jeg** ved en vare). Retter, der bruger det, kommer
@@ -491,10 +551,11 @@ fx kødet, altid være på tilbud eller noget, du har derhjemme.
 
 Madplanen huskes i browseren, ligesom indkøbslisten.
 
-### Ugeplan
+### Planlæg kommende uger (ugeplan)
 
-Knappen **Ugeplan** viser alle opskrifterne, så du selv kan vælge retter
-til en uge. Ugerne har ugenummeret fra kalenderen (ISO-uger, som i
+Knappen **Planlæg kommende uger** nederst i madplanen viser alle
+opskrifterne, så du selv kan vælge retter til denne og de kommende uger
+(madplanen vælger dem for dig ud fra ugens tilbud). Ugerne har ugenummeret fra kalenderen (ISO-uger, som i
 Danmark), og du bladrer fra denne uge og op til 12 uger frem. Søg efter en
 ret eller ingrediens, vælg slags, og tryk **+ uge 42** for at gemme retten
 i ugen. Retterne i ugen sættes i den rækkefølge, du har lyst til at spise
