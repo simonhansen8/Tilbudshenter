@@ -212,7 +212,9 @@ noegleord = ["tatar"]          # ekstra nøgleord til en eksisterende kategori
 
 ### Filtre
 
-Som udgangspunkt vises alle tilbud fra dine kæder. Knappen **Filtre** over
+Første gang vises tilbud på mad og drikke fra dine kæder, så vaskemaskiner,
+shampoo og andet non-food ikke fylder toppen. Det står som mærket *Mad og
+drikke* over tilbuddene og fjernes med ét tryk. Knappen **Filtre** over
 tilbuddene åbner valgene:
 
 - **Butik**, **Kategori** og **Gælder** (nu eller senere): tryk på det, du vil
@@ -230,6 +232,15 @@ er slået til, står som et mærke ved siden af knappen og fjernes med ét tryk,
 skjuler, og skjuler de alt, foreslås det, hvad man kan slå fra. Søgningen
 bruger også filtrene. Filtrene huskes i browseren. Hvilke kæder og aviser der
 hentes, vælges under *Indstillinger* (linket *Flere kæder og aviser*).
+Panelets knap **Vis N tilbud** bliver i bunden af skærmen, mens man vælger.
+
+Samme tilbud i flere kæder (fx føtex og føtex food eller SuperBrugsen og
+Kvickly: samme vare, pris og periode) vises på ét kort med alle kæderne, så
+listen ikke er fuld af dubletter. Vælger du én af kæderne under Butik, vises
+den kædes tilbud. Kortet viser ikke det, der allerede står andre steder på det
+(kilo-/literprisen og normalprisen i beskrivelsen, rabatten to gange); hele
+teksten fra avisen står, når tilbuddet åbnes. Sorteringen står ud for antallet
+af tilbud.
 
 Har du `udelad_ord` eller `max_pris` i `tilbudshenter.toml`, bliver de til filtre
 første gang, appen åbnes med de nye filtre, så de kan ses og fjernes. I
