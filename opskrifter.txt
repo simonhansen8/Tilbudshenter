@@ -14,7 +14,8 @@
 # linker til madsiden for fremgangsmåden. Kager, desserter, sovse, tilbehør,
 # frokostretter, retter uden kød, fisk, æg, bælgfrugter eller ost, og
 # opskrifter med kød eller fisk, som ikke kan genkendes i tilbudsaviserne,
-# springes over.
+# springes over. Opskrifter, der er gennemgået og ikke er en ret (fx tilbehør,
+# brød og snacks), står i src/tilbudshenter/data/ikke_retter.txt.
 
 # Hele madsider
 sitemap: https://www.valdemarsro.dk/

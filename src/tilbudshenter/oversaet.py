@@ -1104,7 +1104,8 @@ def danish(recipe: dict) -> tuple[dict | None, str]:
             if title := translate_title(name):
                 return {**recipe, "name": title}, ""
         return recipe, ""
-    name = recipe["name"]
+    # HelloFresh UK skriver prisen i navnet: "Veggie Mince £3.15"
+    name = re.sub(r"\s*£\s*\d+(?:[.,]\d+)?", "", recipe["name"]).strip()
     if any(re.search(rf"\b{re.escape(w)}\b", name.lower()) for w in NOT_DINNER_EN):
         return None, "ikke aftensmad"
     title = translate_title(name)
