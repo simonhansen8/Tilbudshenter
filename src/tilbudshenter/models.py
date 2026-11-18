@@ -39,6 +39,23 @@ def normalize_unit(unit: str) -> tuple[str, float] | None:
     return _UNITS.get(unit.strip().lower().rstrip("."))
 
 
+def _quantities(text: str) -> list[tuple[float, str]]:
+    """Alle mængder i teksten som (mængde i SI-enhed, SI-enhed)."""
+    out = []
+    for m in _QUANTITY_RE.finditer(text or ""):
+        unit = normalize_unit(m["unit"])
+        before = text[: m.start()]
+        # "Max 3 stk." er en begrænsning, "pr. 1/2 kg" et prisgrundlag og
+        # "20-50 cl" et spænd; ingen af dem er pakningens størrelse
+        if re.search(r"(\b(max|maks|pr)\.?\s*|/)$", before, re.IGNORECASE) or re.match(r"\s*-\s*\d", text[m.end("size"):]):
+            continue
+        if unit:
+            amount = float(m["size"].replace(",", ".")) * unit[1] * (int(m["pieces"]) if m["pieces"] else 1)
+            if amount > 0:
+                out.append((amount, unit[0]))
+    return out
+
+
 def parse_quantity(text: str) -> tuple[float, str] | None:
     """Finder mængde i fritekst, fx '500 g', '6 x 33 cl' eller '1,5 kg'.
 
@@ -213,7 +230,14 @@ class Offer:
         stated = parse_stated_unit_price(self.description)
         if stated:
             unit_price, unit = stated
-            self.amount, self.unit = self.price / unit_price, unit
+            amount = self.price / unit_price
+            # Avisen kan have byttet om på tallene ("8 stk/180 g. Pr. kg 3,13
+            # /pr. stk 138,88"); er der mere end en faktor 10 mellem den angivne
+            # vægt og den, enhedsprisen giver, er vægten det sikre
+            stated_sizes = [a for a, u in _quantities(f"{self.heading} {self.description}") if u == unit]
+            if stated_sizes and not any(0.1 <= amount / a <= 10 for a in stated_sizes):
+                amount = stated_sizes[0]
+            self.amount, self.unit = amount, unit
 
     @property
     def unit_price(self) -> float | None:

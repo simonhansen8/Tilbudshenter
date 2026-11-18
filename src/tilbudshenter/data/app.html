@@ -85,18 +85,21 @@ select { padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; 
 .frow label.field select, .frow label.field input { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
 .frow label.field input { width: 140px; }
 .frow .check { padding-bottom: 8px; }
-.panel-foot { display: flex; gap: 12px; align-items: center; justify-content: flex-end; margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); }
+.panel-foot { display: flex; gap: 12px; align-items: center; justify-content: flex-end; margin-top: 14px; padding: 10px 0; border-top: 1px solid var(--line);
+  position: sticky; bottom: 0; background: var(--surface); z-index: 2; }
 .basics-box { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 10px 14px 12px; margin: 0 0 8px; }
 .basics-box .flabel { margin-bottom: 4px; }
 .hidden-note { color: var(--muted); }
 .empty .fixes { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 14px; }
 
-.count { color: var(--muted); font-size: 14px; margin: 18px 0 10px; }
+.count { color: var(--muted); font-size: 14px; margin: 18px 0 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+#count { flex: 1 1 0; min-width: 0; }
+.count .sort { margin-left: auto; flex: none; font-size: 14px; padding: 5px 8px; border-radius: 8px; max-width: 100%; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 3px; box-shadow: var(--shadow); min-width: 0; }
 .card .img { height: 120px; display: flex; align-items: center; justify-content: center; background: #fff; border-radius: 8px; margin-bottom: 6px; overflow: hidden; }
 .card img { max-width: 100%; max-height: 120px; object-fit: contain; }
-.top { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); }
+.top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--muted); }
 .badge { background: var(--badge); color: #fff; border-radius: 6px; padding: 1px 6px; font-weight: 700; font-size: 13px; white-space: nowrap; }
 .badge.est { background: transparent; color: var(--badge); box-shadow: inset 0 0 0 1.5px var(--badge); }
 .name { font-weight: 650; overflow-wrap: anywhere; }
@@ -382,12 +385,6 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
   <section id="filters" hidden>
     <div class="toolbar">
       <input class="search" id="search" type="search" placeholder="Søg efter vare, fx kylling eller kaffe" autocomplete="off">
-      <select id="sort" aria-label="Sortering" title="Største rabat først: rabat i procent ift. normalprisen. Favoritter og laveste pris i flere uger rykker lidt op. Under Mine basisvarer kommer laveste pris pr. kg/l først.">
-        <option value="best">Største rabat først</option>
-        <option value="unit">Laveste pris pr. kg/l</option>
-        <option value="price">Laveste pris</option>
-        <option value="store">Butik, som i avisen</option>
-      </select>
     </div>
     <div class="viewbar" id="viewbar">
       <div class="seg" role="group" aria-label="Visning">
@@ -452,7 +449,14 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
     </div>
   </section>
 
-  <div class="count"><span id="count"></span><button class="link" id="btn-fold-all" hidden></button></div>
+  <div class="count"><span id="count"></span><button class="link" id="btn-fold-all" hidden></button>
+    <select id="sort" class="sort" aria-label="Sortering" title="Største rabat først: rabat i procent ift. normalprisen. Favoritter og laveste pris i flere uger rykker lidt op. Under Mine basisvarer kommer laveste pris pr. kg/l først.">
+        <option value="best">Største rabat først</option>
+        <option value="unit">Laveste pris pr. kg/l</option>
+        <option value="price">Laveste pris</option>
+        <option value="store">Butik, som i avisen</option>
+      </select>
+  </div>
   <div class="grid" id="grid"></div>
   <div class="more"><button class="btn" id="btn-more" hidden>Vis flere</button></div>
   <div class="empty" id="empty" hidden></div>
@@ -1171,6 +1175,9 @@ function loadFilters() {
     if (s.max_price > 0) f.maxPrice = s.max_price;
     if (s.only_known_discount) f.discount = "known";
     f.hideMember = !!store.get("prefs", {}).hideMember;
+    // Helt nye brugere starter med mad og drikke: ellers fylder vaskemaskiner,
+    // vin og shampoo toppen. Det står som et mærke, der fjernes med ét tryk.
+    if (store.get("filters", null) === null && store.get("prefs", null) === null) f.cats = new Set(foodCats());
   }
   state.f = f;
 }
@@ -1536,7 +1543,28 @@ function filtered() {
   // Under hver basisvare kommer den billigste pr. kg eller liter først, medmindre andet er valgt
   if (basics && state.sort === "best") list = [...list].sort((a, b) => perKg(a) - perKg(b) || a.price - b.price);
   if (basics) list = [...list].sort((a, b) => basicOf.get(a) - basicOf.get(b));
+  // Samme tilbud i flere kæder (føtex og føtex food, SuperBrugsen og Kvickly)
+  // vises på ét kort med alle kæderne. Butiksvisningen viser aviserne hele.
+  filtered.also = new Map();
+  if (state.sort !== "store") {
+    const first = new Map();
+    list = list.filter(o => {
+      const key = [o.heading.toLowerCase().trim(), o.price, o.unit_price, (o.run_till || "").slice(0, 10)].join("|");
+      const rep = first.get(key);
+      if (!rep) { first.set(key, o); return true; }
+      if (rep.dealer === o.dealer) return true;
+      const also = filtered.also.get(rep) || [];
+      if (!also.includes(o.dealer)) also.push(o.dealer);
+      filtered.also.set(rep, also);
+      return false;
+    });
+  }
+  filtered.total = list.length;
   return list;
+}
+function dealersText(o) {
+  const all = [o.dealer, ...((filtered.also && filtered.also.get(o)) || [])];
+  return all.length > 1 ? all.slice(0, -1).join(", ") + " og " + all[all.length - 1] : o.dealer;
 }
 
 // Grupperne (en avis eller en basisvare) kan klappes sammen ved at trykke på
@@ -1684,8 +1712,7 @@ function renderFilters() {
   $("btn-filters").setAttribute("aria-expanded", String(!$("filter-panel").hidden));
   for (const b of document.querySelectorAll("[data-view-mode]")) b.setAttribute("aria-pressed", String((b.dataset.viewMode === "basics") === basics));
   $("basics-box").hidden = !basics;
-  const shown = pool.filter(o => !masks.get(o)).length;
-  $("btn-filters-done").textContent = `Vis ${shown} tilbud`;
+  $("btn-filters-done").textContent = `Vis ${filtered.total ?? pool.filter(o => !masks.get(o)).length} tilbud`;
 }
 
 // <normalpris>
@@ -1732,6 +1759,22 @@ function normalLine(o) {
   return `<div class="normal${cls}" title="${esc(n.long)}">${esc(n.short)}</div>`;
 }
 
+// Beskrivelsen på kortet uden det, kortet allerede viser: kilo-/literprisen
+// og normalprisen. Hele teksten står i vinduet og som hjælpetekst.
+function cardDesc(o) {
+  let d = o.description || "";
+  const num = String.raw`(?:kr\.?\s*)?\d+(?:[.,]\d{1,2})?(?:,-)?\.?`;
+  if (o.unit_price_text) {
+    const u = {stk: ["stk", String.raw`stk\.?-?\s?pris`], l: [String.raw`(?:l|ltr|liter)`, String.raw`liter\s?pris|l-pris`]}[o.unit]
+      || [String.raw`(?:kg|kilo)`, String.raw`kg-?\s?pris|kilopris`];
+    d = d.replace(new RegExp(String.raw`(?:\bpr\.?\s*${u[0]}\.?|\b(?:${u[1]}))\s*(?:maks\.?|max\.?)?\s*${num}`, "gi"), " ");
+    // REMA skriver tallet først: "10.71 pr. kg"
+    if (o.unit !== "stk") d = d.replace(new RegExp(String.raw`\b\d+[.,]\d{2}\s*pr\.?\s*${u[0]}\b\.?`, "gi"), " ");
+  }
+  if (o.pre_price) d = d.replace(new RegExp(String.raw`\b(?:normalpris|normal pris|før-?\s?pris)\s*${num}(?:\s*pr\.?\s*(?:fl|stk|pk|pakke|bakke)\b\.?)?`, "gi"), " ");
+  return d.replace(/\s{2,}/g, " ").replace(/\s+([.,])/g, "$1").replace(/^[\s.,·]+|[\s,·]+$/g, "").trim();
+}
+
 function card(o) {
   const img = o.image_url ? `<div class="img"><img src="${esc(o.image_url)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>` : "";
   // Anslået rabat (fra andre butikker eller prishistorik) vises med kant i stedet for fyld
@@ -1742,15 +1785,19 @@ function card(o) {
     o.lowest_weeks ? `<span class="tag low" title="Lavere pris end i alle tidligere aviser i ${o.lowest_weeks} uger">Laveste i ${o.lowest_weeks} uger</span>` : "",
     o.member ? `<span class="tag member" title="Prisen kræver Lidl Plus, kædens app eller medlemskab">${esc(o.member)}</span>` : "",
   ].join("");
+  // Rabatten står i mærket og normalprisen, og laveste pris i flere uger som
+  // mærke; det gentages ikke. Anslåede rabatter forklares stadig.
+  const why = o.reasons.filter(r => !/^-\d/.test(r) && !/^laveste pris i/.test(r));
+  const desc = cardDesc(o);
   return `<article class="card" data-offer="${esc(o.id)}" tabindex="0" aria-label="${esc(o.heading)}, ${esc(o.price_text)}">${img}
-    <div class="top"><span>${esc(o.dealer)}</span>${badge}</div>
+    <div class="top"><span>${esc(dealersText(o))}</span>${badge}</div>
     ${tags ? `<div class="tags">${tags}</div>` : ""}
     <div class="name">${esc(o.heading)}</div>
-    ${o.description ? `<div class="desc" title="${esc(o.description)}">${esc(o.description)}</div>` : ""}
+    ${desc ? `<div class="desc" title="${esc(o.description)}">${esc(desc)}</div>` : ""}
     <div class="price">${esc(o.price_text)}</div>
     ${o.unit_price_text ? `<div class="unit">${esc(o.unit_price_text)}</div>` : ""}
     ${normalLine(o)}
-    ${o.reasons.length ? `<div class="why">${esc(o.reasons.join(", "))}</div>` : ""}
+    ${why.length ? `<div class="why">${esc(why.join(", "))}</div>` : ""}
     <div class="meta">${esc(o.category_name)} · ${esc(o.period_text)}${o.catalog_label ? ` · ${esc(o.catalog_label)}` : ""}</div>
     ${listButton(o.id)}
   </article>`;
@@ -1759,6 +1806,7 @@ function card(o) {
 function render() {
   const hasOffers = state.offers.length > 0;
   $("filters").hidden = !hasOffers;
+  $("sort").hidden = !hasOffers;
   if (!hasOffers) {
     $("grid").innerHTML = ""; $("count").textContent = ""; $("btn-more").hidden = true;
     $("empty").hidden = false;
@@ -1809,7 +1857,8 @@ function countText(shown, total) {
 }
 // Hvor mange tilbud filtrene skjuler, med en vej tilbage
 function hiddenNote(list) {
-  const hidden = (filtered.pool || []).length - list.length;
+  const masks = filtered.masks || new Map();
+  const hidden = (filtered.pool || []).filter(o => masks.get(o)).length;
   return hidden > 0 ? ` <span class="hidden-note">· ${hidden} skjult af filtrene</span>` : "";
 }
 // Når filtrene skjuler alt: forslag til, hvad man kan slå fra, og hvor mange
@@ -1887,7 +1936,7 @@ function renderOffer() {
   if (!o) { $("offer-dlg").close(); return; }
   const paper = state.papers[o.catalog_id] || {};
   $("od-title").textContent = o.heading;
-  $("od-sub").textContent = [o.dealer, paper.label || o.catalog_label, o.catalog_page ? `side ${o.catalog_page}` : ""].filter(Boolean).join(" · ");
+  $("od-sub").textContent = [dealersText(o), paper.label || o.catalog_label, o.catalog_page ? `side ${o.catalog_page}` : ""].filter(Boolean).join(" · ");
   $("od-pos").textContent = list.length > 1 ? `${i + 1} af ${list.length}` : "";
   $("btn-offer-prev").disabled = i <= 0;
   $("btn-offer-next").disabled = i >= list.length - 1;

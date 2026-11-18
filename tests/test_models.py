@@ -90,6 +90,15 @@ def test_enrich_from_text():
     assert offer.pre_price == pytest.approx(46.67)
 
 
+def test_stated_unit_price_that_contradicts_the_weight_is_ignored():
+    # Netto skrev kilo- og stykprisen byttet om: 180 g til 25 kr er ikke 3,13 kr/kg
+    offer = Offer(id="1", catalog_id="c", dealer="Netto", heading="Samba flødeboller",
+                  description="8 stk/ 180 g. Pr. kg 3,13 /pr. stk 138,88", price=25)
+    offer.enrich_from_text()
+    assert offer.unit == "kg"
+    assert offer.unit_price == pytest.approx(138.89, abs=0.01)
+
+
 def test_member_requirement():
     from tilbudshenter.models import member_requirement
 
