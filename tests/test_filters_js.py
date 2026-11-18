@@ -24,7 +24,7 @@ OFFERS = [
 CATEGORIES = ["kaffe_og_te", "mejeri", "oel_og_vin", "husholdning"]
 
 
-def run(code: str, saved: dict | None = None, settings: dict | None = None, basics: bool = False):
+def run(code: str, saved: dict | None = None, settings: dict | None = None, basics: bool = False, new_user: bool = False):
     """Kører koden med filtrene og søgningen fra app.html og giver det, koden
     skriver med out(...)."""
     node = shutil.which("node")
@@ -34,8 +34,8 @@ def run(code: str, saved: dict | None = None, settings: dict | None = None, basi
     search = html.split("// <search>", 1)[1].split("\n", 1)[1].split("// </search>", 1)[0]
     filters = html.split("// <filters>", 1)[1].split("// </filters>", 1)[0]
     script = f"""
-const saved = {json.dumps(saved or {})};
-const store = {{get: (k, d) => k === "filters" ? saved : d, set: () => {{}}}};
+const saved = {"null" if new_user else json.dumps(saved or {})};
+const store = {{get: (k, d) => k === "filters" && saved !== null ? saved : d, set: () => {{}}}};
 const panel = {{hidden: true}};
 const $ = id => panel;
 function money(n) {{ return n + " kr"; }}
@@ -62,6 +62,12 @@ console.log(JSON.stringify(result));
 def test_everything_is_shown_from_the_start():
     # Ingen kategorier, butikker eller rabatter er valgt på forhånd
     assert run("out(shown()); out(activeFilters().length);") == [["1", "2", "3", "4"], 0]
+
+
+def test_a_new_user_starts_with_food_and_drink():
+    # Første besøg: kun mad og drikke, som et mærke der kan fjernes
+    got = run("out(shown()); out(activeFilters().map(a => a.label)); activeFilters()[0].clear(); out(shown());", new_user=True)
+    assert got == [["1", "2", "3"], ["Mad og drikke"], ["1", "2", "3", "4"]]
 
 
 def test_choosing_a_store_shows_only_that_store():
