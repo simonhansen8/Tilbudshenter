@@ -183,6 +183,13 @@ class App:
                                          str(data.get("dealer") or "")[:60] or None, price, plan=bool(data.get("plan")))
             elif action == "check":
                 storage.set_list_checked(str(data.get("id", "")), bool(data.get("checked")))
+            elif action == "count":
+                try:
+                    storage.set_list_count(str(data.get("id", "")), int(data.get("count") or 1))
+                except (TypeError, ValueError) as exc:
+                    raise ValueError("Ugyldigt antal") from exc
+            elif action == "dealer":
+                storage.set_list_dealer(str(data.get("id", "")), str(data.get("dealer") or "")[:60] or None)
             elif action == "remove":
                 storage.remove_from_list(str(data.get("id", "")))
             elif action == "clear":

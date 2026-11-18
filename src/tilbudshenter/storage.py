@@ -388,6 +388,16 @@ class Storage:
         self.conn.execute("UPDATE shopping_list SET checked = ? WHERE id = ?", (int(checked), item_id))
         self.conn.commit()
 
+    def set_list_count(self, item_id: str, count: int) -> None:
+        """Antal pakker af varen (1-99)."""
+        self.conn.execute("UPDATE shopping_list SET count = ? WHERE id = ?", (max(1, min(99, int(count))), item_id))
+        self.conn.commit()
+
+    def set_list_dealer(self, item_id: str, dealer: str | None) -> None:
+        """Butikken, en egen vare købes i (None: ingen bestemt butik)."""
+        self.conn.execute("UPDATE shopping_list SET dealer = ? WHERE id = ? AND id LIKE 'egen-%'", (dealer or None, item_id))
+        self.conn.commit()
+
     def remove_from_list(self, item_id: str) -> None:
         self.conn.execute("DELETE FROM shopping_list WHERE id = ?", (item_id,))
         self.conn.commit()
