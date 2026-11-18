@@ -327,7 +327,10 @@ plan giver nye retter.
   toast er frokost og kommer heller ikke med. En ret med kød eller fisk skal
   have mindst 30 g pr. person (bacon, chorizo og skinke, der giver smag,
   tæller ikke); er der mindre, er mængden næsten altid læst forkert, fx "1
-  lakseside" som én laksefilet. Opskrifterne er
+  lakseside" som én laksefilet. Har en madside samme ret flere gange
+  (samme varer i samme mængder, fx HelloFresh på dansk og engelsk), kommer
+  den kun med én gang, og en ret med et engelsk navn, der ikke kan
+  oversættes, springes over. Opskrifterne er
   også gennemgået i hånden: dem, madsiden kalder aftensmad, men som er
   tilbehør, dessert, snack, frokost eller en sovs eller dej, står i
   `src/tilbudshenter/data/ikke_retter.txt`. Danske opskrifter
@@ -417,6 +420,20 @@ plan giver nye retter.
   retter, der passer ind i planen og har tilbud på dagen (pris pr. person,
   tid og hvor mange varer der er på tilbud), at vælge imellem, og **Ny
   madplan** giver helt nye retter.
+- **Ikke aftensmad** ved en ret skjuler den for altid (tilbehør, frokost
+  eller en snack, som reglerne ikke fangede), og dagen får en anden ret.
+  Skjulte retter findes under **Ugeplan → Skjulte retter**, hvor **Vis igen**
+  fortryder. Listen gemmes i browseren.
+- Under **Indkøb** vælger du **Til hver ret** (standard: et tilbud bruges
+  på en dag, hvor det gælder, så du handler flere gange om ugen) eller **Alt
+  på én gang**: så bruges kun tilbud, der kan købes den første dag, og fisk
+  og kød kommer først i ugen, mens det er frisk.
+- Under **Budget for 7 dage** kan du skrive, hvad aftensmaden må koste.
+  Øverst står så, om ugen holder sig inden for (regnet om til planens antal
+  dage), og ellers hvor meget den er over, med en knap til en billigere plan
+  eller navnet på den dyreste ret. Ud over prisen i butikken regnes med ca.
+  2 kr pr. person pr. dag for olie, smør, krydderier og mel, som
+  opskrifterne regner med, du har derhjemme; det står for sig selv.
 - **Fjern** gør dagen til en dag uden aftensmad (ude, rester eller fri), og
   de andre retter bliver på deres dage. **Lav mad alligevel** giver dagen en
   ret igen. Den sidste ret på planen gør bare planen en dag kortere.
@@ -496,8 +513,12 @@ anslåede pris (et tilbud, der allerede er på listen, fx fra madplanen,
 sætter ugens retter i madplanen i den rækkefølge, de står (højst 7), så de
 får hver sin dag, og planen vælger de højst to butikker, hvor retterne er
 billigst. Som standard står retterne med den største andel
-af varerne på tilbud først (kun retter med varer på tilbud i ugen); vælg
-**Flest varer på tilbud** eller **Alfabetisk** for en anden rækkefølge. Hver ret kan åbnes, lægges i en uge og på
+af varerne på tilbud først (kun retter, hvor hovedingrediensen er på
+tilbud i ugen); vælg **Flest varer på tilbud**, **Billigst** (prisen til
+ugens antal personer, med tilbehør) eller **Alfabetisk** for en anden
+rækkefølge. "På tilbud" tæller kun tilbud fra den butik, hvor
+hovedingrediensen er på tilbud, så retten kan købes ind ét sted, og under
+**Butik** kan du vælge kun at se tilbud fra én butik. Hver ret kan åbnes, lægges i en uge og på
 indkøbslisten. Ved hver ret står, hvad den koster til ugens antal
 personer, og i den åbne ret står prisen for hver vare: hele pakker af
 tilbuddet eller basisvaren, som i madplanen. I madplanen

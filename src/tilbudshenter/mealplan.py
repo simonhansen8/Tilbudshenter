@@ -18,6 +18,7 @@ import statistics
 from dataclasses import dataclass, field
 from functools import lru_cache
 from importlib import resources
+from urllib.parse import urlparse
 
 from .comparison import PER_PIECE_GROUPS, PRODUCT_GROUPS, _has_word, _tokens, product_group
 
@@ -1124,9 +1125,35 @@ def _recipe_payload(r: Recipe) -> dict:
     }
 
 
+def _english_name(name: str) -> bool:
+    """Et engelsk navn på en dansk madside, som ikke kunne oversættes:
+    "Alpine chicken schnitzel with fresh lemon and creamy potatoes"."""
+    return bool(re.search(r"\bwith\b", name, re.IGNORECASE)) and not re.search(
+        r"\b(?:med|og|i|på|til)\b", name, re.IGNORECASE)
+
+
+def unique_recipes(recipes) -> list[Recipe]:
+    """Opskrifterne uden dubletter og uden engelske navne. Madsider som
+    HelloFresh har samme ret flere gange (på dansk og engelsk, eller med
+    citron og med citrus); samme madside og samme varer i samme mængder er
+    samme ret, og den første beholdes."""
+    seen: set = set()
+    result = []
+    for r in recipes:
+        if _english_name(r.name):
+            continue
+        key = (urlparse(r.source).netloc,
+               tuple(sorted((i.keys[0], round(i.amount), i.unit) for i in r.items if i.keys)))
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append(r)
+    return result
+
+
 def recipes_payload() -> list[dict]:
     """Retterne som siden og appen bruger dem: de faste og dem fra madsiderne."""
-    return [_recipe_payload(r) for r in [*RECIPES, *imported_recipes()]]
+    return [_recipe_payload(r) for r in [*RECIPES, *unique_recipes(imported_recipes())]]
 
 
 # -- Afdelinger ---------------------------------------------------------

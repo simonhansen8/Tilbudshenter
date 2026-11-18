@@ -189,6 +189,9 @@ label.field input { padding: 8px 10px; border: 1px solid var(--line); border-rad
 .plan-controls select { padding: 7px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
 .dish { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-top: 12px; }
 .dish.off { border-style: dashed; padding: 8px 14px; }
+.plan-total .budget { flex-basis: 100%; font-size: 14px; margin-top: 6px; }
+.plan-total .budget.over { color: var(--error); }
+.plan-total .budget.ok { color: var(--accent); }
 .dish.off .day { color: var(--muted); }
 .dish-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .dish h3 { margin: 0; font-size: 17px; }
@@ -507,6 +510,11 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
             <option value="vegetar">Vegetar</option>
           </select></label>
           <label class="field">Butik <select id="plan-store"></select></label>
+          <label class="field">Indkøb <select id="plan-shop">
+            <option value="">Til hver ret (flere gange om ugen)</option>
+            <option value="once">Alt på én gang, første dag</option>
+          </select></label>
+          <label class="field">Budget for 7 dage <input id="plan-budget" type="number" min="0" step="50" inputmode="numeric" placeholder="kr, fx 600"></label>
           <label class="field">På tilbud <select id="plan-ratio">
             <option value="0.5">Mindst halvdelen af varerne</option>
             <option value="0.75">Mindst 3 af 4 varer</option>
@@ -622,12 +630,14 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
           <option value="">Alle slags</option><option value="okse">Okse</option><option value="gris">Gris</option>
           <option value="kylling">Kylling</option><option value="fisk">Fisk</option><option value="vegetar">Vegetar</option>
           <option value="andet">Andet kød</option><option value="own">Mine opskrifter</option>
+          <option value="hidden">Skjulte retter (ikke aftensmad)</option>
         </select>
         <button class="btn small" id="btn-week-own" type="button">+ Egen opskrift fra link</button>
         <select id="week-sort" aria-label="Sortering">
           <option value="offers" selected>Størst andel på tilbud</option><option value="">Alfabetisk</option>
-          <option value="count">Flest varer på tilbud</option>
+          <option value="count">Flest varer på tilbud</option><option value="cheap">Billigst</option>
         </select>
+        <select id="week-store" aria-label="Butik"></select>
       </div>
       <div id="week-recipes"></div>
       <button class="btn small" id="btn-week-more" style="margin-top:10px" hidden>Vis flere</button>
@@ -1791,7 +1801,9 @@ let planData = null, ING = {};
 const KIND_NAMES = {okse: "Okse", gris: "Gris", kylling: "Kylling", fisk: "Fisk", vegetar: "Vegetar", andet: "Andet kød"};
 // En grøntsagsret med ansjoser, fiskesauce eller kødbouillon er ikke vegetar
 function isVegetarian(r) { return r.kind === "vegetar" && !(r.flags || []).length; }
-function mainKeys(r) { return r.items.filter(i => i.main).flatMap(i => i.keys); }
+// Rettens hovedingredienser (gemt på retten, da de bruges tit)
+function mainsOf(r) { return r._mains || (r._mains = r.items.filter(i => i.main)); }
+function mainKeys(r) { return mainsOf(r).flatMap(i => i.keys); }
 function kindName(r) {
   if (r.kind === "vegetar" && !isVegetarian(r))
     return r.flags.includes("fish") ? "Grøntsagsret med fisk i smagen" : "Grøntsagsret med kød i bouillon eller smagen";
@@ -1926,6 +1938,7 @@ function applyBasis() {
     const v = Number(custom[k]);
     ing.price[0] = v > 0 ? v : ing.base;
   }
+  applyBasis.version = (applyBasis.version || 0) + 1;
 }
 function renderBasis() {
   const q = $("basis-search").value.trim().toLowerCase();
@@ -2031,7 +2044,7 @@ function keyPosition(k, toks) {
 function lineKeys(text) {
   text = text.split(/(?<![\p{L}\p{N}_])til(?![\p{L}\p{N}_])/iu)[0].trim() || text;
   const keys = textKeys(text);
-  if (keys.length < 2) return keys;
+  if (keys.length < 2) return [...keys];
   const heads = new Set(), others = new Set();
   for (const part of text.replace(/\([^)]*\)?/g, " ").split(ITEM_SPLIT)) {
     const here = textKeys(part).filter(k => keys.includes(k)), toks = tokens(part);
@@ -2042,7 +2055,14 @@ function lineKeys(text) {
   return keys.filter(k => heads.has(k) || !others.has(k));
 }
 
+// Gemt pr. tekst: tilbuddenes navne tjekkes mange gange
+const TEXT_KEYS = new Map();
 function textKeys(text) {
+  let keys = TEXT_KEYS.get(text);
+  if (!keys) TEXT_KEYS.set(text, keys = textKeysOf(text));
+  return keys;
+}
+function textKeysOf(text) {
   const words = planData.words;
   if (words.not_raw_heading.some(w => hasWord(tokens(text), w))) return [];
   const found = [];
@@ -2205,6 +2225,7 @@ function savePlan() {
   const used = new Set(Object.values(plan.picks).flatMap(p => Object.values(p)));
   const offers = Object.fromEntries([...used].map(id => [id, offerById(id)]).filter(([, o]) => o));
   store.set("mealplan", {ids: plan.ids, count: plan.count, days: plan.days || plan.count, persons: plan.persons, diet: plan.diet, focus: plan.focus, ratio: plan.ratio,
+    shop: plan.shop, budget: plan.budget,
     store: plan.store, start: plan.start, have: [...plan.have], double: [...plan.double], off: plan.off, past: plan.past,
     picks: plan.picks, offers, shops: plan.autoShops ? [...plan.autoShops] : null, v: 2});
 }
@@ -2216,7 +2237,7 @@ function offerById(id) {
   return OFFER_IDS.map.get(id) || (plan.cache || {})[id] || null;
 }
 
-function haveItem(item) { return item.keys.some(k => plan.have.has(k)); }
+function haveItem(item) { return plan.have.size > 0 && item.keys.some(k => plan.have.has(k)); }
 
 // Retten tilpasset kosten: ingredienser, kosten udelukker, fjernes (fx
 // bacon i kartoffelsuppe for en vegetar). null hvis retten ikke passer.
@@ -2230,7 +2251,7 @@ function dietRecipe(r) {
       (plan.diet === "vegetar" && r.kind !== "vegetar")) return null;
   const items = r.items.map(i => ({...i, keys: i.keys.filter(k => !banned.has(k))}))
     .filter(i => i.keys.length || !r.items.find(o => o.name === i.name).keys.length);
-  return items.some(i => i.main) ? {...r, items} : null;
+  return items.some(i => i.main) ? {...r, items, _mains: items.filter(i => i.main), _mainKey: undefined} : null;
 }
 
 // Tilbud der kan bruges i madplanen, efter ingrediens. Billigste pr. kg
@@ -2258,78 +2279,137 @@ function beatsBasis(o, k) {
 function validOn(o, day) {
   return (!o.run_from || new Date(o.run_from) <= day) && (!o.run_till || new Date(o.run_till) >= day);
 }
+// Dagen, varerne til en ret købes: rettens dag, eller første dag, når alt købes på én gang
+function buyDay(day) { return plan.shop === "once" ? startDate() : day; }
 // Slutter tilbuddet før dagen (det skal så købes før)?
 function endsBefore(o, day) { return !!o.run_till && new Date(o.run_till) < day; }
 function shortDay(iso) { return new Date(iso).toLocaleDateString("da-DK", {weekday: "short", day: "numeric", month: "numeric"}); }
 
 // Kun tilbud, der gælder på mindst én af madplanens dage, og kun fra
 // butikkerne i dealers (en Set eller ét navn; tom = alle mine butikker)
-function ingredientIndex(first = startDate(), last = addDays(first, plan.count - 1), dealers = planDealers()) {
+function ingredientIndex(first = startDate(), last = plan.shop === "once" ? first : addDays(first, plan.count - 1), dealers = planDealers()) {
   const only = typeof dealers === "string" ? (dealers ? new Set([dealers]) : null) : dealers;
+  const parts = dealerIndexes(first, last);
   const index = new Map();
-  for (const o of state.offers) {
-    if (!planUsable(o) || (only && !only.has(o.dealer))) continue;
-    if ((o.run_from && new Date(o.run_from) > last) || (o.run_till && new Date(o.run_till) < first)) continue;
-    for (const k of o.ingredients) {
-      if (!beatsBasis(o, k)) continue;
-      if (!index.has(k)) index.set(k, []);
-      index.get(k).push(o);
-    }
+  index.parts = new Map([...parts].filter(([d]) => !only || only.has(d)));
+  for (const part of index.parts.values()) {
+    for (const [k, list] of part) index.set(k, [...(index.get(k) || []), ...list]);
   }
   for (const list of index.values()) list.sort((a, b) => perKg(a) - perKg(b) || a.price - b.price);
   return index;
 }
+// Tilbuddene butik for butik i perioden (gemt, så madplanen kan prøve mange
+// butikker og par af butikker hurtigt)
+let DEALER_INDEXES = {key: "", parts: null};
+function dealerIndexes(first, last) {
+  const key = [isoDay(first), isoDay(last), [...state.stores].join(), state.hideMember, applyBasis.version].join("|");
+  if (DEALER_INDEXES.key === key && DEALER_INDEXES.offers === state.offers) return DEALER_INDEXES.parts;
+  const parts = new Map();
+  for (const o of state.offers) {
+    if (!planUsable(o)) continue;
+    if ((o.run_from && new Date(o.run_from) > last) || (o.run_till && new Date(o.run_till) < first)) continue;
+    if (!parts.has(o.dealer)) parts.set(o.dealer, new Map());
+    const part = parts.get(o.dealer);
+    for (const k of o.ingredients) {
+      if (!beatsBasis(o, k)) continue;
+      if (!part.has(k)) part.set(k, []);
+      part.get(k).push(o);
+    }
+  }
+  DEALER_INDEXES = {key, offers: state.offers, parts};
+  return parts;
+}
 
 // Billigste tilbud på varen; helst fra butikken med hovedingrediensen, så
 // en ret kan købes ind ét sted
+// Gemt pr. varenavn, så "hakket oksekød" kun tjekkes én gang pr. tilbud på tværs af retterne
 const FITS = new Map();
 function fits(item, o) {
-  const id = `${item.name}|${o.id}`;
-  if (!FITS.has(id)) FITS.set(id, item.keys.some(k => o.ingredients.includes(k) && offerFits(item.name, o.heading, k)));
-  return FITS.get(id);
+  let m = FITS.get(item.name);
+  if (!m) FITS.set(item.name, m = new Map());
+  let ok = m.get(o.id);
+  if (ok === undefined) m.set(o.id, ok = item.keys.some(k => o.ingredients.includes(k) && offerFits(item.name, o.heading, k)));
+  return ok;
 }
 
 function bestOffer(item, index, dealer, day = null) {
-  const found = [...new Set(item.keys.flatMap(k => index.get(k) || []))].filter(o => (!day || validOn(o, day)) && fits(item, o));
-  const there = dealer ? found.filter(o => o.dealer === dealer) : [];
-  const pool = there.length ? there : found;
   // Billigst for de hele pakker, retten skal bruge, så en kæmpepakke til
   // lav kilopris ikke vælges til 400 g; derefter billigst pr. kg
   const pay = (o) => item.amount && item.keys.length ? packPay(item, o) : 0;
-  pool.sort((a, b) => pay(a) - pay(b) || perKg(a) - perKg(b) || a.price - b.price);
+  const order = (a, b) => pay(a) - pay(b) || perKg(a) - perKg(b) || a.price - b.price;
+  if (!day && index.parts) {
+    // Det bedste tilbud i hver butik er det samme, uanset hvilke andre butikker der er med
+    if (dealer && index.parts.has(dealer)) { const o = bestIn(item, index.parts.get(dealer), order); if (o) return o; }
+    let best = null;
+    for (const part of index.parts.values()) {
+      const o = bestIn(item, part, order);
+      if (o && (!best || order(o, best) < 0)) best = o;
+    }
+    return best;
+  }
+  const found = [...new Set(item.keys.flatMap(k => index.get(k) || []))].filter(o => (!day || validOn(o, day)) && fits(item, o));
+  const there = dealer ? found.filter(o => o.dealer === dealer) : [];
+  const pool = there.length ? there : found;
+  pool.sort(order);
   return pool[0] || null;
+}
+// Det bedste tilbud på varen i én butik; gemt pr. butik, vare og antal personer
+const BEST = new WeakMap();
+function bestIn(item, part, order) {
+  let c = BEST.get(part);
+  if (!c || c.persons !== plan.persons) BEST.set(part, c = {persons: plan.persons, map: new WeakMap()});
+  if (c.map.has(item)) return c.map.get(item);
+  const found = [...new Set(item.keys.flatMap(k => part.get(k) || []))].filter(o => fits(item, o)).sort(order);
+  c.map.set(item, found[0] || null);
+  return found[0] || null;
 }
 
 // Alle retter, bedste først. En ret kan komme på planen af sig selv, når en
 // hovedingrediens er på tilbud eller er noget, man har derhjemme.
-function rankRecipes(dealers = planDealers()) {
+// Kan retten blive en tilbudsret med tilbuddene i index? Hovedingredienserne
+// skal være på tilbud (eller derhjemme), og nok af varerne (se offerDish)
+function canBeOffer(r, index) {
+  const mainItems = mainsOf(r);
+  if (!mainItems.every(i => haveItem(i) || listedIn(i, index))) return false;
+  if (mainItems.some(haveItem)) return true;
+  let lines = 0, on = 0;
+  for (const i of r.items) {
+    if (i.side || haveItem(i)) continue;
+    lines++;
+    if (listedIn(i, index)) on++;
+  }
+  return on >= Math.min(OFFER_MIN_ITEMS, lines) && on >= Math.max(OFFER_MIN_RATIO, plan.ratio) * lines - 1e-9;
+}
+// Retter, man har skjult med "Ikke aftensmad" (gemt i browseren)
+function hiddenSet() { return new Set(store.get("hidden", [])); }
+function setHidden(id, on) {
+  const ids = store.get("hidden", []).filter(x => x !== id);
+  store.set("hidden", on ? [...ids, id] : ids);
+}
+function listedIn(item, index) {
+  for (const k of item.keys) if (index.has(k)) return true;
+  return false;
+}
+function rankRecipes(dealers = planDealers(), pool = null) {
   const index = ingredientIndex(undefined, undefined, dealers);
   const only = typeof dealers === "string" ? (dealers ? new Set([dealers]) : null) : dealers;
   plan.index = index;
-  const ranked = [], kept = new Set([...plan.ids, ...plan.past.map(x => x.id)]);
-  for (const base of allRecipes()) {
+  const ranked = [], kept = new Set([...plan.ids, ...plan.past.map(x => x.id)]), hidden = hiddenSet();
+  for (const base of pool || allRecipes()) {
+    if (hidden.has(base.id) && !kept.has(base.id)) continue;
     const r = dietRecipe(base);
     if (!r) continue;
-    const mainItems = r.items.filter(i => i.main);
+    const mainItems = mainsOf(r);
+    // En ret uden tilbud på hovedingrediensen kan ikke blive en tilbudsret;
+    // kun egne retter og samlingens hverdagsretter (som kan fylde ugen ud) regnes
+    // igennem, og retterne på planen, som bliver, hvor de er
+    if (r.source && !r.own && !kept.has(r.id) && !canBeOffer(r, index)) continue;
     // De tilbud, retten havde, da den kom på planen (der kan være handlet ind)
     const picks = (plan.picks || {})[r.id] || {};
     const picked = (item) => {
       const o = picks[item.name] && offerById(picks[item.name]);
       return o && (!only || only.has(o.dealer)) && fits(item, o) ? o : null;
     };
-    // En ret uden tilbud på hovedingrediensen kan ikke blive en tilbudsret;
-    // kun egne retter og samlingens hverdagsretter (som kan fylde ugen ud) regnes
-    // igennem, og retterne på planen, som bliver, hvor de er
-    if (r.source && !r.own && !kept.has(r.id)) {
-      const listed = (i) => i.keys.some(k => index.has(k));
-      if (!mainItems.every(i => haveItem(i) || listed(i))) continue;
-      // Uden noget derhjemme skal nok af varerne kunne være på tilbud (se offerDish)
-      if (!mainItems.some(haveItem)) {
-        const lines = r.items.filter(i => !i.side && !haveItem(i));
-        const on = lines.filter(listed).length;
-        if (on < Math.min(OFFER_MIN_ITEMS, lines.length) || on < Math.max(OFFER_MIN_RATIO, plan.ratio) * lines.length - 1e-9) continue;
-      }
-    }
     const mains = mainItems.filter(i => !haveItem(i)).map(i => picked(i) || bestOffer(i, index)).filter(Boolean);
     const main = mains.length ? mains.reduce((a, b) => (b.score > a.score ? b : a)) : null;
     const items = r.items.map(item => {
@@ -2422,7 +2502,11 @@ function seenPenalty(x) {
 // højst to af samme slags og ikke det samme hovedtilbud to gange. Er der
 // for få, fyldes op uden de krav og til sidst med retter, der er byttet væk.
 // Rettens hovedingrediens, fx "hakket_gris"
-function mainKey(x) { const i = x.recipe.items.find(i => i.main); return i && i.keys[0]; }
+function mainKey(x) {
+  const r = x.recipe;
+  if (r._mainKey === undefined) { const i = mainsOf(r)[0]; r._mainKey = (i && i.keys[0]) || null; }
+  return r._mainKey;
+}
 
 function choosePlan(ranked, keep, n) {
   // Retterne på planen bliver, også når tilbuddet er slut: der kan være handlet ind
@@ -2447,11 +2531,16 @@ function choosePlan(ranked, keep, n) {
     (!red(x) || count(red) < Math.max(1, Math.floor(n / 2)));
   // Den næste ret er den med flest point; en ret, der bruger resten af en
   // pakke fra en anden ret, får lidt ekstra
+  // Puljen står efter point; bonussen for en delt pakke er højst 20, så
+  // gennemgangen stopper, når ingen af de næste kan komme forbi
+  const base = new Map(pool.map(x => [x, x.score - seenPenalty(x)]));
+  const sorted = [...pool].sort((a, b) => base.get(b) - base.get(a));
   const pick = (pred) => {
     let best = null, bestScore = -Infinity;
-    for (const x of pool) {
+    for (const x of sorted) {
+      if (base.get(x) + 20 <= bestScore) break;
       if (chosen.includes(x) || !pred(x)) continue;
-      const v = x.score + shareBonus(x, chosen) - seenPenalty(x);
+      const v = base.get(x) + shareBonus(x, chosen);
       if (v > bestScore) { best = x; bestScore = v; }
     }
     return best;
@@ -2520,6 +2609,8 @@ function arrange(entries) {
     if (!x.recipe.own && !x.fallback && !dayOk(fitDay({...x, mult: 1, day}))) c += 1000;
     const m = dishMinutes(x.recipe);
     if (!isWeekend(day)) c += m > SLOW_MINUTES ? 100 : m > 45 ? 30 : 0;
+    // Købes det hele på én gang, kommer fisk og kød først i ugen, mens det er frisk
+    if (plan.shop === "once") c += d * (x.recipe.kind === "fisk" ? 12 : x.recipe.kind === "vegetar" ? 0 : 4);
     return c;
   }));
   let best = null, bestCost = Infinity;
@@ -2542,11 +2633,11 @@ function arrange(entries) {
 // Et tilbud, retten havde i forvejen, bliver, når det er startet: er det slut
 // før dagen, købes det bare før (se planToList)
 function fitDay(e) {
-  const mainOk = e.main && validOn(e.main, e.day);
+  const day = buyDay(e.day), mainOk = e.main && validOn(e.main, day);
   const items = e.items.map(y => {
-    if (!y.offer || y.have || validOn(y.offer, e.day)) return y;
-    if (y.picked && (!y.offer.run_from || new Date(y.offer.run_from) <= e.day)) return y;
-    return {...y, offer: bestOffer(y.item, plan.index, mainOk ? e.main.dealer : null, e.day)};
+    if (!y.offer || y.have || validOn(y.offer, day)) return y;
+    if (y.picked && (!y.offer.run_from || new Date(y.offer.run_from) <= day)) return y;
+    return {...y, offer: bestOffer(y.item, plan.index, mainOk ? e.main.dealer : null, day)};
   });
   return {...e, items};
 }
@@ -2561,17 +2652,21 @@ function planDealers() {
 
 // De (højst) max butikker, der giver den bedste plan: flest tilbudsretter,
 // derefter flest point (pris, besparelse og grønt) og lavest pris for de hele
-// pakker (hver krone tæller som et point). Hver butik prøves for sig, og de bedste seks prøves to og to.
+// pakker (hver krone tæller som et point). Hver butik prøves for sig, og de bedste fem prøves to og to.
 // Har planen retter i forvejen (fx fra ugeplanen), er det de butikker, hvor de er billigst.
 function chooseShops(max) {
   const stores = [...new Set(state.offers.filter(planUsable).map(o => o.dealer))];
   const tried = new Map(), keep = [...plan.ids];
+  // Kun de retter, der overhovedet kan blive tilbudsretter i en af butikkerne,
+  // prøves for hver butik og hvert par af butikker (det gør det hurtigt på telefonen)
+  const union = ingredientIndex(undefined, undefined, null), kept = new Set([...keep, ...plan.past.map(x => x.id)]);
+  const pool = allRecipes().filter(r => !r.source || r.own || kept.has(r.id) || canBeOffer(r, union));
   const value = (combo) => {
     const key = [...combo].sort().join("|");
     if (!tried.has(key)) {
       // Planen, som den bliver dag for dag (et tilbud, der først starter
       // senere, kan give en anden ret)
-      const entries = buildEntries(rankRecipes(new Set(combo)), keep, new Set(plan.double));
+      const entries = buildEntries(rankRecipes(new Set(combo), pool), keep, new Set(plan.double));
       buyPacks(entries);
       const pay = entries.reduce((sum, x) => sum + dishPay(x), 0);
       tried.set(key, keep.length ? -pay
@@ -2583,7 +2678,7 @@ function chooseShops(max) {
   if (!singles.length) return null;
   let best = singles[0];
   if (max >= 2) {
-    const top = singles.slice(0, 6).map(c => c[0]);
+    const top = singles.slice(0, 5).map(c => c[0]);
     for (const [i, a] of top.entries()) for (const b of top.slice(i + 1)) if (value([a, b]) > value(best)) best = [a, b];
   }
   return new Set(best);
@@ -2906,7 +3001,7 @@ function dishHtml(x, i, entries) {
     <ul>${x.items.map((y, j) => {
       const c = lineCost(y, x.mult);
       const src = y.have ? "har du derhjemme" : y.offer ? offerLine(y.offer, y.item.keys.find(k => y.offer.ingredients.includes(k)))
-          + (endsBefore(y.offer, x.day) ? ` · slutter ${shortDay(y.offer.run_till)}, køb det før` : "")
+          + (plan.shop !== "once" && endsBefore(y.offer, x.day) ? ` · slutter ${shortDay(y.offer.run_till)}, køb det før` : "")
         : y.item.keys.length ? `ikke på tilbud, ${basisText(y.item.keys[0])}` : "pris ukendt";
       return `<li class="${y.offer ? "on" : ""}${y.have ? " have" : ""}">
       <span class="what">${esc(itemText(y.item, x.mult))}</span>
@@ -2924,6 +3019,7 @@ function dishHtml(x, i, entries) {
       <button class="btn small" data-move="${i}:-1" ${i ? "" : "disabled"} title="Byt med dagen før">↑</button>
       <button class="btn small" data-move="${i}:1" ${i < entries.length - 1 ? "" : "disabled"} title="Byt med dagen efter">↓</button>
       <button class="btn small" data-drop="${i}">Fjern</button>
+      ${r.own ? "" : `<button class="btn small" data-hide="${i}" title="Retten er tilbehør, frokost eller en snack og skal ikke foreslås igen">Ikke aftensmad</button>`}
       <button class="btn small" data-to-week="${i}">${inWeek(r.id, weekOf(x.day)) ? "✓ I" : "Gem i"} uge ${weekOf(x.day).week}</button>
     </div>
     ${plan.swap && plan.swap.i === i ? swapPanel(i) : ""}
@@ -3016,7 +3112,23 @@ function renderPlanOpts() {
   const diet = {nopork: "uden svinekød", nofish: "uden fisk", vegetar: "vegetar"}[plan.diet];
   const shop = plan.store === "@2" ? "højst 2 butikker" : plan.store === "@1" ? "1 butik" : plan.store || "alle butikker";
   $("plan-opts-sum").textContent = [`${plan.count} ${plan.count === 1 ? "dag" : "dage"} ${from}`, `${plan.persons} pers.`,
-    diet, shop, plan.focus === "cheap" ? "lavest pris" : ""].filter(Boolean).join(" · ");
+    diet, shop, plan.focus === "cheap" ? "lavest pris" : "", plan.shop === "once" ? "alt købes første dag" : "",
+    plan.budget ? `budget ${kr(plan.budget)}` : ""].filter(Boolean).join(" · ");
+}
+
+// Det, retterne bruger af det, man har derhjemme (olie, smør, krydderier,
+// mel, bouillon), anslået pr. person pr. dag
+const PANTRY_PER_PERSON_DAY = 2;
+// Ugens pris holdt op mod budgettet (for 7 dage, regnet om til planens dage)
+function budgetText(entries, total, days) {
+  if (!plan.budget) return "";
+  const budget = plan.budget * days / 7, diff = total - budget;
+  const of = days === 7 ? "" : ` (${kr(plan.budget)} for 7 dage er ${kr(budget)} for ${days} ${days === 1 ? "dag" : "dage"})`;
+  if (diff <= 0) return `<div class="budget ok">Inden for budgettet${of}: ${kr(-diff)} tilbage.</div>`;
+  const dear = [...entries].sort((a, b) => dishPay(b) - dishPay(a))[0];
+  return `<div class="budget over"><b>${kr(diff)} over budgettet</b>${of}.
+    ${plan.focus === "cheap" ? `Den dyreste ret er ${esc(dear.recipe.name)} (ca. ${kr(dishPay(dear))}); tryk Byt ret for en billigere.`
+      : `<button class="btn small" data-cheaper="1">Lav en billigere plan</button>`}</div>`;
 }
 
 function planTotal(entries) {
@@ -3050,9 +3162,12 @@ function planTotal(entries) {
   const left = [have && `${have} ${have === 1 ? "vare" : "varer"}, du har derhjemme`,
     unknown && `${unknown} ${unknown === 1 ? "vare" : "varer"} uden kendt pris`].filter(Boolean);
   if (left.length) details.push(`Ikke regnet med: ${left.join(" og ")}`);
+  // Olie, smør, krydderier og mel, som opskrifterne regner med, man har
+  const pantry = PANTRY_PER_PERSON_DAY * plan.persons * days;
+  details.push(`Desuden bruger retterne olie, smør, krydderier m.m. derhjemme for ca. ${kr(pantry)} (anslået)`);
   return `<div class="plan-total" id="plan-total">
     <div><div class="label">Du betaler for ugen</div><div class="sum">ca. ${kr(pay)}</div></div>
-    <div class="details">${details.join("<br>")}</div></div>`;
+    <div class="details">${details.join("<br>")}</div>${budgetText(entries, pay + pantry, days)}</div>`;
 }
 
 async function openPlan() {
@@ -3063,6 +3178,8 @@ async function openPlan() {
   plan.persons = saved.persons || 4;
   plan.diet = saved.diet || "";
   plan.focus = saved.focus || "";
+  plan.shop = saved.shop === "once" ? "once" : "";
+  plan.budget = Number(saved.budget) > 0 ? Number(saved.budget) : 0;
   plan.ratio = [0.5, 0.75, 1].includes(saved.ratio) ? saved.ratio : 0.5;
   plan.have = new Set(saved.have || []);
   plan.double = new Set(saved.double || []);
@@ -3129,6 +3246,8 @@ async function openPlan() {
   }).join("");
   $("plan-diet").value = plan.diet;
   $("plan-focus").value = plan.focus;
+  $("plan-shop").value = plan.shop;
+  $("plan-budget").value = plan.budget || "";
   $("plan-ratio").value = String(plan.ratio);
   $("plan-body").innerHTML = `<p class="hint" style="margin-top:14px">Finder retter…</p>`;
   $("plan-dlg").showModal();
@@ -3336,12 +3455,16 @@ $("plan-count").addEventListener("change", e => {
   renderPlan();
 });
 $("plan-persons").addEventListener("change", e => { plan.persons = Number(e.target.value); renderPlan(); });
+$("plan-budget").addEventListener("change", e => {
+  plan.budget = Math.max(0, Math.round(Number(e.target.value) || 0)); renderPlan();
+});
 $("plan-start").addEventListener("change", e => { plan.start = e.target.value; renderPlan(); });
 $("plan-ratio").addEventListener("change", e => {
   plan.ratio = Number(e.target.value); plan.ids = []; plan.double = new Set(); plan.skipped = new Set(); renderPlan();
 });
 // Ny kost eller butik giver en ny madplan
-for (const [id, key] of [["plan-focus", "focus"], ["plan-diet", "diet"], ["plan-store", "store"]]) {
+// Handler man det hele på én gang, gælder kun de tilbud, der kan købes den dag: en ny plan
+for (const [id, key] of [["plan-focus", "focus"], ["plan-diet", "diet"], ["plan-store", "store"], ["plan-shop", "shop"]]) {
   $(id).addEventListener("change", e => {
     plan[key] = e.target.value; plan.ids = []; plan.double = new Set(); plan.skipped = new Set(); renderPlan();
   });
@@ -3407,6 +3530,19 @@ $("plan-body").addEventListener("click", e => {
     }
     plan.double.delete(id);
     plan.ids = plan.ids.filter(y => y !== id);
+  } else if (d.cheaper !== undefined) {
+    plan.focus = "cheap"; $("plan-focus").value = "cheap";
+    plan.ids = []; plan.double = new Set(); plan.skipped = new Set();
+  } else if (d.hide !== undefined) {
+    // Retten foreslås ikke igen, og dagen får en anden ret
+    const i = Number(d.hide), x = plan.entries[i];
+    setHidden(x.recipe.id, true);
+    const [next] = dayOptions(x.day, plan.ids.filter(id => id !== x.recipe.id), [x.recipe.id], 1);
+    if (next) {
+      plan.ids[i] = next.recipe.id;
+      if (plan.double.delete(x.recipe.id)) plan.double.add(next.recipe.id);
+    } else plan.ids.splice(i, 1);
+    toast(`${x.recipe.name} foreslås ikke mere. Fortryd under Ugeplan → Skjulte retter.`);
   } else if (d.unoff !== undefined) {
     // En ny ret på dagen; de andre retter bliver, hvor de er
     delete plan.off[d.unoff];
@@ -3483,7 +3619,7 @@ function cleanWeeks(weeks, now) {
 // </weeks>
 const WEEKS_AHEAD = 12, WEEK_PAGE = 50;
 // Opskrifterne med flest varer på tilbud står først; "Alfabetisk" kan vælges
-const week = {offset: 0, q: "", kind: "", sort: "offers", limit: WEEK_PAGE};
+const week = {offset: 0, q: "", kind: "", sort: "offers", limit: WEEK_PAGE, store: ""};
 function shownWeek() { const d = today(); return weekOf(addDays(d, 7 * week.offset)); }
 function allWeeks() { return store.get("weeks", {}); }
 function weekIds(w) { return allWeeks()[w.key] || []; }
@@ -3504,42 +3640,48 @@ function weekPersons() { return Number(store.get("weekpersons", 0)) || store.get
 // Rettens tilbud gemmes pr. opskrift (egne opskrifter laves på ny, når de ændres)
 const weekOffers = {key: "", index: null, recipes: new WeakMap()};
 function weekIndex() {
-  const w = shownWeek(), key = `${w.key}|${state.offers.length}|${[...state.stores].join()}`;
+  const w = shownWeek(), key = `${w.key}|${state.offers.length}|${[...state.stores].join()}|${week.store}|${applyBasis.version}`;
   if (weekOffers.key !== key) {
     const m = w.monday, start = new Date(m.getFullYear(), m.getMonth(), m.getDate());
     const first = new Date(Math.max(start, new Date(new Date().setHours(0, 0, 0, 0))));
-    weekOffers.index = ingredientIndex(first, new Date(m.getFullYear(), m.getMonth(), m.getDate() + 6, 23, 59), "");
+    weekOffers.index = ingredientIndex(first, new Date(m.getFullYear(), m.getMonth(), m.getDate() + 6, 23, 59), week.store);
     weekOffers.key = key;
     weekOffers.recipes = new WeakMap();
   }
   return weekOffers.index;
 }
-// Rettens varer med det billigste tilbud i ugen; helst fra butikken med
-// hovedingrediensen, så retten kan købes ind ét sted
+// Rettens varer med det billigste tilbud i ugen. Er hovedingrediensen på
+// tilbud, tages de andre tilbud kun fra samme butik, så retten kan købes ind
+// ét sted (resten er basisvarer, der kan købes der)
 function recipeOffers(r) {
   const index = weekIndex();
   if (weekOffers.recipes.has(r)) return weekOffers.recipes.get(r);
   const items = r.items.filter(i => !i.side);
   const mains = items.filter(i => i.main).map(i => bestOffer(i, index)).filter(Boolean);
   const dealer = mains.length ? mains[0].dealer : null;
-  const lines = items.map(item => ({item, offer: bestOffer(item, index, dealer)}));
+  const part = dealer && index.parts && index.parts.get(dealer);
+  const one = part ? Object.assign(new Map(part), {parts: new Map([[dealer, part]])}) : index;
+  const lines = items.map(item => ({item, offer: bestOffer(item, one, dealer)}));
+  lines.dealer = dealer;
   weekOffers.recipes.set(r, lines);
   return lines;
 }
-// Hvor mange af rettens varer der er på tilbud, og hvor stor en andel
+// Hvor mange af rettens varer der er på tilbud (i hovedingrediensens butik), og hvor stor en andel
 function offerShare(r) {
   const lines = recipeOffers(r), on = lines.filter(y => y.offer).length;
-  return {on, all: lines.length, ratio: lines.length ? on / lines.length : 0};
+  return {on, all: lines.length, ratio: lines.length ? on / lines.length : 0, dealer: lines.dealer};
 }
 function offerCount(r) {
-  const {on, all} = offerShare(r);
-  return on ? ` · <span class="on-offer">${on} af ${all} varer på tilbud</span>` : "";
+  const {on, all, dealer} = offerShare(r);
+  return on ? ` · <span class="on-offer">${on} af ${all} varer på tilbud${dealer ? ` i ${esc(dealer)}` : ""}</span>` : "";
 }
+// Er alle hovedingredienserne på tilbud i ugen?
+function mainOnOffer(r) { return mainsOf(r).every(i => listedIn(i, weekIndex())); }
 // Rettens pris til ugens personer som i madplanen: hele pakker af tilbuddet
 // eller basisvaren (pay), og det, retten bruger af dem (cost). Kaldes, mens
 // plan.persons er sat til ugens personer.
 function recipePrice(r) {
-  const entry = {recipe: r, mult: 1, day: today(), items: recipeOffers(r).map(y => ({item: y.item, offer: y.offer, have: false}))};
+  const entry = {recipe: r, mult: 1, day: today(), items: weekItems(r)};
   buyPacks([entry]);
   return {items: entry.items, pay: dishPay(entry), cost: dishCost(entry),
     unknown: entry.items.filter(y => lineCost(y, 1).unknown).length};
@@ -3574,7 +3716,8 @@ function recipeDetails(r, persons) {
     ${r.method ? `<p class="method">${esc(r.method)}</p>` : ""}
     ${r.source ? `<a href="${esc(r.source)}" target="_blank" rel="noopener">Se opskriften hos ${esc(host(r.source))}</a>` : ""}
     ${weekPicker(r.id)}
-    <div><button class="btn small" data-week-list="${esc(r.id)}" style="margin-top:8px">Læg ingredienserne på indkøbslisten</button></div>`;
+    <div class="dish-actions"><button class="btn small" data-week-list="${esc(r.id)}">Læg ingredienserne på indkøbslisten</button>
+      ${r.own ? "" : `<button class="btn small" data-week-hide="${esc(r.id)}">${hiddenSet().has(r.id) ? "Vis igen" : "Ikke aftensmad"}</button>`}</div>`;
 }
 // Vælg retten til en anden uge end den, der vises; ✓ ved uger, den allerede er i
 function weekPicker(id) {
@@ -3620,19 +3763,26 @@ function sortName(r) { return r.name.replace(/^[^\p{L}\p{N}]+/u, ""); }
 function renderWeekRecipes() {
   const w = shownWeek(), chosen = new Set(weekIds(w)), persons = weekPersons();
   const q = tokens(week.q);
-  let list = allRecipes().filter(r => (!week.kind || (week.kind === "own" ? r.own : week.kind === "vegetar" ? isVegetarian(r) : r.kind === week.kind)) &&
-    q.every(t => tokens(r.name + " " + r.items.map(i => i.name).join(" ")).some(x => x.startsWith(t))))
+  const hidden = hiddenSet();
+  const kindOk = (r) => week.kind === "hidden" ? hidden.has(r.id) : !hidden.has(r.id) &&
+    (!week.kind || (week.kind === "own" ? r.own : week.kind === "vegetar" ? isVegetarian(r) : r.kind === week.kind));
+  const words = (r) => r._words || (r._words = tokens(r.name + " " + r.items.map(i => i.name).join(" ")));
+  let list = allRecipes().filter(r => kindOk(r) && q.every(t => words(r).some(x => x.startsWith(t))))
     .sort((a, b) => (b.own || false) - (a.own || false) || sortName(a).localeCompare(sortName(b), "da"));
-  // Kun retter med varer på tilbud i ugen: størst andel først (så flest
-  // varer), eller flest varer først (så størst andel)
-  if (week.sort) {
+  // Kun retter, hvor hovedingrediensen er på tilbud i ugen: størst andel
+  // på tilbud først (så flest varer), flest varer først eller billigst pr. person
+  if (week.sort && week.kind !== "hidden") {
+    list = list.filter(r => r.own || mainOnOffer(r));
     const share = new Map(list.map(r => [r.id, offerShare(r)]));
     const ratio = (a, b) => share.get(b.id).ratio - share.get(a.id).ratio;
     const count = (a, b) => share.get(b.id).on - share.get(a.id).on;
-    list = list.filter(r => share.get(r.id).on)
-      .sort(week.sort === "count" ? (a, b) => count(a, b) || ratio(a, b) : (a, b) => ratio(a, b) || count(a, b));
+    list = list.filter(r => share.get(r.id).on);
+    if (week.sort === "cheap") {
+      const price = withWeekPersons(() => new Map(list.map(r => [r.id, recipePrice(r).pay])));
+      list.sort((a, b) => price.get(a.id) - price.get(b.id) || ratio(a, b));
+    } else list.sort(week.sort === "count" ? (a, b) => count(a, b) || ratio(a, b) : (a, b) => ratio(a, b) || count(a, b));
   }
-  $("week-count").textContent = `(${list.length.toLocaleString("da-DK")}${week.sort ? " med varer på tilbud" : ""})`;
+  $("week-count").textContent = `(${list.length.toLocaleString("da-DK")}${week.sort && week.kind !== "hidden" ? " med hovedvaren på tilbud" : ""})`;
   $("week-recipes").innerHTML = list.slice(0, week.limit).map(r => {
     const other = otherWeeks(r.id, w), on = chosen.has(r.id);
     return `<div class="week-recipe"><div class="what"><details><summary>${esc(r.name)}
@@ -3644,6 +3794,10 @@ function renderWeekRecipes() {
 
 async function openWeek() {
   week.limit = WEEK_PAGE;
+  const stores = [...new Set(state.offers.filter(planUsable).map(o => o.dealer))].sort((a, b) => a.localeCompare(b, "da"));
+  week.store = stores.includes(store.get("weekstore", "")) ? store.get("weekstore", "") : "";
+  $("week-store").innerHTML = `<option value="">Alle mine butikker</option>`
+    + stores.map(st => `<option ${st === week.store ? "selected" : ""}>${esc(st)}</option>`).join("");
   const persons = weekPersons();
   $("week-persons").innerHTML = [1, 2, 3, 4, 5, 6, 8].map(n => `<option ${n === persons ? "selected" : ""}>${n}</option>`).join("");
   $("week-chosen").innerHTML = `<p class="hint" style="margin-top:14px">Henter opskrifterne…</p>`;
@@ -3660,15 +3814,15 @@ async function openWeek() {
 function weekEntries(recipes) {
   const index = weekIndex(), w = shownWeek();
   const first = week.offset ? w.monday : today();
-  const entries = recipes.map((r, i) => {
-    const lines = new Map(recipeOffers(r).map(y => [y.item, y.offer]));
-    const main = recipeOffers(r).find(y => y.item.main && y.offer);
-    const items = r.items.map(item => ({item, have: false,
-      offer: lines.has(item) ? lines.get(item) : bestOffer(item, index, main ? main.offer.dealer : null)}));
-    return {recipe: r, mult: 1, day: addDays(first, Math.min(i, 6)), items};
-  });
+  const entries = recipes.map((r, i) => ({recipe: r, mult: 1, day: addDays(first, Math.min(i, 6)), items: weekItems(r, index)}));
   buyPacks(entries);
   return entries;
+}
+// Alle rettens varer, også tilbehøret (kartofler, ris, grønt), med ugens tilbud
+function weekItems(r, index = weekIndex()) {
+  const lines = recipeOffers(r), offers = new Map(lines.map(y => [y.item, y.offer]));
+  return r.items.map(item => ({item, have: false,
+    offer: offers.has(item) ? offers.get(item) : bestOffer(item, index, lines.dealer)}));
 }
 function withWeekPersons(fn) {
   const old = plan.persons;
@@ -3720,6 +3874,9 @@ $("week-search").addEventListener("input", e => { week.q = e.target.value; week.
 $("week-kind").addEventListener("change", e => { week.kind = e.target.value; week.limit = WEEK_PAGE; renderWeekRecipes(); });
 $("btn-week-own").addEventListener("click", () => { openRecipes(); $("r-url").focus(); });
 $("week-sort").addEventListener("change", e => { week.sort = e.target.value; week.limit = WEEK_PAGE; renderWeekRecipes(); });
+$("week-store").addEventListener("change", e => {
+  week.store = e.target.value; store.set("weekstore", week.store); week.limit = WEEK_PAGE; renderWeek();
+});
 $("week-persons").addEventListener("change", e => { store.set("weekpersons", Number(e.target.value)); renderWeek(); });
 $("week-dlg").addEventListener("change", e => {
   const sel = e.target.closest("[data-week-copy]");
@@ -3747,6 +3904,15 @@ $("week-dlg").addEventListener("click", e => {
   }
   const one = e.target.closest("[data-week-list]");
   if (one) { weekToList(one.dataset.weekList, one); return; }
+  const hide = e.target.closest("[data-week-hide]");
+  if (hide) {
+    const id = hide.dataset.weekHide, on = !hiddenSet().has(id);
+    setHidden(id, on);
+    const r = allRecipes().find(x => x.id === id);
+    toast(on ? `${r ? r.name : "Retten"} foreslås ikke mere. Find den under Skjulte retter.` : `${r ? r.name : "Retten"} foreslås igen`);
+    renderWeekRecipes();
+    return;
+  }
   const b = e.target.closest("[data-week-add], [data-week-move], [data-week-drop]");
   if (!b) return;
   const w = shownWeek(), ids = weekIds(w), d = b.dataset;

@@ -312,3 +312,18 @@ def test_too_little_meat_is_a_misread_amount():
 def test_lasagne_sheets_are_counted():
     recipe, _ = recipe_from_lines("x", "Lasagne", ["9 lasagneplader", "500 g hakket oksekød"], 4)
     assert (recipe.items[0].amount, recipe.items[0].unit) == (180, "g")
+
+
+def test_duplicates_and_english_names_are_left_out():
+    from tilbudshenter.mealplan import Item, Recipe, unique_recipes
+
+    def recipe(name, url, grams=500):
+        return Recipe(url, name, "kylling", 30, [Item(grams, "g", "kyllingebryst", ["kyllingebryst"], True)], [], "", url)
+
+    rs = [recipe("Østrigsk kyllingeschnitzel med citron", "https://www.hellofresh.dk/a"),
+          recipe("Østrigsk kyllingeschnitzel med citrus", "https://www.hellofresh.dk/b"),
+          recipe("Alpine chicken schnitzel with fresh lemon", "https://www.hellofresh.dk/c", 400),
+          recipe("Kyllingeschnitzel", "https://www.valdemarsro.dk/d"),
+          recipe("Kyllingeschnitzel med mere kød", "https://www.hellofresh.dk/e", 600)]
+    assert [r.name for r in unique_recipes(rs)] == [
+        "Østrigsk kyllingeschnitzel med citron", "Kyllingeschnitzel", "Kyllingeschnitzel med mere kød"]
