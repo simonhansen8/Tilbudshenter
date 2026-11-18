@@ -323,7 +323,11 @@ plan giver nye retter.
   med, og det samme gælder brød og boller (hvidløgsbrød, briocheboller),
   småkager (klejner, brownies), pålæg (postej, rillettes, terrine),
   smørrebrød, pølsehorn, babymad, snacks i stk ("6 stk", "2 servinger") og
-  HelloFresh' delevenlige retter (snackbrætter, crostini). Opskrifterne er
+  HelloFresh' delevenlige retter (snackbrætter, crostini). Sandwiches og
+  toast er frokost og kommer heller ikke med. En ret med kød eller fisk skal
+  have mindst 30 g pr. person (bacon, chorizo og skinke, der giver smag,
+  tæller ikke); er der mindre, er mængden næsten altid læst forkert, fx "1
+  lakseside" som én laksefilet. Opskrifterne er
   også gennemgået i hånden: dem, madsiden kalder aftensmad, men som er
   tilbehør, dessert, snack, frokost eller en sovs eller dej, står i
   `src/tilbudshenter/data/ikke_retter.txt`. Danske opskrifter
@@ -339,7 +343,10 @@ plan giver nye retter.
   10 tomater, ikke 10 bakker. Hver ingrediens genkendes i aviserne ud fra nøgleord, så
   hvert tilbud ved, hvilke ingredienser det kan bruges som. En bestemt vare
   går forud for en bred: parmesan er ikke revet ost, og rucola og
-  romainesalat er ikke icebergsalat. Er et tilbud på to varer, fx "pasta
+  romainesalat er ikke icebergsalat. Udskæringer kan ikke bytte plads: en
+  hel and er ikke andelår, og kalkunbryst er ikke underlår eller hakket
+  kalkun. Aspargeskartofler er kartofler, aspargessnitter er på dåse,
+  fintskåret laks er røget laks, og ketchup og æblesaft er ikke tomater og æbler. Er et tilbud på to varer, fx "pasta
   eller hakkede tomater", står kun den del, retten bruger.
 - Retterne får point for tre ting: lav pris pr. person, stor besparelse i
   forhold til normalprisen og meget grønt. Vælg **Lavest mulig pris** for at
@@ -347,8 +354,9 @@ plan giver nye retter.
 - Planen følger kostrådene: fisk hver uge (to gange ved 6-7 retter), en
   grøntsagsret ved 4 eller flere retter, højst halvdelen med rødt kød og højst
   to retter af samme slags. Samme hovedingrediens (fx hakket grisekød) eller
-  samme hovedtilbud bruges ikke to gange, så ugen ikke bliver fire slags
-  frikadeller. Retter med under 125 g grønt pr. person får grønt
+  samme hovedtilbud bruges ikke to gange, og der er højst én ret af hver
+  slags (frikadeller, tærte, suppe, lasagne, gryde ...; to med pasta), så ugen
+  ikke bliver tre slags frikadeller eller to spinattærter. Retter med under 125 g grønt pr. person får grønt
   tilbehør, fx råkost, af det billigste grønt på tilbud.
 - Under **Butik** er standardvalget **Højst 2 butikker**: madplanen prøver
   de butikker, hvor ugens bedste tilbudsretter har deres hovedtilbud, og
@@ -400,13 +408,28 @@ plan giver nye retter.
   2 butikker"); tryk **Ret** for at vælge første dag, antal dage, antal
   personer (mængderne skaleres), kost (alt, uden svinekød, uden fisk eller
   vegetar), butik og hvor mange varer der skal være på tilbud. Hver ret får
-  en dag: retter over 45 minutter lægges i weekenden og de hurtige på
-  hverdagene. **↑** og **↓** flytter en ret, **Byt ret** viser fire andre
-  retter, der passer ind i planen (pris pr. person, tid og hvor mange varer
-  der er på tilbud), at vælge imellem, og **Ny madplan** giver helt nye retter.
-- Retterne står på deres dato. Åbner du planen senere på ugen, er de dage,
-  der er gået, væk, og resten står, hvor de stod, så de passer til det, du
-  har købt. Først når alle dagene er gået, laves en ny plan.
+  en dag: alle rækkefølger prøves, så tilbuddene gælder på rettens dag, og
+  retter over 45 minutter (især over en time) kommer i weekenden. Der kommer
+  ikke flere retter over en time på planen, end der er fredage, lørdage og
+  søndage (mindst én). En steg eller en hel fugl uden oplyst tid regnes for
+  at tage to timer. **↑** og **↓** flytter en ret (starter et tilbud først
+  senere, står det, hvis retten så koster mere), **Byt ret** viser fire andre
+  retter, der passer ind i planen og har tilbud på dagen (pris pr. person,
+  tid og hvor mange varer der er på tilbud), at vælge imellem, og **Ny
+  madplan** giver helt nye retter.
+- **Fjern** gør dagen til en dag uden aftensmad (ude, rester eller fri), og
+  de andre retter bliver på deres dage. **Lav mad alligevel** giver dagen en
+  ret igen. Den sidste ret på planen gør bare planen en dag kortere.
+- Retterne står på deres dato og skiftes aldrig ud af sig selv, heller ikke
+  når du flytter dem, ændrer antal personer eller startdag, eller når
+  tilbuddet er slut: der kan være handlet ind til dem. Tilbuddene låses til
+  retten, når den kommer på planen, og gemmes med planen, så de kan vises,
+  efter de er slut (er et tilbud slut før rettens dag, står der "køb det
+  før"). Åbner du planen senere på ugen, er de dage, der er gået, væk, og
+  resten står, hvor de stod; det, der er tilbage af pakkerne fra de spiste
+  retter, bruges stadig i de næste og købes ikke igen. Var gårsdagens ret en
+  dobbelt portion, står der rester i dag. Først når alle dagene er gået,
+  laves en ny plan.
 - Øverst står også, hvad der er tilovers af pakkerne efter ugen (fx "400 g
   ris, citron (ca. 4 stk)"), og hvilke tilbud der først kan købes senere.
 - **Dobbelt portion** laver retten til to dage, så resten spises dagen efter.
@@ -435,6 +458,9 @@ plan giver nye retter.
   nødder og friske krydderurter som dild og koriander), står ved retten som
   **Tjek om du har** og kommer på listen med en note. Varer uden tilbud får
   den anslåede pris for hele pakker, så listens sum passer med madplanens.
+  Et tilbud, der først starter senere, får "først lør. 21.11" i noten, så du
+  kan se, hvad der skal købes en anden dag, og det, der er tilbage af en
+  pakke fra en ret tidligere i ugen, kommer ikke på igen.
   Laver du en ny madplan og lægger den på listen, erstatter den den forrige
   madplans varer; det, du har sat hak ved, og det, du selv har lagt på,
   bliver. Listen åbnes, så du kan se den. Indkøbslisten er sorteret efter
@@ -456,12 +482,20 @@ Danmark), og du bladrer fra denne uge og op til 12 uger frem. Søg efter en
 ret eller ingrediens, vælg slags, og tryk **+ uge 42** for at gemme retten
 i ugen. Retterne i ugen sættes i den rækkefølge, du har lyst til at spise
 dem, med ↑ og ↓. **Læg på indkøbslisten** lægger ugens ingredienser på
-listen, lagt sammen pr. vare til det valgte antal personer. Tryk på en ret i ugen for at åbne opskriften og lægge
+listen, lagt sammen pr. vare til det valgte antal personer (se nedenfor). Tryk på en ret i ugen for at åbne opskriften og lægge
 netop dens ingredienser på listen. Under opskriften kan du også vælge
 retten til en anden uge. Under hver vare står det billigste tilbud i ugen
 fra dine butikker (tryk for at se tilbuddet), og ved retten står, hvor
 mange varer der er på tilbud. For de kommende uger vises kun de tilbud,
-der allerede er kendt. Som standard står retterne med den største andel
+der allerede er kendt. Nederst står, hvad ugens retter koster i butikken
+til ugens antal personer, med hele pakker delt mellem retterne.
+**Læg på indkøbslisten** lægger ugens varer på listen som madplanen gør:
+tilbuddene med butik, pris og antal pakker, og varerne uden tilbud med den
+anslåede pris (et tilbud, der allerede er på listen, fx fra madplanen,
+ændres ikke). Ugeplanen bruger alle dine butikker; **Lav madplan af ugen**
+sætter ugens retter i madplanen i den rækkefølge, de står (højst 7), så de
+får hver sin dag, og planen vælger de højst to butikker, hvor retterne er
+billigst. Som standard står retterne med den største andel
 af varerne på tilbud først (kun retter med varer på tilbud i ugen); vælg
 **Flest varer på tilbud** eller **Alfabetisk** for en anden rækkefølge. Hver ret kan åbnes, lægges i en uge og på
 indkøbslisten. Ved hver ret står, hvad den koster til ugens antal

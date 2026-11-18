@@ -251,7 +251,9 @@ NOT_DINNER = ["kage", "kager", "muffin", "cookie", "småkage", "brød ", "desser
 NOT_DINNER_NAME = ["madpakke", "madpakken", "natmad", "pålæg", "frokostboks", "avocadomad", "rugbrødsmad",
                    # Frokost og snacks, selv om madsiden også kalder dem aftensmad
                    "smørrebrød", "mellemmadder", "laksemad", "rejemad", "æggemad", "kartoffelmad", "pølsehorn",
-                   "blinis", "kanapéer", "test "]
+                   "blinis", "kanapéer", "test ",
+                   # Sandwiches og toast er frokost, også når madsiden kalder dem en hovedret
+                   "sandwich", "sandwiches", "toast", "toasts"]
 # Ord i navnet, der kun er aftensmad, når madsiden kalder retten en hovedret
 NOT_DINNER_UNLESS_MAIN = ["frokost", "brunch", "tapas", "frokostret"]
 

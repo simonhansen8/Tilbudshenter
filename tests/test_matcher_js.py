@@ -104,6 +104,11 @@ FITS = [
     ("300 g brune ris", "Ris", "ris"),
     ("500 g hakket oksekød", "Veggie hakket", "hakket_okse"),
     ("2 skiver veggie bacon", "REMA 1000 Bacon i skiver", "bacon"),
+    # En hel and er ikke andelår, og kalkunbryst er ikke underlår
+    ("1 landand", "Bistronne andelår", "and"),
+    ("1 landand", "Hel fransk landand", "and"),
+    ("600 g kalkunbryst", "Kalkununderlår", "kalkun"),
+    ("600 g kalkunbryst", "Kalkunfilet", "kalkun"),
 ]
 
 
@@ -112,7 +117,8 @@ def test_offer_fits_like_python():
 
     js = run_js(f"{json.dumps(FITS, ensure_ascii=False)}.map(([l, h, k]) => offerFits(l, h, k))")
     assert js == [offer_fits(*f) for f in FITS]
-    assert js == [False, True, False, True, True, False, True, False, False, True, False, False, False, True, False, False]
+    assert js == [False, True, False, True, True, False, True, False, False, True, False, False, False, True, False, False,
+                  False, True, False, True]
 
 
 def test_parts_after_med_are_ignored_like_python():

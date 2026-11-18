@@ -4,7 +4,7 @@ from tilbudshenter.cli import main
 from tilbudshenter.mealplan import (
     BASIS_PACK_G, DEPARTMENTS, INGREDIENTS, MIN_VEG_PER_PERSON, NORMAL_PRICES, RECIPES, VEGETABLES, imported_recipes,
     basis_pack_g, ingredient_keys, ingredient_names, line_keys, load_imported, offer_fits, recipe_from_lines, recipe_items,
-    recipes_payload, vegetables_per_person,
+    dinner_problem, recipes_payload, vegetables_per_person,
 )
 
 
@@ -134,8 +134,9 @@ def test_slices_are_grams():
 
 def test_imported_recipes_build():
     # Samlingen fra madsiderne skrives af GitHub; næsten alle opskrifter i den skal
-    # kunne bruges. Skærpes reglerne, falder enkelte ældre opskrifter fra.
-    assert len(imported_recipes()) >= 0.995 * len(load_imported())
+    # kunne bruges. Skærpes reglerne, falder enkelte ældre opskrifter fra, til
+    # næste hentning flytter dem til de sprungne sider (opskrifter.update).
+    assert len(imported_recipes()) >= 0.98 * len(load_imported())
     for r in imported_recipes():
         assert r.source.startswith("http") and any(i.main for i in r.items)
 
@@ -283,3 +284,31 @@ def test_desserts_and_breakfast_are_not_dinner():
     assert not is_dinner({"name": "Sprøde kranse med marcipan", "category": ""})
     assert not is_dinner({"name": "Rustikke gulerodsbrud 6 boller | færdig dej", "category": ""})
     assert is_dinner({"name": "Boller i karry", "category": "Aftensmad"})
+
+
+def test_offers_that_are_another_product():
+    # Aspargeskartofler er kartofler, og aspargessnitter er på dåse
+    assert ingredient_keys("Danske aspargeskartofler") == ["kartofler"]
+    assert "asparges" not in ingredient_keys("MØLLESTEN/ FRESHONA Tarteletter eller aspargessnitter")
+    assert ingredient_keys("Grønne asparges") == ["asparges"]
+    # Fintskåret laks er røget laks i skiver, ikke laksefilet
+    assert "laksefilet" not in ingredient_keys("Munkebo Fintskåret laks")
+    # Ketchup og æblesaft er ikke tomater og æbler
+    assert line_keys("tomat ketchup") == [] and line_keys("æble saft") == []
+    assert line_keys("2 æbler") == ["aebler"] and line_keys("1 bøftomat") == ["tomater"]
+
+
+def test_too_little_meat_is_a_misread_amount():
+    # "80 g laks" til fire er ikke en aftensmad; mængden er læst forkert
+    recipe, _ = recipe_from_lines("x", "Fisk på grill", ["80 g laks", "1 kg kartofler", "250 g tomater"], 4)
+    assert "for lidt kød eller fisk" in dinner_problem(recipe)
+    recipe, _ = recipe_from_lines("x", "Laks i ovn", ["600 g laks", "1 kg kartofler", "250 g tomater"], 4)
+    assert dinner_problem(recipe) == ""
+    # Bacon giver smag og tæller ikke
+    recipe, _ = recipe_from_lines("x", "Pasta med bacon", ["80 g bacon", "400 g pasta", "2 dl fløde", "100 g revet ost"], 4)
+    assert dinner_problem(recipe) == ""
+
+
+def test_lasagne_sheets_are_counted():
+    recipe, _ = recipe_from_lines("x", "Lasagne", ["9 lasagneplader", "500 g hakket oksekød"], 4)
+    assert (recipe.items[0].amount, recipe.items[0].unit) == (180, "g")

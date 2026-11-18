@@ -11,6 +11,10 @@
 # "kartofler", "ris" eller "grønt".
 
 [tilbehør]
+https://www.valdemarsro.dk/bagte-graeskar/  # Bagt græskar
+https://www.jamieoliver.com/recipes/pasta/quick-and-easy-pasta-salad/  # Hurtig nem salat med pasta
+https://www.deliciousmagazine.co.uk/recipes/roast-asparagus-with-feta/  # Ovnstegt asparges med feta
+https://www.deliciousmagazine.co.uk/recipes/creamy-leek-gratin/  # Cremet porregratin
 https://www.goodto.com/recipes/hairy-bikers-baked-mushrooms  # Bagt champignon
 https://www.jamieoliver.com/recipes/vegetables/baked-mushrooms  # Bagt champignon
 https://www.jamieoliver.com/recipes/vegetables/baked-mushrooms/  # Bagt champignon
@@ -124,6 +128,10 @@ https://www.jamieoliver.com/recipes/egg/sesame-fried-eggs/  # Sesam stegte æg
 https://opskrifter.coop.dk/opskrifter/farvede-aeg-12827  # Farvede æg
 
 [snack, forret eller tapas]
+https://mummum.dk/butterdejsstang-med-kartoffel-skinke-og-porrer/  # Butterdejsstang med kartoffel, skinke og porrer
+https://mummum.dk/butterdejsstang-med-kylling-og-bacon/  # Butterdejsstang med kylling og bacon
+https://mummum.dk/mexicansk-butterdejsstang-med-kylling-og-ost/  # Mexicansk butterdejsstang med kylling og ost
+https://mummum.dk/butterdejsstang-med-bacon-og-porre-i-airfryer/  # Butterdejsstang med bacon og porre i airfryer
 https://www.olivemagazine.com/recipes/vegetarian/baked-brie-in-puff-pastry/  # Bagt brie i butterdej
 https://www.jamieoliver.com/recipes/cheese/baked-cheese/  # Bagt ost
 https://www.jamieoliver.com/recipes/cheese/fried-halloumi-wara-wagashi/  # Stegt halloumi
@@ -152,6 +160,15 @@ https://www.hellofresh.dk/recipes/mini-puff-pastry-tarts-67d82b95859430068bc50b4
 https://www.hellofresh.dk/recipes/market/sprod-italiensk-salat-med-hovlet-ost-67fe644ea3d47a35160c84a4  # Sprød italiensk salat med høvlet ost med ostegratineret hvidløgsbr
 
 [frokost]
+https://opskrifter.coop.dk/opskrifter/flaeskestegssandwich-med-roedkaalssalat-og-agurkesalat-og-mayo-96  # Klassisk flæskestegssandwich
+https://www.louisesmadblog.dk/flaeskestegssandwich/  # Flæskestegssandwich
+https://www.valdemarsro.dk/flaeskestegssandwich/  # Flæskestegssandwich med sprød svær og lækkert fyld
+https://madensverden.dk/hjemmelavet-flaeskestegssandwich/  # Flæskestegssandwich
+https://www.arla.dk/opskrifter/flaskestegssandwich/  # Flæskestegssandwich
+https://www.valdemarsro.dk/cowboytoast/  # Cowboytoast med bløde løg og krydret oksekødsfyld
+https://www.valdemarsro.dk/vegetar-cowboytoast/  # Vegetar cowboytoast med linsefyld og smeltet ost
+https://www.arla.dk/opskrifter/cowboytoast/  # Cowboytoast
+https://madensverden.dk/cowboytoast/  # Cowboytoast
 https://www.loveandlemons.com/grilled-cheese/  # Ost
 https://www.onceuponachef.com/recipes/grilled-cheese.html  # Ost
 https://www.opskrifter.dk/opskrift/100657-æble-ostesandwiches-med-karse  # Æble- ostesandwiches med karse
