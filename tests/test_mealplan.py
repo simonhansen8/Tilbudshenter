@@ -234,6 +234,29 @@ def test_meat_in_name_needs_meat_in_ingredients():
         assert recipe and recipe.kind == "vegetar", (name, why)
 
 
+def test_meat_and_fish_are_never_vegetarian():
+    veg = ["400 g pasta", "1 broccoli", "100 g revet ost"]
+    # Kød, der ligner en basisvare: varen er det, der står sidst
+    for line in ["100 g peberspegepølse", "200 g honning skinke"]:
+        assert recipe_from_lines("x", "Pasta med grønt", veg + [line])[0] is None, line
+    # Men bouillon, fiskesauce og salt til kødet er basisvarer
+    for line in ["1 l hønsebouillon", "2 spsk fiske sauce, kan erstattes af salt", "Salt til kød",
+                 "Stegesky fra kyllingen", "1 terning bouillon (kalv, okse eller høns)"]:
+        recipe, why = recipe_from_lines("x", "Pasta med grønt", veg + [line])
+        assert recipe and recipe.kind == "vegetar", (line, why)
+    # Kød og fisk, ordlisten ikke kendte: kan ikke prissættes, så retten springes over
+    for line in ["4 helleflyndersteaks", "2 hele fasaner", "600 g havtaskefilet", "1 kg revelsben"]:
+        assert recipe_from_lines("x", "Ret", veg + [line])[0] is None, line
+    # ... eller genkendes som pølser, bacon og bøf
+    assert recipe_from_lines("x", "Biksemad", veg + ["1 pakke GØL Frankfurter"])[0].kind == "gris"
+    assert recipe_from_lines("x", "Carbonara", veg + ["150 g guanciale"])[0].kind == "gris"
+    assert recipe_from_lines("x", "Entrecôte med salsa verde", veg + ["4 entrecôte"])[0].kind == "okse"
+    # Kød i navnet uden kød i ingredienserne, også når ansjoser giver fisk i smagen
+    assert recipe_from_lines("x", "Caesar wraps med kylling", veg + ["4 ansjoser"])[0] is None
+    recipe, _ = recipe_from_lines("x", "Pasta med broccoli og ansjos", veg + ["4 ansjoser"])
+    assert recipe.kind == "vegetar" and recipe.flags == ["fish"]
+
+
 def test_broken_recipe_file_stops_the_build(tmp_path):
     import pytest
 

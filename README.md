@@ -320,7 +320,13 @@ plan giver nye retter.
   fisk, æg, bælgfrugter, tofu eller ost (mindst 60 g til 4 personer).
   Desserter og bagværk (en ret uden kød med fx marcipan, vanilje, flormelis
   eller glasur), bagværk i stk ("6 boller") og morgenmad kommer heller ikke
-  med. Danske opskrifter
+  med, og det samme gælder brød og boller (hvidløgsbrød, briocheboller),
+  småkager (klejner, brownies), pålæg (postej, rillettes, terrine),
+  smørrebrød, pølsehorn, babymad, snacks i stk ("6 stk", "2 servinger") og
+  HelloFresh' delevenlige retter (snackbrætter, crostini). Opskrifterne er
+  også gennemgået i hånden: dem, madsiden kalder aftensmad, men som er
+  tilbehør, dessert, snack, frokost eller en sovs eller dej, står i
+  `src/tilbudshenter/data/ikke_retter.txt`. Danske opskrifter
   (madsider på .dk og samlingens hverdagsretter) får ekstra point, fordi de
   bruger varer og pakker fra danske butikker og er skrevet på dansk.
 - Mangler en ret kartofler, ris, pasta, brød eller lignende, får den
