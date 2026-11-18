@@ -177,20 +177,32 @@ label.field input { padding: 8px 10px; border: 1px solid var(--line); border-rad
 .store-catalogs { display: flex; flex-direction: column; gap: 3px; margin: 6px 0 2px 24px; font-size: 13px; }
 .store-catalogs .period { color: var(--muted); }
 .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 6px; }
-.toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 14px; max-width: calc(100vw - 32px); }
+.toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 14px; max-width: calc(100vw - 32px); z-index: 10; display: flex; gap: 12px; align-items: center; }
+.toast[hidden] { display: none; }
+.toast[popover] { margin: 0; border: none; inset: auto auto 20px 50%; color: var(--bg); }
+.toast-act { background: none; border: none; color: inherit; font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 4px; }
 .add { margin-top: 8px; align-self: flex-start; }
 .add.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 .list-store { margin-top: 14px; }
 .list-store h3 { margin: 0 0 4px; font-size: 15px; display: flex; justify-content: space-between; gap: 8px; }
 .list-store h3 .sum { color: var(--muted); font-weight: 500; }
-.item { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
-.item input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--accent); flex: none; }
-.item .what { flex: 1; min-width: 0; }
+.item { display: flex; align-items: flex-start; gap: 4px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.item .tick { flex: none; display: flex; padding: 6px 8px 6px 0; cursor: pointer; }
+.item input { width: 24px; height: 24px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+.item .what { flex: 1; min-width: 0; padding-top: 6px; }
 .item .sub { color: var(--muted); font-size: 12px; }
+/* Noten (mængde og retter) på én linje; et tryk viser det hele */
+.item .sub.note { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.item .sub.note.full { white-space: normal; }
+.item .hint-time { color: var(--warn, #9a6700); font-weight: 600; }
+.basket { margin-top: 16px; border-top: 2px solid var(--line); padding-top: 8px; }
+.basket > summary { cursor: pointer; font-weight: 600; padding: 6px 0; }
+.basket .item .what { color: var(--muted); text-decoration: line-through; }
 .item.done .what { text-decoration: line-through; color: var(--muted); }
-.item .x { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; line-height: 1; padding: 0 4px; }
-.item .p { white-space: nowrap; font-weight: 600; }
-.item .open { background: none; border: none; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+.item .x { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 20px; line-height: 1;
+  min-width: 40px; min-height: 40px; margin-left: 4px; }
+.item .p { white-space: nowrap; font-weight: 600; padding-top: 6px; }
+.item .open { background: none; border: none; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; display: inline; }
 .item .open:hover { text-decoration-color: currentColor; }
 .item .open::after { content: " ›"; color: var(--muted); }
 .expired { color: var(--error); }
@@ -524,7 +536,7 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
 <dialog id="list-dlg">
   <div class="dlg">
     <div class="dlg-head">
-      <h2>Indkøbsliste</h2>
+      <div style="min-width:0"><h2>Indkøbsliste</h2><div class="od-head-sub" id="list-sub"></div></div>
       <button class="btn small" id="btn-list-close">Luk</button>
     </div>
     <div class="dlg-body">
@@ -535,12 +547,11 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
       <div id="list-body"></div>
     </div>
     <div class="dlg-foot" style="flex-wrap:wrap">
-      <button class="btn small" id="btn-list-clear-checked">Fjern afkrydsede</button>
       <button class="btn small" id="btn-list-clear">Tøm listen</button>
       <span style="flex:1"></span>
-      <button class="btn small" id="btn-list-copy">Kopiér</button>
       <a class="btn small" id="btn-list-mail" href="#" style="text-decoration:none;color:inherit">Send som mail</a>
-      <button class="btn small primary" id="btn-list-print">Udskriv</button>
+      <button class="btn small" id="btn-list-print">Udskriv</button>
+      <button class="btn small primary" id="btn-list-copy">Del listen</button>
     </div>
   </div>
 </dialog>
@@ -725,7 +736,7 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
 </dialog>
 <div id="print-area"></div>
 
-<div class="toast" id="toast" hidden></div>
+<div class="toast" id="toast" popover="manual" hidden></div>
 
 <script>
 const $ = (id) => document.getElementById(id);
@@ -923,7 +934,10 @@ function siteOffers(s) {
 
 function siteList() {
   const now = new Date();
-  return store.get("list", []).map(i => ({...i, expired: !!(i.run_till && new Date(i.run_till) < now)}));
+  return store.get("list", []).map(i => {
+    const o = !i.run_from && i.dealer && siteData ? siteData.offers.find(o => o.id === i.id) : null;
+    return {...i, ...(o ? {run_from: o.run_from} : {}), expired: !!(i.run_till && new Date(i.run_till) < now)};
+  });
 }
 
 function changeSiteList(body) {
@@ -935,7 +949,7 @@ function changeSiteList(body) {
       items.push({
         id: o.id, dealer: o.dealer, heading: o.heading, description: o.description, price: o.price,
         price_text: o.price_text, unit_price_text: o.unit_price_text, period_text: o.period_text,
-        member: o.member, run_till: o.run_till, category: o.category, checked: false, added: Date.now(),
+        member: o.member, run_from: o.run_from, run_till: o.run_till, category: o.category, checked: false, added: Date.now(),
         plan: !!body.plan,
       });
     }
@@ -1013,9 +1027,46 @@ function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
 }
 
-function toast(text) {
-  const t = $("toast"); t.textContent = text; t.hidden = false;
-  clearTimeout(toast.timer); toast.timer = setTimeout(() => t.hidden = true, 3500);
+// Beskeden skal ligge over åbne vinduer (madplanen, indkøbslisten); ellers
+// ligger den bag dem og kan ikke ses. Den vises derfor som popover, der altid
+// ligger øverst. action: {label, fn}, fx "Fortryd"
+function toast(text, action = null) {
+  const t = $("toast");
+  const popover = typeof t.showPopover === "function";
+  // Inde i det åbne vindue, så "Fortryd" kan trykkes på (resten af siden er
+  // spærret, mens et vindue er åbent), og som popover, så den ligger øverst
+  const host = topDialog() || document.body;
+  if (t.parentNode !== host) {
+    if (popover && t.matches(":popover-open")) t.hidePopover();
+    host.appendChild(t);
+  }
+  t.textContent = text;
+  if (action) {
+    const b = document.createElement("button");
+    b.className = "toast-act"; b.type = "button"; b.textContent = action.label;
+    b.onclick = () => { hideToast(); action.fn(); };
+    t.append(b);
+  }
+  t.hidden = false;
+  if (popover) {
+    // Vises igen, så den kommer over et vindue, der er åbnet siden
+    if (t.matches(":popover-open")) t.hidePopover();
+    t.showPopover();
+  }
+  clearTimeout(toast.timer); toast.timer = setTimeout(hideToast, action ? 6000 : 3500);
+}
+// Det øverste åbne vindue: det, der ligger midt på skærmen (to vinduer kan
+// være åbne, fx indkøbslisten oven på madplanen)
+function topDialog() {
+  const open = [...document.querySelectorAll("dialog[open]")];
+  if (open.length < 2) return open[0] || null;
+  const hit = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
+  return (hit && hit.closest("dialog[open]")) || open[open.length - 1];
+}
+function hideToast() {
+  const t = $("toast");
+  t.hidden = true;
+  if (typeof t.hidePopover === "function" && t.matches(":popover-open")) t.hidePopover();
 }
 
 function showMessage(html, kind) {
@@ -1960,27 +2011,62 @@ function withDepts(items, head, row) {
 
 function money(n) { return n.toLocaleString("da-DK", {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " kr"; }
 
+// Hvornår tilbuddet kan købes, kun når det betyder noget: det starter
+// senere, eller det er sidste dag i dag eller i morgen
+function listWhen(i) {
+  if (i.expired) return "";
+  const now = new Date(), day = 864e5;
+  if (i.run_from && new Date(i.run_from) > now) return `fra ${new Date(i.run_from).toLocaleDateString("da-DK", {weekday: "short", day: "numeric", month: "numeric"})}`;
+  if (i.run_till) {
+    const left = (new Date(i.run_till) - now) / day;
+    if (left < 1) return "sidste dag i dag";
+    if (left < 2) return "sidste dag i morgen";
+  }
+  return "";
+}
+// Kort pris på listen: "30 kr", men "19,90 kr"
+function listMoney(n) { return Math.round(n * 100) % 100 ? money(n) : `${Math.round(n).toLocaleString("da-DK")} kr`; }
+function listRow(i, offerIds) {
+  const when = listWhen(i);
+  return `<div class="item${i.checked ? " done" : ""}">
+    <label class="tick"><input type="checkbox" data-check="${esc(i.id)}" ${i.checked ? "checked" : ""} aria-label="${esc(i.heading)} er købt"></label>
+    <div class="what">${listCount(i.count) > 1 ? `<b>${listCount(i.count)} ×</b> ` : ""}${offerIds.has(i.id)
+      ? `<span class="open" role="button" tabindex="0" data-open="${esc(i.id)}" title="Se tilbuddet">${esc(i.heading)}</span>` : esc(i.heading)}
+      ${when || i.member ? `<div class="sub">${when ? `<span class="hint-time">${esc(when)}</span>` : ""}${when && i.member ? " · " : ""}${esc(i.member || "")}</div>` : ""}
+      ${i.note ? `<div class="sub note" data-note title="${esc(i.note)}">${esc(i.note)}</div>` : ""}
+      ${i.expired ? `<div class="sub"><span class="expired">Tilbuddet er udløbet</span></div>` : ""}</div>
+    ${i.price_text ? `<span class="p">${i.price ? `${/^ca\./.test(i.price_text) ? "ca. " : ""}${listMoney(itemTotal(i))}` : esc(i.price_text)}</span>` : ""}
+    <button class="x" data-remove="${esc(i.id)}" title="Fjern ${esc(i.heading)}" aria-label="Fjern ${esc(i.heading)}">×</button>
+  </div>`;
+}
 function renderList() {
   $("btn-list-mail").href = "mailto:?subject=" + encodeURIComponent("Indkøbsliste") + "&body=" + encodeURIComponent(listText());
+  // På telefonen deles listen med telefonens egen deling; ellers kopieres den
+  $("btn-list-copy").textContent = navigator.share ? "Del listen" : "Kopiér listen";
+  $("btn-list-mail").hidden = !!navigator.share;
+  const todo = state.list.filter(i => !i.checked), done = state.list.filter(i => i.checked);
+  const left = todo.reduce((s, i) => s + itemTotal(i), 0);
+  $("list-sub").textContent = !state.list.length ? ""
+    : todo.length ? `${todo.length} ${todo.length === 1 ? "vare" : "varer"} tilbage${left ? ` · ca. ${listMoney(left)}` : ""}${done.length ? ` · ${done.length} i kurven` : ""}`
+    : "Alt er købt";
+  $("btn-list-clear").hidden = !state.list.length;
   if (!state.list.length) {
-    $("list-body").innerHTML = `<p class="hint" style="margin-top:14px">Listen er tom. Tryk "+ Indkøbsliste" på et tilbud for at lægge det her.</p>`;
+    $("list-body").innerHTML = `<p class="hint" style="margin-top:14px">Listen er tom. Tryk "+ Indkøbsliste" på et tilbud,
+      eller "Læg på indkøbslisten" i madplanen. Egne varer skrives i feltet ovenfor.</p>`;
     return;
   }
-  const total = state.list.reduce((s, i) => s + itemTotal(i), 0);
   const offerIds = new Set(listOffers().map(o => o.id));
+  // Det, der mangler, efter butik og afdeling; det, der er købt, nederst i kurven
   $("list-body").innerHTML = listGroups().map(([store, items]) => {
-    const sum = items.reduce((s, i) => s + itemTotal(i), 0);
-    return `<div class="list-store"><h3>${esc(store)}${sum ? `<span class="sum">${money(sum)}</span>` : ""}</h3>
-      ${withDepts(items, name => `<div class="dept">${esc(name)}</div>`, i => `<div class="item${i.checked ? " done" : ""}">
-        <input type="checkbox" data-check="${esc(i.id)}" ${i.checked ? "checked" : ""}>
-        <div class="what">${listCount(i.count) > 1 ? `<b>${listCount(i.count)} ×</b> ` : ""}${offerIds.has(i.id)
-          ? `<button class="open" data-open="${esc(i.id)}" title="Se tilbuddet">${esc(i.heading)}</button>` : esc(i.heading)}
-          <div class="sub">${[i.note, i.unit_price_text, i.period_text, i.member].filter(Boolean).map(esc).join(" · ")}
-          ${i.expired ? ` · <span class="expired">Tilbuddet er udløbet</span>` : ""}</div></div>
-        ${i.price_text ? `<span class="p">${listCount(i.count) > 1 ? money(itemTotal(i)) : esc(i.price_text)}</span>` : ""}
-        <button class="x" data-remove="${esc(i.id)}" title="Fjern">×</button>
-      </div>`)}</div>`;
-  }).join("") + (total ? `<p style="text-align:right;font-weight:700;margin:12px 0 0">I alt ${money(total)}</p>` : "");
+    const open = items.filter(i => !i.checked);
+    if (!open.length) return "";
+    const sum = open.reduce((s, i) => s + itemTotal(i), 0);
+    return `<div class="list-store"><h3>${esc(store)}${sum ? `<span class="sum">${listMoney(sum)}</span>` : ""}</h3>
+      ${withDepts(open, name => `<div class="dept">${esc(name)}</div>`, i => listRow(i, offerIds))}</div>`;
+  }).join("") + (todo.length ? "" : `<p class="hint" style="margin-top:14px">Alt på listen er købt.</p>`)
+  + (done.length ? `<details class="basket"${todo.length ? "" : " open"}><summary>I kurven (${done.length})</summary>
+      ${done.map(i => listRow(i, offerIds)).join("")}
+      <button class="btn small" id="btn-list-clear-checked" style="margin-top:10px">Fjern det købte fra listen</button></details>` : "");
 }
 
 // Tilbuddene på listen i samme rækkefølge som listen, så man kan bladre i dem
@@ -1989,10 +2075,19 @@ function listOffers() {
   return listGroups().flatMap(([, items]) => items).map(i => byId.get(i.id)).filter(Boolean);
 }
 
+// Noten uden retterne: "2 pakker · 1 kg til Lasagne og Chili" -> "2 pakker · 1 kg"
+function shortNote(note) {
+  return (note || "").replace(/(^|\s)til\s.*$/, "").replace(/ikke på tilbud, anslået pris\s*·?\s*/, "").replace(/[\s·]+$/, "").trim();
+}
+function listLine(i) {
+  const note = shortNote(i.note);
+  return `${listCount(i.count) > 1 ? `${listCount(i.count)} × ` : ""}${i.heading}${note ? ` (${note})` : ""}${i.price_text ? ` · ${listCount(i.count) > 1 ? money(itemTotal(i)) : i.price_text}` : ""}`;
+}
 function listText() {
-  return listGroups().map(([store, items]) =>
-    `${store}:\n` + items.filter(i => !i.checked).map(i => `- ${listCount(i.count) > 1 ? `${listCount(i.count)} × ` : ""}${i.heading}${i.price_text ? ` (${i.price_text})` : ""}${i.note ? `, ${i.note}` : ""}`).join("\n")
-  ).join("\n\n");
+  const groups = listGroups().map(([store, items]) => [store, items.filter(i => !i.checked)]).filter(([, items]) => items.length);
+  const total = groups.reduce((s, [, items]) => s + items.reduce((t, i) => t + itemTotal(i), 0), 0);
+  return groups.map(([store, items]) => `${store}:\n` + items.map(i => `- ${listLine(i)}`).join("\n")).join("\n\n")
+    + (total ? `\n\nI alt ca. ${money(total)}` : "");
 }
 
 function openList() {
@@ -2001,9 +2096,9 @@ function openList() {
 }
 
 function printList() {
-  $("print-area").innerHTML = `<h1>Indkøbsliste</h1>` + listGroups().map(([store, items]) =>
+  $("print-area").innerHTML = `<h1>Indkøbsliste</h1>` + listGroups().filter(([, items]) => items.some(i => !i.checked)).map(([store, items]) =>
     `<h2>${esc(store)}</h2><ul>${withDepts(items.filter(i => !i.checked), name => `<li class="dept">${esc(name)}</li>`, i =>
-      `<li>${listCount(i.count) > 1 ? `${listCount(i.count)} × ` : ""}${esc(i.heading)}${i.price_text ? ` · ${esc(i.price_text)}` : ""}${i.note ? ` · ${esc(i.note)}` : ""}</li>`)}</ul>`).join("");
+      `<li>☐ ${esc(listLine(i))}</li>`)}</ul>`).join("");
   window.print();
 }
 
@@ -3468,10 +3563,10 @@ async function planToList() {
     }
     const newTexts = texts.filter(t => !state.list.some(i => i.heading === t.text));
     for (const t of newTexts) state.list = (await api("/api/list", {action: "add_text", ...t})).items;
-    toast(`Madplanens ${offers.size + newTexts.length} varer er på indkøbslisten`
-      + (removed ? ` (den forrige madplans ${removed} varer er fjernet)` : ""));
     renderListCount();
     openList();  // Vis listen oven på madplanen; Luk fører tilbage
+    toast(`Madplanens ${offers.size + newTexts.length} varer er på indkøbslisten`
+      + (removed ? ` (den forrige madplans ${removed} varer er fjernet)` : ""));
   } catch (e) { toast(e.message); }
   finally { btn.disabled = false; }
   renderListCount();
@@ -4575,21 +4670,71 @@ $("btn-list").addEventListener("click", openList);
 $("btn-list-close").addEventListener("click", () => $("list-dlg").close());
 $("btn-list-print").addEventListener("click", printList);
 $("btn-list-copy").addEventListener("click", async () => {
-  try { await navigator.clipboard.writeText(listText()); toast("Listen er kopieret"); }
+  const text = listText();
+  if (!text) { toast("Der er intet tilbage på listen"); return; }
+  if (navigator.share) {
+    try { await navigator.share({title: "Indkøbsliste", text}); return; }
+    catch (e) { if (e.name === "AbortError") return; }
+  }
+  try { await navigator.clipboard.writeText(text); toast("Listen er kopieret"); }
   catch (e) { toast("Kunne ikke kopiere listen"); }
 });
-$("btn-list-clear-checked").addEventListener("click", () => changeList({action: "clear", only_checked: true}));
-$("btn-list-clear").addEventListener("click", () => { if (confirm("Tøm hele indkøbslisten?")) changeList({action: "clear"}); });
+$("btn-list-clear").addEventListener("click", () => {
+  if (!confirm("Tøm hele indkøbslisten?")) return;
+  const all = [...state.list];
+  changeList({action: "clear"});
+  toast("Listen er tømt", {label: "Fortryd", fn: async () => { for (const i of all) await restoreItem(i); }});
+});
 $("add-own").addEventListener("submit", e => {
   e.preventDefault();
   const text = $("own-text").value.trim();
-  if (text) { changeList({action: "add_text", text}); $("own-text").value = ""; }
+  if (!text) return;
+  $("own-text").value = "";
+  // Står varen der allerede, tilføjes den ikke igen; er den købt, kommer den tilbage på listen
+  const key = text.toLowerCase();
+  const same = state.list.find(i => i.heading.trim().toLowerCase() === key);
+  if ((same && !same.checked) || listAdding.has(key)) { toast(`${same ? same.heading : text} står allerede på listen`); return; }
+  if (same) { changeList({action: "check", id: same.id, checked: false}); toast(`${same.heading} er sat tilbage på listen`); return; }
+  // Den lokale app svarer først lidt senere; samme vare to gange i træk tilføjes kun én gang
+  listAdding.add(key);
+  changeList({action: "add_text", text}).finally(() => listAdding.delete(key));
 });
+const listAdding = new Set();
+// En fjernet vare kan lægges tilbage (tilbud med samme antal og note, egne varer som de var)
+function restoreItemBody(i) {
+  return i.dealer && !String(i.id).startsWith("egen-") && state.offers.some(o => o.id === i.id)
+    ? {action: "add", id: i.id, note: i.note, count: i.count, plan: i.plan}
+    : {action: "add_text", text: i.heading, note: i.note, category: i.category, dealer: i.dealer, price: i.price, plan: i.plan};
+}
+async function restoreItem(i) {
+  await changeList(restoreItemBody(i));
+  // Var varen købt, er den det stadig
+  const back = state.list.filter(x => x.heading === i.heading).pop();
+  if (i.checked && back) await changeList({action: "check", id: back.id, checked: true});
+}
 $("list-body").addEventListener("click", e => {
+  if (e.target.id === "btn-list-clear-checked") {
+    const done = state.list.filter(i => i.checked);
+    changeList({action: "clear", only_checked: true});
+    toast(`${done.length} købte ${done.length === 1 ? "vare er" : "varer er"} fjernet`, {label: "Fortryd", fn: async () => {
+      for (const i of done) await restoreItem(i);
+    }});
+    return;
+  }
   const id = e.target.dataset.remove;
-  if (id) changeList({action: "remove", id});
+  if (id) {
+    const item = state.list.find(i => i.id === id);
+    changeList({action: "remove", id});
+    if (item) toast(`${item.heading} er fjernet`, {label: "Fortryd", fn: () => restoreItem(item)});
+    return;
+  }
+  if (e.target.dataset.note !== undefined) { e.target.classList.toggle("full"); return; }
   const open = e.target.closest("[data-open]");
   if (open) openOffer(open.dataset.open, listOffers());
+});
+$("list-body").addEventListener("keydown", e => {
+  const open = e.target.closest && e.target.closest("[data-open]");
+  if (open && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openOffer(open.dataset.open, listOffers()); }
 });
 $("list-body").addEventListener("change", e => {
   const id = e.target.dataset.check;

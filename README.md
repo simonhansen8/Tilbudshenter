@@ -98,8 +98,15 @@ I appen kan du:
   uden tilbud, se nedenfor) for almindelige basisvarer som hakket oksekød, mælk og kartofler.
   For de fleste andre varer oplyser aviserne ingen normalpris, og så står der
   *Normalpris ukendt*,
-- lægge tilbud og egne varer på en **indkøbsliste**, delt op efter butik og afdeling, som
-  kan kopieres, sendes som mail eller udskrives,
+- lægge tilbud og egne varer på en **indkøbsliste**, delt op efter butik og afdeling.
+  Øverst står, hvor mange varer der mangler, og hvad de koster. Det, du sætter
+  hak ved, flytter ned **I kurven**, så det, der mangler, står øverst. Hver vare
+  fylder én linje (tryk på noten for at se mængder og retter), og "fra fre."
+  eller "sidste dag i morgen" står ved tilbud, hvor det betyder noget. En vare,
+  du fjerner, kan lægges tilbage med **Fortryd**, og samme egen vare kommer kun
+  på én gang. **Del listen** bruger telefonens deling (ellers kopieres den); den
+  delte tekst er kort, kun det, der mangler, med en samlet pris. Listen kan også
+  sendes som mail eller udskrives,
 - lave en **madplan** ud fra ugens tilbud (se nedenfor),
 - vælge kæder, aviser, favoritter og din placering under **Indstillinger**.
 
