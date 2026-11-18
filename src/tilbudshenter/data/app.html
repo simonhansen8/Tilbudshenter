@@ -3165,7 +3165,15 @@ function newPlan() {
   for (const id of plan.ids) plan.skipped.add(id);
   plan.ids = [];
   plan.double = new Set();
-  renderPlan();
+  renderPlanSoon();
+}
+// En ny plan tager et øjeblik (butikker og hele ugen regnes igennem): vis det,
+// før browseren går i gang
+function renderPlanSoon() {
+  const body = $("plan-body"), total = $("plan-total");
+  if (total) total.querySelector(".sum").textContent = "Finder retter…";
+  body.style.opacity = "0.5";
+  setTimeout(() => { try { renderPlan(); } finally { body.style.opacity = ""; } }, 30);
 }
 
 // "kylling, broccoli" -> ingredienser. Navnet fra listen, en genkendt vare
@@ -3467,12 +3475,12 @@ $("plan-count").addEventListener("change", e => {
 $("plan-persons").addEventListener("change", e => { plan.persons = Number(e.target.value); renderPlan(); });
 $("plan-start").addEventListener("change", e => { plan.start = e.target.value; renderPlan(); });
 $("plan-ratio").addEventListener("change", e => {
-  plan.ratio = Number(e.target.value); plan.ids = []; plan.double = new Set(); plan.skipped = new Set(); renderPlan();
+  plan.ratio = Number(e.target.value); plan.ids = []; plan.double = new Set(); plan.skipped = new Set(); renderPlanSoon();
 });
 // Ny kost eller butik giver en ny madplan
 for (const [id, key] of [["plan-focus", "focus"], ["plan-diet", "diet"], ["plan-store", "store"]]) {
   $(id).addEventListener("change", e => {
-    plan[key] = e.target.value; plan.ids = []; plan.double = new Set(); plan.skipped = new Set(); renderPlan();
+    plan[key] = e.target.value; plan.ids = []; plan.double = new Set(); plan.skipped = new Set(); renderPlanSoon();
   });
 }
 $("have-form").addEventListener("submit", e => {
