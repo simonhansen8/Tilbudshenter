@@ -1,0 +1,184 @@
+# Opskrifter fra madsiderne, som ikke er en ret til aftensmad
+#
+# Gennemgået i hånden: tilbehør, brød, desserter, snacks, frokost, sovse og
+# dej, som madsiden kalder "aftensmad" eller "hovedret", og som reglerne i
+# opskrifter.py (is_dinner) ikke kan kende sikkert. Står en opskrift her,
+# kommer den ikke med i madplanen og hentes ikke igen.
+#
+# Én adresse pr. linje; efter # står opskriftens navn. Afsnittet i [ ] er
+# grunden, som skrives i opskrifter.json. Tilbehøret er samlet for sig, så
+# det senere kan foreslås som tilbehør til retterne i stedet for bare
+# "kartofler", "ris" eller "grønt".
+
+[tilbehør]
+https://www.goodto.com/recipes/hairy-bikers-baked-mushrooms  # Bagt champignon
+https://www.jamieoliver.com/recipes/vegetables/baked-mushrooms  # Bagt champignon
+https://www.jamieoliver.com/recipes/vegetables/baked-mushrooms/  # Bagt champignon
+https://www.jamieoliver.com/recipes/mushroom/baked-garlicky-mushrooms/  # Bagt med hvidløg champignon
+https://www.valdemarsro.dk/bagte-graeskar/  # Bagt græskar
+https://www.jamieoliver.com/recipes/vegetables/spicy-roasted-squash/  # Stærk ovnbagt græskar
+https://www.recipetineats.com/maple-roasted-pumpkin-with-chili-and-feta/  # Ahorn ovnbagt græskar med chili og feta
+https://www.goodto.com/recipes/roast-butternut-squash  # Ovnstegt butternutsquash
+https://www.jamieoliver.com/recipes/potato/baked-mash/  # Bagt mos
+https://www.taste.com.au/recipes/eggplant-feta-mash/18790f2e-3ccf-4071-a9ec-58ee9c309083  # Mos med aubergine og feta
+https://www.bbcgoodfood.com/recipes/cauliflower-grana-padano-cheese-mash-with-sage-butter  # Mos med blomkål og ost og salvie smør
+https://www.goodto.com/recipes/cheese-and-onion-mash  # Mos med ost og løg
+https://www.taste.com.au/recipes/parmesan-mash/552eea9e-4243-486e-a255-f0a192fa259e  # Mos med parmesan
+https://www.goodto.com/recipes/leek-potato-and-goats-cheese-mash  # Mos med food, porrer, kartofler og gedeost
+https://www.taste.com.au/recipes/potato-cannellini-bean-yoghurt-mash/74691ab4-8e7e-4dbc-90ac-35cf2ac84c78  # Mos med kartofler, cannellini, bønner og yoghurt
+https://www.goodto.com/recipes/winter-vegetable-mash  # Vinter grøntsagsmos
+https://www.hellofresh.dk/recipes/market/varmende-kartoffel-knoldsellerimos-65b9f82519543b8e362ee35e  # Varmende kartoffel-knoldsellerimos med ost og valnødder
+https://www.olivemagazine.com/recipes/healthy/baked-tomatoes-with-oregano-and-pecorino/  # Bagte tomater med oregano og pecorino
+https://www.bbc.co.uk/food/recipes/cauliflower_and_broccoli_55586  # Blomkål og broccoli ost
+https://www.bbc.co.uk/food/recipes/cauliflower_and_broccoli_93405  # Blomkål og broccoli ost
+https://www.bbc.co.uk/food/recipes/cauliflower_cheese_55471  # Blomkål ost
+https://www.delish.com/cooking/recipe-ideas/recipes/a51638/cauliflower-grilled-cheese-recipe/  # Blomkål ost
+https://www.goodto.com/recipes/cauliflower-cheese  # Blomkål ost
+https://www.bbc.co.uk/food/recipes/cauliflower_leek_and_55530  # Blomkål porre og broccoli ost
+https://www.goodto.com/recipes/broccoli-leek-and-cauliflower-cheese  # Broccoli porre og blomkål ost
+https://www.bbc.co.uk/food/recipes/smoky_cauliflower_cheese_10135  # Røget blomkål ost
+https://www.bbcgoodfood.com/recipes/vegan-cauliflower-cheese  # Vegansk blomkål ost
+https://www.deliciousmagazine.co.uk/recipes/quick-cauliflower-cheese/  # Hurtig blomkål ost
+https://mummum.dk/gratineret-blomkaal/  # Gratineret blomkål
+https://opskrifter.coop.dk/opskrifter/gratineret-fennikel-med-citron-og-olivenolie-10688  # Gratineret fennikel med citron og olivenolie
+https://www.goodto.com/recipes/butternut-squash-gratin  # Gratin med butternutsquash
+https://www.bbcgoodfood.com/recipes/green-bean-cherry-tomato-traybake-gratin  # Gratin med grønne bønner og cherrytomat i fad
+https://www.goodto.com/recipes/parsnip-and-tomato-gratin  # Gratin med pastinak og tomater
+https://www.olivemagazine.com/recipes/vegetarian/courgette-tomato-and-gruyere-gratin/  # Gratin med squash
+https://www.goodto.com/recipes/potato-gratin  # Kartoffelgratin
+https://www.jamieoliver.com/recipes/vegetables/the-perfect-potato-gratin  # Kartoffelgratin
+https://www.jamieoliver.com/recipes/vegetables/the-perfect-potato-gratin/  # Kartoffelgratin
+https://www.opskrifter.dk/opskrift/109071-kartoffelgratin  # Kartoffelgratin
+https://www.valdemarsro.dk/floedekartofler/  # Flødekartofler opskrift
+https://www.opskrifter.dk/opskrift/108588-flødekartofler-med-ost  # Flødekartofler med ost
+https://www.hellofresh.dk/recipes/market/cremede-flodekartofler-65d89964e15fd4f7b093a0cd  # Cremede flødekartofler med ost og frisk timian
+https://www.danishcrown.com/da-dk/opskrifter/floedekartofler-med-bacon/  # Flødekartofler med bacon
+https://opskrifter.coop.dk/opskrifter/floedekartofler-med-urter-og-bacon-10923  # Flødekartofler med urter og bacon
+https://www.danishcrown.com/da-dk/opskrifter/kartoffelroesti/  # Kartoffelrøsti
+https://www.danishcrown.com/da-dk/opskrifter/kartoffelroesti-i-ovn/  # Kartoffelrøsti i ovn
+https://opskrifter.coop.dk/opskrifter/den-bedste-kartoffelsalat-coleslaw-11804  # Den bedste kartoffelsalat & coleslaw
+https://www.danishcrown.com/da-dk/opskrifter/crispy-kartoffelsalat/  # Crispy kartoffelsalat
+https://opskrifter.coop.dk/opskrifter/kartoffelsalat-med-spidskaal-og-bacon-7984  # Kartoffelsalat med spidskål og bacon
+https://www.danishcrown.com/da-dk/opskrifter/kartoffelsalat-med-sproed-bacon-og-ristede-graeskarkerner/  # Kartoffelsalat med sprød bacon og ristede græskarkerner
+https://mummum.dk/kartoffelsalat-med-edamamebonner-og-sprod-serranoskinke/  # Kartoffelsalat med edamamebønner og sprød serranoskinke
+https://www.danishcrown.com/da-dk/opskrifter/bagte-kartofler-med-bacon-og-hvidloegssmoer/  # Bagte kartofler med bacon og hvidløgssmør
+https://www.danishcrown.com/da-dk/opskrifter/brasede-kartofler-med-bacon/  # Brasede kartofler med bacon
+https://www.danishcrown.com/da-dk/opskrifter/brasekartofler-med-bacon-tomatchutney/  # Brasekartofler med bacon & tomatchutney
+https://mummum.dk/graeske-kartofler-i-fad/  # Græske kartofler i fad
+https://www.delish.com/cooking/recipe-ideas/a22667515/cheesy-garlic-butter-potatoes-recipe/  # Ost hvidløgssmør kartofler
+https://www.olivemagazine.com/recipes/entertain/mini-roast-potatoes-with-creme-fraiche/  # Mini ovnstegte kartofler med creme fraiche
+https://www.bbc.co.uk/food/recipes/cheeseychips_84010  # Ost pommes frites
+https://mummum.dk/curly-fries-med-cheddar-og-bacon/  # Curly fries med cheddar og bacon
+https://www.danishcrown.com/da-dk/opskrifter/pommes-anna-med-bacon/  # Pommes Anna med bacon
+https://madensverden.dk/panerede-persilleroedder-med-panko-rasp/  # Panerede persillerødder
+https://www.taste.com.au/recipes/parsnip-crispy-prosciutto/77254877-0a8b-4126-b347-e76c04f315b4  # Pastinak med sprød prosciutto
+https://www.delish.com/cooking/recipe-ideas/a41835827/parmesan-roasted-green-beans-recipe/  # Parmesan ovnbagte grønne bønner
+https://www.delish.com/cooking/recipe-ideas/a22813603/creamed-brussels-sprouts-recipe/  # Cremet rosenkål
+https://www.goodto.com/recipes/video-recipe-brussels-sprouts-with-bacon-almonds-and-cream  # Rosenkål med fløde
+https://www.goodto.com/recipes/cheesy-leeks  # Ost porrer
+https://opskrifter.coop.dk/opskrifter/stegt-palmekaal-med-bacon-og-kantareller-10044  # Stegt palmekål med bacon og kantareller
+https://www.jamieoliver.com/recipes/vegetables/braised-white-cabbage-with-bacon-and-thyme/  # Braiseret hvidkål
+https://www.arla.dk/opskrifter/stegte-gulerodder-med-cremet-dip/  # Stegte gulerødder med cremet dip
+https://madensverden.dk/grillet-agurk-med-fetaost/  # Grillet agurk med fetaost og mandler
+https://www.hellofresh.dk/recipes/grilled-portobello-with-cheese-67d28a3d08ede577c31f28ab  # Grillet portobello med gouda med timian- og hvidløgsolie
+https://opskrifter.coop.dk/opskrifter/grillet-spidskaal-med-feta-aeble-og-citron-12368  # Grillet spidskål med feta, æble og citron
+https://www.taste.com.au/recipes/sauteed-broccoli-zucchini-baby-spinach/0d0ca61f-b40e-452e-993e-7caad0b50d54  # Sauteret broccoli squash og babyspinat
+https://www.goodto.com/recipes/roasted-vegetables-with-honey-and-feta-cheese  # Ovnbagte grøntsager med honning og feta
+https://www.goodto.com/recipes/roasted-peppers-with-feta-and-olives  # Ovnbagte peberfrugter med feta og oliven
+https://www.olivemagazine.com/recipes/healthy/mediterranean-roast-peppers-with-olives-and-goats-cheese/  # Middelhavs ovnstegte peberfrugter med oliven og gedeost
+https://www.goodto.com/recipes/mexican-rice  # Mexicansk ris
+https://www.delish.com/cooking/recipe-ideas/a33984626/french-onion-rice-recipe/  # Fransk ris med løg
+https://www.delish.com/cooking/recipe-ideas/a60128448/lemon-herb-rice-pilaf-recipe/  # Ris med citron og krydderurter pilaf
+https://www.goodto.com/recipes/levi-roots-rice-and-peas  # Ris og ærter
+https://www.bbc.co.uk/food/recipes/polentawithrosemary_84559  # Polenta med rosmarin
+https://www.loveandlemons.com/mushroom-polenta-2/  # Champignon polenta
+https://www.hellofresh.dk/recipes/market/olympiske-log-ringe-667581343d7908a0f17bd0ea  # Olympiske (løg)ringe med Jorden rundt-krydderi
+https://opskrifter.coop.dk/opskrifter/veggi-juleret-8292  # Veggi juleret
+https://opskrifter.coop.dk/opskrifter/ærtepuré-med-foraarsgroent-og-sproede-linser-11257  # Ærtepuré med forårsgrønt og sprøde linser
+https://www.budgetbytes.com/cumin-lime-chickpeas/  # Spidskommen lime kikærter
+https://www.olivemagazine.com/recipes/chef-recipes/valentine-warners-onion-baked-in-pastry/  # Løg bagt i dej
+
+[brød og bagværk]
+https://www.olivemagazine.com/recipes/quick-and-easy/easy-flatbreads/  # Nem fladbrød
+https://www.bbc.co.uk/food/recipes/homemadeflatbreadwit_85657  # Hjemmelavet fladbrød med stærk rød peberfrugt hummus
+https://www.jamieoliver.com/recipes/chickpea/homemade-houmous-green-flatbreads/  # Hjemmelavet grøn fladbrød med hummus
+https://www.jamieoliver.com/recipes/bread/cheesy-corn-flatbreads/  # Fladbrød med ost og majs
+https://www.olivemagazine.com/recipes/family/broccoli-and-mozzarella-focaccia/  # Broccoli og mozzarella focaccia
+https://mummum.dk/hvidloegsbroed-som-pizza/  # Hvidløgsbrød som pizza
+https://www.hellofresh.dk/recipes/olympisk-karamelliseret-log-baguette-662f56cbe7c9545da100264d  # Karamelliseret løg-baguette med gruyerèost og timian
+https://www.hellofresh.dk/recipes/market/olympisk-karamelliseret-log-baguette-666c497ba14f558771e071fd  # Olympisk karamelliseret løg-baguette med gruyèreost og timian
+https://www.danishcrown.com/da-dk/opskrifter/burgerbolle-opskrift/  # Burgerbolle opskrift
+https://www.olivemagazine.com/recipes/baking-and-desserts/cinnamon-buns-cinnamon-swirls/  # Kanel ruller
+
+[kage, dessert eller morgenmad]
+https://www.jamieoliver.com/recipes/vegetables/pumpkin-pie/  # Græskartærte
+https://www.olivemagazine.com/recipes/family/pumpkin-pie-with-maple-cream/  # Græskartærte
+https://www.olivemagazine.com/recipes/family/plum-tart/  # Tærte med blomme
+https://www.olivemagazine.com/recipes/baking-and-desserts/pineapple-tart/  # Tærte med ananas
+https://www.jamieoliver.com/recipes/desserts/lemon-and-lime-cream-tart/  # Tærte med citron, lime og fløde
+https://www.jamieoliver.com/recipes/fruit/apple-date-pie/  # Tærte med æble og daddel
+https://opskrifter.coop.dk/opskrifter/soed-og-dejlig-jordbaer-roulade-6940  # Sød og dejlig jordbær roulade
+https://www.opskrifter.dk/opskrift/110707-banan-vafler-med-havregryn  # Banan vafler med havregryn
+https://www.valdemarsro.dk/scrambled-eggs/  # Scrambled eggs
+https://www.jamieoliver.com/recipes/egg/sesame-fried-eggs/  # Sesam stegte æg
+https://opskrifter.coop.dk/opskrifter/farvede-aeg-12827  # Farvede æg
+
+[snack, forret eller tapas]
+https://www.olivemagazine.com/recipes/vegetarian/baked-brie-in-puff-pastry/  # Bagt brie i butterdej
+https://www.jamieoliver.com/recipes/cheese/baked-cheese/  # Bagt ost
+https://www.jamieoliver.com/recipes/cheese/fried-halloumi-wara-wagashi/  # Stegt halloumi
+https://www.jamieoliver.com/recipes/fruit/roasted-grapes-with-cheese/  # Ovnbagte druer med ost
+https://www.goodto.com/recipes/parma-ham-and-mozzarella-bites  # Bidder med parmaskinke og mozzarella
+https://www.hellofresh.dk/recipes/garlic-and-chilli-king-prawns-673b0c933b7854c34e9310da  # Garlic and Chilli King Prawns Sharing dish with yellow curry yoghurt dip
+https://www.hellofresh.dk/recipes/market/japansk-ebi-fry-og-asiatisk-dressing-6659879cc0b3b3007f95206a  # Japansk ”ebi fry” med sprøde rejer med asiatisk mayo
+https://www.hellofresh.dk/recipes/market/japansk-ebi-fry-med-sprode-rejer-679b708a89b349720f5ab507  # Japansk ”ebi fry” med sprøde rejer med vegansk sesammayonnaise
+https://www.deliciousmagazine.co.uk/recipes/chicken-and-mushrooms-on-bruschetta/  # Kylling og champignon på bruschetta
+https://www.taste.com.au/recipes/broad-bean-pecorino-bruschetta/388c6c46-c0a8-42ec-9b45-903a150bf1d4  # Bondebønner og pecorino bruschetta
+https://www.taste.com.au/recipes/tomato-bean-bruschetta/3d9778f9-407e-4b35-9106-1ea38e402124  # Tomat og bønne bruschetta
+https://mummum.dk/ceviche-med-laks/  # Ceviche med laks
+https://www.valdemarsro.dk/ceviche-med-laks/  # Ceviche med laks
+https://www.valdemarsro.dk/tuntatar-med-avocado-og-nektarin/  # Tuntatar
+https://www.valdemarsro.dk/roert-tatarsalat/  # Rørt tatarsalat med peberrodscreme og urter
+https://www.arla.dk/opskrifter/salat-med-grillede-gronne-asparges-og-stenbiderrogn/  # Salat med grillede grønne asparges og stenbiderrogn
+https://opskrifter.coop.dk/opskrifter/stenbiderrogn-paa-vafler-12072  # Stenbiderrogn på vafler
+https://www.bbcgoodfood.com/recipes/mini-prosciutto-asparagus-frittatas  # Mini prosciutto og asparges frittatas
+https://opskrifter.coop.dk/opskrifter/groentsagsmuffins-med-chorizo-12356  # Grøntsagsmuffins med chorizo
+https://www.goodto.com/recipes/pea-and-paneer-samosas  # Ærte og paneer samosas
+https://opskrifter.coop.dk/opskrifter/tre-hurtige-tapas-bagte-peberfrugter-rejer-og-aeg-9312  # Tre hurtige tapas: bagte peberfrugter, rejer og æg
+https://opskrifter.coop.dk/opskrifter/jule-tapas-5558  # Jule-tapas
+https://www.danishcrown.com/da-dk/opskrifter/mexicansk-inspireret-tapas/  # Mexicansk inspireret tapas
+https://opskrifter.coop.dk/opskrifter/sproede-chili-cheese-tops-11892  # Sprøde chili cheese tops
+https://www.hellofresh.dk/recipes/mini-puff-pastry-tarts-67d82b95859430068bc50b4e  # Upside down-minibutterdejstærter med cherrytomater og karamelliser
+https://www.hellofresh.dk/recipes/market/sprod-italiensk-salat-med-hovlet-ost-67fe644ea3d47a35160c84a4  # Sprød italiensk salat med høvlet ost med ostegratineret hvidløgsbr
+
+[frokost]
+https://www.loveandlemons.com/grilled-cheese/  # Ost
+https://www.onceuponachef.com/recipes/grilled-cheese.html  # Ost
+https://www.opskrifter.dk/opskrift/100657-æble-ostesandwiches-med-karse  # Æble- ostesandwiches med karse
+https://www.arla.dk/opskrifter/lun-ostesandwich-og-syltet-hvidkal/  # Lun ostesandwich og syltet hvidkål
+https://www.arla.dk/opskrifter/rugbrodssandwich-med-gron-spread/  # Rugbrødssandwich med grøn spread
+https://opskrifter.coop.dk/opskrifter/let-frokost-3443  # Let frokost
+https://www.danishcrown.com/da-dk/opskrifter/frokost-salat-med-hytteost-og-bacon/  # Frokost salat med hytteost og bacon
+https://www.deliciousmagazine.co.uk/recipes/tuna-and-hazelnut-coleslaw/  # Tun og hasselnødde coleslaw
+https://www.danishcrown.com/da-dk/opskrifter/brunch-hotdog-med-scrambled-eggs-og-asparges/  # Brunch hotdog med scrambled eggs og asparges
+https://www.danishcrown.com/da-dk/opskrifter/grove-bagels-med-kylling/  # Grove bagels med kylling
+https://www.opskrifter.dk/opskrift/107628-bagels-med-røget-laks-og-krydret-flødeost  # Bagels med røget laks og krydret flødeost
+https://www.hellofresh.dk/recipes/market/avocado-og-baconbagel-657c2e9b5b66803087b1aad1  # Avocado og bacon bagel med pisket ricotta
+https://www.hellofresh.dk/recipes/avocado-and-bacon-sourdough-bun-68b5899264e0f866f5dabbe8  # Avocado og bacon på surdejsbolle med purløg
+https://www.valdemarsro.dk/svampe-og-avocado/  # Svampe og avocado på lækkert surdejsbrød
+https://www.danishcrown.com/da-dk/opskrifter/roeget-moerbrad-med-pocheret-aeg-paa-surdejsbroed/  # Røget mørbrad med pocheret æg på surdejsbrød
+
+[sovs, dej eller en del af en anden ret]
+https://www.hellofresh.co.uk/recipes/avocado-and-corn-salsa-67893846582e728e80abdfa6  # Avocado og majs salsa
+https://www.taste.com.au/recipes/bean-coriander-tomato-salsa/3958ac18-dff0-4894-ab20-82a97adba91f  # Bønne koriander og tomat salsa
+https://opskrifter.coop.dk/opskrifter/relish-af-kartofler-aebler-og-sennep-10687  # Relish af kartofler, æbler og sennep
+https://www.bbc.co.uk/food/recipes/halloumi_parma_ham_pizza_22119  # Hurtig pizzadej
+https://www.olivemagazine.com/recipes/entertain/cheese-pastry/  # Ost dej
+https://www.louisesmadblog.dk/sund-gulerodsbund-til-pizza/  # Sund gulerodsbund til pizza
+https://opskrifter.coop.dk/opskrifter/taertedej-af-blomkaal-aeg-og-ost-9302  # Tærtedej af blomkål, æg og ost
+https://pinchofyum.com/how-to-make-homemade-gnocchi  # Hjemmelavet gnocchi
+https://www.loveandlemons.com/gnocchi-recipe/  # Hjemmelavet gnocchi med kartofler
+https://www.bbc.co.uk/food/recipes/potato_gnocchi_35010  # Gnocchi med kartofler
+https://www.bbcgoodfood.com/recipes/next-level-potato-gnocchi  # Gnocchi med kartofler
+https://www.danishcrown.com/da-dk/opskrifter/koedboller-til-suppe/  # Kødboller til suppe
+https://www.danishcrown.com/da-dk/opskrifter/italiensk-inspirerede-koedboller-til-suppe/  # Italiensk inspirerede kødboller til suppe

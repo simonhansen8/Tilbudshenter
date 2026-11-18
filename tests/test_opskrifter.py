@@ -118,6 +118,59 @@ def test_only_dinners():
     assert not is_dinner({"name": "Ovnbagt rodfrugter", "category": "Tilbehør"})
 
 
+def test_not_dishes_even_when_called_dinner():
+    # HelloFresh' "Delevenlig ret" er snackbrætter, crostini og hvidløgsbrød til at dele
+    assert not is_dinner({"name": "Asiatisk snackbræt Delevenlig ret | med gyoza, pak choi og sprøde rejer"})
+    assert not is_dinner({"name": "Rosebruschetta Delevenlig ret | med gedeost og prosciutto"})
+    # Brød, boller, småkager og desserter
+    assert not is_dinner({"name": "Klassisk hvidløgsbrød med ost og persille", "category": "Aftensmad"})
+    assert not is_dinner({"name": "Briocheboller", "category": "Aftensmad"})
+    assert not is_dinner({"name": "Meyers klejner", "category": "Jul"})
+    assert not is_dinner({"name": "Julebrownies", "category": "Afprøvet opskrift"})
+    assert not is_dinner({"name": "Flødeis med brunet smør og valnødder"})
+    assert not is_dinner({"name": "Sur tærte med cherry", "category": "Pudding, Pastry, Dinner Party"})
+    # Pålæg, smørrebrød og snacks
+    assert not is_dinner({"name": "Gulerodspostej", "category": "Hovedretter, Aftensmad"})
+    assert not is_dinner({"name": "Lakserillettes"})
+    assert not is_dinner({"name": "Varm champignonpaté", "category": "Frokost, Hovedretter, Aftensmad"})
+    assert not is_dinner({"name": "Smørrebrød med flæskesteg", "category": "Aftensmad, Frokost"})
+    assert not is_dinner({"name": "Rugbrød med hønsesalat", "category": "Aftensmad"})
+    assert not is_dinner({"name": "Pølsehorn med sesam"})
+    assert not is_dinner({"name": "Indiske kartoffelsamosas 6 stk med spicy abrikoschutney"})
+    assert not is_dinner({"name": "Za'atar-fladbrød 2 servinger med sødmefuld gedeostedip"})
+    # Babymad og madsidernes testopskrifter
+    assert not is_dinner({"name": "Grøntsagsmos med fisk - til baby", "category": "Hovedretter, Aftensmad"})
+    assert not is_dinner({"name": "Test recipe with chicken and salad"})
+    # Men det er retter
+    assert is_dinner({"name": "Frikadeller med ost og hakket kyllingekød", "category": "Appetiser, Main Course"})
+    assert not is_dinner({"name": "Arancini med svampe og trøffelmayo", "category": "Appetizer"})
+    assert is_dinner({"name": "Tarteletter med kylling og asparges", "category": "Hovedret"})
+    assert is_dinner({"name": "Pitabrød med falafel", "category": "Hovedret"})
+    assert is_dinner({"name": "Boller i karry med spinat", "category": "Aftensmad"})
+    assert is_dinner({"name": "Pasta med spinat og babyspinat", "category": "Aftensmad"})
+    assert is_dinner({"name": "Spaghetti med kødboller", "category": "Aftensmad"})
+
+
+def test_reviewed_list_of_recipes_that_are_not_dishes():
+    from tilbudshenter.opskrifter import not_a_dish, not_dishes
+
+    listed = not_dishes()
+    assert len(listed) > 100 and all(u.startswith("https://") for u in listed)
+    gratin = "https://www.goodto.com/recipes/potato-gratin"
+    assert listed.get(gratin) == "ikke en ret: tilbehør"
+    assert not_a_dish({"url": gratin, "name": "Kartoffelgratin"}) == "ikke en ret: tilbehør"
+    assert not is_dinner({"url": gratin, "name": "Kartoffelgratin", "category": "Hovedret"})
+
+
+def test_prices_and_portions_are_not_part_of_the_name():
+    from tilbudshenter.opskrifter import clean_name
+    from tilbudshenter.oversaet import danish
+
+    assert clean_name("Street Food Nacho Fiesta 2-4 portioner | med majssalsa") == "Street Food Nacho Fiesta med majssalsa"
+    da, _ = danish({"name": "Veggie Mince £3.15", "lang": "en", "ingredients": ["1 carton Black Beans"]})
+    assert da["name"] == "Vegetar hakket kød"
+
+
 def test_extract_microdata():
     # Som Valdemarsro: kun en artikel i JSON-LD, opskriften står som microdata
     page = """<html><head><title>Chili con carne - Valdemarsro</title>

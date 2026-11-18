@@ -23,13 +23,15 @@ import time
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
+from functools import lru_cache
+from importlib import resources
 from itertools import zip_longest
 from pathlib import Path
 from urllib.parse import quote, urlparse, urlsplit, urlunsplit
 
 from .comparison import _has_word, _tokens
 from .mealplan import dinner_problem, dish_head, recipe_from_lines
-from .oversaet import danish, is_english
+from .oversaet import danish, is_english, translate_category
 
 log = logging.getLogger(__name__)
 
@@ -240,25 +242,42 @@ def extract_recipe(page: str, url: str) -> dict | None:
 NOT_DINNER = ["kage", "kager", "muffin", "cookie", "småkage", "brød ", "dessert", "desserter", "is ", "smoothie",
               "drink", "cocktail", "marmelade", "syltetøj", "dressing", "snack", "konfekt", "chokolade", "grød",
               "bagværk", "drikke", "tilbehør", "forret", "forretter", "morgenmad", "breakfast", "kranse", "kringle",
-              "snegle", "wienerbrød", "marcipan"]
+              "snegle", "wienerbrød", "marcipan",
+              # Madsider med engelske kategorier (fx opskrifter.dk): "Pudding", "Component"
+              "pudding", "component ", "babymad", "baby ",
+              # Julebag, småkager og desserter, også når madsiden kalder dem aftensmad
+              "klejner", "kringler", "brownies", "lussekatter", "flødeis", "riddere", "lemoncurd"]
 # Kun i navnet: "Salat med kold roastbeef" i kategorien "Aftensmad, Madpakke" er aftensmad
-NOT_DINNER_NAME = ["madpakke", "madpakken", "natmad", "pålæg", "frokostboks", "avocadomad", "rugbrødsmad"]
+NOT_DINNER_NAME = ["madpakke", "madpakken", "natmad", "pålæg", "frokostboks", "avocadomad", "rugbrødsmad",
+                   # Frokost og snacks, selv om madsiden også kalder dem aftensmad
+                   "smørrebrød", "mellemmadder", "laksemad", "rejemad", "æggemad", "kartoffelmad", "pølsehorn",
+                   "blinis", "kanapéer", "test "]
 # Ord i navnet, der kun er aftensmad, når madsiden kalder retten en hovedret
-NOT_DINNER_UNLESS_MAIN = ["frokost", "brunch", "smørrebrød", "tapas", "frokostret"]
+NOT_DINNER_UNLESS_MAIN = ["frokost", "brunch", "tapas", "frokostret"]
 
 
 # Kategorier for salater og frokost: kun aftensmad, når madsiden også kalder
 # retten en hovedret, fx "Salater, Hovedretter, Aftensmad"
 SIDE_CATEGORIES = ["salat", "salater", "frokost", "madpakke", "tapas", "brunch", "other", "sovs", "dressing",
-                   "buffet", "picnic", "afternoon", "boller", "søde", "lette"]
+                   "buffet", "picnic", "afternoon", "boller", "søde", "lette", "appetiser",
+                   "forret", "forretter"]
 MAIN_CATEGORIES = ["aftensmad", "hovedret", "hovedretter", "middag", "aftensretter"]
 
 # Det, retten er (navnet før "med", "og", "i" ...): en sovs, en dressing
 # eller syltede løg er ikke en aftensmad, men "Kylling i karrysauce" er
 CONDIMENT_HEADS = ["sauce", "sovs", "dressing", "dip", "marinade", "pesto", "relish", "chutney", "salsa", "pickles",
                    "aioli", "mayonnaise", "mayo", "hummus", "tzatziki", "guacamole", "remoulade", "smør", "olie",
-                   "fond", "bouillon", "krydderi", "krydderblanding", "glasur", "sirup", "pickle"]
+                   "fond", "bouillon", "krydderi", "krydderblanding", "glasur", "sirup", "pickle",
+                   # Pålæg og smørepålæg: "Gulerodspostej", "Lakserillettes", "Champignonpaté"
+                   "postej", "pate", "paté", "rillettes", "rilette", "rillette", "terrine", "potkæs", "curd",
+                   "kimchi"]
 CONDIMENT_FIRST = ["syltet", "syltede", "pickled", "picklede"]
+# Brød, boller og tilbehør, som aldrig er en aftensmad, heller ikke når
+# madsiden kalder dem en hovedret: "Klassisk hvidløgsbrød med ost og persille"
+NOT_DISH_HEADS = ["ostebrød", "hvidløgsbrød", "fletbrød", "morsbrød", "luciabrød", "baconbrød", "madbrød",
+                  "broccolibrød", "rugbrød", "rugbrødsbolle", "briocheboller", "burgerboller", "burgerbolle",
+                  "græskarboller", "melboller", "hvidløgsbaguette", "ostebaguette", "hvidløgsflute", "hvidløgsknuder",
+                  "brødsticks", "løgringe", "majskolber", "majskolbe", "padroner", "bræt"]
 # Tilbehør og frokost: aftensmad, når madsiden kalder retten en hovedret
 SIDE_HEADS = ["coleslaw", "råkost", "kartoffelmos", "croutoner", "kiks", "knækbrød", "bagels", "bagel",
               "sandwich", "sandwiches", "toast", "tilbehør", "pommes", "fritter", "bruschetta", "crostini"]
@@ -272,17 +291,42 @@ def clean_name(name: str) -> str:
     parts = [p.strip() for p in name.split("|")]
     parts = [p for p in parts if p]
     text = " ".join(parts) or name
-    text = re.sub(r"\s*\b\d+\s*portioner\b", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\s*\b\d+(?:\s*-\s*\d+)?\s*portioner\b", "", text, flags=re.IGNORECASE)
     return re.sub(r"\s+", " ", text).strip(" -–|")
 
 
-# "Rustikke gulerodsboller 6 boller", "Blåbærsnitter 6 snitter": bagværk i stk
-_PIECES_IN_NAME = re.compile(r"\b\d+\s*(boller|snitter|kager|cookies|muffins|stk)\b", re.IGNORECASE)
+# "Rustikke gulerodsboller 6 boller", "Blåbærsnitter 6 snitter": bagværk i stk.
+# "Indiske kartoffelsamosas 6 stk" og HelloFresh' "Za'atar-fladbrød 2 servinger"
+# er snacks og tilbehør, man køber ved siden af aftensmaden
+_PIECES_IN_NAME = re.compile(r"\b\d+\s*(boller|snitter|kager|cookies|muffins|stk|styk|stykker|pieces|servinger|"
+                             r"serveringer|servings)\b", re.IGNORECASE)
+
+
+@lru_cache(maxsize=1)
+def not_dishes() -> dict[str, str]:
+    """Opskrifterne i data/ikke_retter.txt: adresse -> hvorfor det ikke er en ret.
+    Filen er delt i afsnit som "[tilbehør]"; afsnittet er grunden."""
+    found: dict[str, str] = {}
+    why = "ikke en ret"
+    for line in resources.files("tilbudshenter.data").joinpath("ikke_retter.txt").read_text("utf-8").splitlines():
+        if m := re.match(r"\s*\[(.+)\]\s*$", line):
+            why = f"ikke en ret: {m.group(1).strip()}"
+        elif url := line.split("#", 1)[0].strip():
+            found[url] = why
+    return found
+
+
+def not_a_dish(recipe: dict) -> str:
+    """Hvorfor opskriften slet ikke er en ret, eller "". Dels HelloFresh'
+    "Delevenlig ret" (snackbrætter, crostini og hvidløgsbrød til at dele),
+    dels de opskrifter, der er gennemgået og skrevet i data/ikke_retter.txt."""
+    if re.search(r"delevenlig", recipe.get("name") or "", re.IGNORECASE):
+        return "ikke en ret: snack eller tilbehør til at dele"
+    return not_dishes().get(recipe.get("url", ""), "")
 
 
 def is_dinner(recipe: dict) -> bool:
-    # HelloFresh' "Delevenlig ret" er snacks til at dele (nachos, kanapéer, snackbræt)
-    if re.search(r"\bdelevenlig\b", recipe["name"], re.IGNORECASE):
+    if not_a_dish(recipe):
         return False
     name = clean_name(recipe["name"])
     if _PIECES_IN_NAME.search(name):
@@ -290,11 +334,12 @@ def is_dinner(recipe: dict) -> bool:
     text = f"{name} {recipe.get('category', '')}"
     if any(_has_word(_tokens(text), w) for w in NOT_DINNER) or any(_has_word(_tokens(name), w) for w in NOT_DINNER_NAME):
         return False
-    cats = _tokens(recipe.get("category") or "")
+    # Danske madsider med engelske kategorier: "Appetiser, Main Course"
+    cats = _tokens(translate_category(recipe.get("category") or ""))
     main = any(_has_word(cats, w) for w in MAIN_CATEGORIES)
     head = dish_head(name)
     last = head[-1] if head else ""
-    if head and (head[0] in CONDIMENT_FIRST or any(last.endswith(w) for w in CONDIMENT_HEADS)):
+    if head and (head[0] in CONDIMENT_FIRST or any(last.endswith(w) for w in CONDIMENT_HEADS + NOT_DISH_HEADS)):
         return False
     if main:
         return True
@@ -307,6 +352,8 @@ def _why_not(recipe: dict) -> str:
     """Hvorfor en hentet opskrift ikke kan bruges, eller "" hvis den kan."""
     da, why = danish(recipe)
     if da is None:
+        return why
+    if why := not_a_dish(da):
         return why
     if not is_dinner(da):
         return "ikke aftensmad"
