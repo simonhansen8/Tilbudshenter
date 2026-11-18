@@ -239,9 +239,10 @@ def extract_recipe(page: str, url: str) -> dict | None:
 # Opskrifter, der ikke er aftensmad (et sitemap har også kager og drinks)
 NOT_DINNER = ["kage", "kager", "muffin", "cookie", "småkage", "brød ", "dessert", "desserter", "is ", "smoothie",
               "drink", "cocktail", "marmelade", "syltetøj", "dressing", "snack", "konfekt", "chokolade", "grød",
-              "bagværk", "drikke", "tilbehør", "forret", "forretter", "morgenmad"]
+              "bagværk", "drikke", "tilbehør", "forret", "forretter", "morgenmad", "breakfast", "kranse", "kringle",
+              "snegle", "wienerbrød", "marcipan"]
 # Kun i navnet: "Salat med kold roastbeef" i kategorien "Aftensmad, Madpakke" er aftensmad
-NOT_DINNER_NAME = ["madpakke", "madpakken", "natmad", "pålæg", "frokostboks"]
+NOT_DINNER_NAME = ["madpakke", "madpakken", "natmad", "pålæg", "frokostboks", "avocadomad", "rugbrødsmad"]
 # Ord i navnet, der kun er aftensmad, når madsiden kalder retten en hovedret
 NOT_DINNER_UNLESS_MAIN = ["frokost", "brunch", "smørrebrød", "tapas", "frokostret"]
 
@@ -273,8 +274,14 @@ def clean_name(name: str) -> str:
     return re.sub(r"\s+", " ", text).strip(" -–|")
 
 
+# "Rustikke gulerodsboller 6 boller", "Blåbærsnitter 6 snitter": bagværk i stk
+_PIECES_IN_NAME = re.compile(r"\b\d+\s*(boller|snitter|kager|cookies|muffins)\b", re.IGNORECASE)
+
+
 def is_dinner(recipe: dict) -> bool:
     name = clean_name(recipe["name"])
+    if _PIECES_IN_NAME.search(name):
+        return False
     text = f"{name} {recipe.get('category', '')}"
     if any(_has_word(_tokens(text), w) for w in NOT_DINNER) or any(_has_word(_tokens(name), w) for w in NOT_DINNER_NAME):
         return False

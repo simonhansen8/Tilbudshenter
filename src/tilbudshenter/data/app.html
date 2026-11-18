@@ -197,6 +197,7 @@ label.field input { padding: 8px 10px; border: 1px solid var(--line); border-rad
 .dish .pantry { color: var(--muted); font-size: 13px; margin-top: 6px; }
 .dish details { margin-top: 6px; font-size: 14px; }
 .dish summary { cursor: pointer; color: var(--accent); font-size: 13px; }
+.dish details.items > summary { font-size: 14px; font-weight: 600; padding: 4px 0; }
 .dish details p { margin: 6px 0 0; }
 .dish a, .own-recipe a { color: var(--accent); }
 .dish-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
@@ -845,7 +846,7 @@ function changeSiteList(body) {
   } else if (body.action === "add_text") {
     const text = String(body.text || "").trim().slice(0, 200);
     if (!text) throw new Error("Skriv hvad der skal på listen");
-    items.push({id: "egen-" + Date.now() + "-" + items.length, dealer: null, heading: text, description: "", price: null,
+    items.push({id: "egen-" + Date.now() + "-" + items.length, dealer: body.dealer ? String(body.dealer).slice(0, 60) : null, heading: text, description: "", price: null,
       price_text: "", unit_price_text: "", period_text: "", member: null, checked: false, added: Date.now(),
       note: body.note ? String(body.note).slice(0, 200) : null, category: body.category || null});
   } else if (body.action === "check") {
@@ -1763,7 +1764,7 @@ function printList() {
 // som. Valgene huskes i browseren under tilbudshenter.mealplan og egne
 // opskrifter under tilbudshenter.myrecipes.
 const plan = {ids: [], count: 5, persons: 4, diet: "", focus: "", store: "", start: "", ratio: 0.5,
-  skipped: new Set(), have: new Set(), double: new Set()};
+  skipped: new Set(), have: new Set(), double: new Set(), open: new Set()};
 let planData = null, ING = {};
 const KIND_NAMES = {okse: "Okse", gris: "Gris", kylling: "Kylling", fisk: "Fisk", vegetar: "Vegetar", andet: "Andet kød"};
 // En grøntsagsret med ansjoser, fiskesauce eller kødbouillon er ikke vegetar
@@ -1783,6 +1784,10 @@ const OFFER_MIN_ITEMS = 2, OFFER_MIN_RATIO = 0.5, OFFER_MIN_SHARE = 0.5, OFFER_M
 // Retter, der er vist de sidste 14 dage, kommer bagerst i køen, så "Ny
 // madplan" og næste uges plan giver nye retter
 const SEEN_DAYS = 14, SEEN_PENALTY = 20;
+const DANISH_BONUS = 12;
+// Madplanens butikker: "@2" og "@1" vælger selv de (højst) 2 eller den ene
+// butik, der giver den bedste plan, så ugens indkøb kan klares ét eller to steder
+const AUTO_STORES = {"@2": 2, "@1": 1};
 const WEEKDAYS = ["søndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag"];
 
 // Ingredienser og priser hentes med det samme (de bruges også ved tilbuddene
@@ -2115,7 +2120,8 @@ function allRecipes() {
 
 function savePlan() {
   store.set("mealplan", {ids: plan.ids, count: plan.count, persons: plan.persons, diet: plan.diet, focus: plan.focus, ratio: plan.ratio,
-    store: plan.store, start: plan.start, have: [...plan.have], double: [...plan.double]});
+    store: plan.store, start: plan.start, have: [...plan.have], double: [...plan.double],
+    shops: plan.autoShops ? [...plan.autoShops] : null, v: 2});
 }
 
 function haveItem(item) { return item.keys.some(k => plan.have.has(k)); }
@@ -2161,11 +2167,13 @@ function validOn(o, day) {
   return (!o.run_from || new Date(o.run_from) <= day) && (!o.run_till || new Date(o.run_till) >= day);
 }
 
-// Kun tilbud, der gælder på mindst én af madplanens dage
-function ingredientIndex(first = startDate(), last = addDays(first, plan.count - 1), dealer = plan.store) {
+// Kun tilbud, der gælder på mindst én af madplanens dage, og kun fra
+// butikkerne i dealers (en Set eller ét navn; tom = alle mine butikker)
+function ingredientIndex(first = startDate(), last = addDays(first, plan.count - 1), dealers = planDealers()) {
+  const only = typeof dealers === "string" ? (dealers ? new Set([dealers]) : null) : dealers;
   const index = new Map();
   for (const o of state.offers) {
-    if (!planUsable(o) || (dealer && o.dealer !== dealer)) continue;
+    if (!planUsable(o) || (only && !only.has(o.dealer))) continue;
     if ((o.run_from && new Date(o.run_from) > last) || (o.run_till && new Date(o.run_till) < first)) continue;
     for (const k of o.ingredients) {
       if (!beatsBasis(o, k)) continue;
@@ -2199,14 +2207,26 @@ function bestOffer(item, index, dealer, day = null) {
 
 // Alle retter, bedste først. En ret kan komme på planen af sig selv, når en
 // hovedingrediens er på tilbud eller er noget, man har derhjemme.
-function rankRecipes() {
-  const index = ingredientIndex();
+function rankRecipes(dealers = planDealers()) {
+  const index = ingredientIndex(undefined, undefined, dealers);
   plan.index = index;
   const ranked = [];
   for (const base of allRecipes()) {
     const r = dietRecipe(base);
     if (!r) continue;
     const mainItems = r.items.filter(i => i.main);
+    // En ret uden tilbud på hovedingrediensen kan ikke blive en tilbudsret;
+    // kun egne retter og samlingens hverdagsretter (som kan fylde ugen ud) regnes igennem
+    if (r.source && !r.own) {
+      const listed = (i) => i.keys.some(k => index.has(k));
+      if (!mainItems.every(i => haveItem(i) || listed(i))) continue;
+      // Uden noget derhjemme skal nok af varerne kunne være på tilbud (se offerDish)
+      if (!mainItems.some(haveItem)) {
+        const lines = r.items.filter(i => !i.side && !haveItem(i));
+        const on = lines.filter(listed).length;
+        if (on < Math.min(OFFER_MIN_ITEMS, lines.length) || on < Math.max(OFFER_MIN_RATIO, plan.ratio) * lines.length - 1e-9) continue;
+      }
+    }
     const mains = mainItems.filter(i => !haveItem(i)).map(i => bestOffer(i, index)).filter(Boolean);
     const main = mains.length ? mains.reduce((a, b) => (b.score > a.score ? b : a)) : null;
     const items = r.items.map(item => {
@@ -2221,6 +2241,8 @@ function rankRecipes() {
     // rumpsteak er ikke en tilbudsret, fordi kartoflerne er på tilbud
     const mainsOk = items.every(y => !y.item.main || y.have || y.offer);
     entry.eligible = mainsOk && (mainItems.some(haveItem) || (!!main && offerDish(entry)));
+    // Samlingens hverdagsretter kan fylde ugen ud, selvom de ikke er tilbudsretter
+    entry.fallback = !entry.eligible && !r.source && !r.own;
     ranked.push({...entry, score: recipeScore(entry)});
   }
   return ranked.sort((a, b) => b.score - a.score);
@@ -2242,7 +2264,9 @@ function recipeScore(entry) {
     .reduce((s, y) => s + packPay(y.item, y.offer) - itemCost(y.item, y.offer).cost, 0);
   // Jo flere af rettens varer på tilbud, jo bedre
   const cover = 25 * clamp((offerStats(entry).ratio - 0.5) / 0.5);
-  return fridge + cover - 20 * clamp(waste / 100) + (plan.focus === "cheap" ? 70 * cheap + 15 * saving + 15 * green : 35 * cheap + 35 * saving + 30 * green);
+  // Danske opskrifter bruger varer og pakker fra danske butikker og er skrevet på dansk
+  const r = entry.recipe, danish = !r.source || r.own || /\.dk\//.test(r.source) ? DANISH_BONUS : 0;
+  return fridge + cover + danish - 20 * clamp(waste / 100) + (plan.focus === "cheap" ? 70 * cheap + 15 * saving + 15 * green : 35 * cheap + 35 * saving + 30 * green);
 }
 
 // Bærer tilbuddene retten? Tilbehøret og det, man har derhjemme, tæller ikke.
@@ -2292,15 +2316,21 @@ function seenPenalty(x) {
 // en grøntsagsret ved 4 eller flere retter, højst halvdelen med rødt kød,
 // højst to af samme slags og ikke det samme hovedtilbud to gange. Er der
 // for få, fyldes op uden de krav og til sidst med retter, der er byttet væk.
+// Rettens hovedingrediens, fx "hakket_gris"
+function mainKey(x) { const i = x.recipe.items.find(i => i.main); return i && i.keys[0]; }
+
 function choosePlan(ranked, keep, n) {
   // En gemt ret, der ikke længere er en tilbudsret, skiftes ud; egne retter bliver
-  const chosen = keep.map(id => ranked.find(x => x.recipe.id === id)).filter(x => x && (x.eligible || x.recipe.own));
+  const chosen = keep.map(id => ranked.find(x => x.recipe.id === id)).filter(x => x && (x.eligible || x.recipe.own || x.fallback));
   const usable = ranked.filter(x => x.eligible);
   const pool = usable.filter(x => !chosen.includes(x) && !plan.skipped.has(x.recipe.id));
   const count = (pred) => chosen.filter(pred).length;
   const red = (x) => RED.has(x.recipe.kind);
-  const fits = (x) => count(c => c.recipe.kind === x.recipe.kind) < PLAN_MAX_PER_KIND &&
-    !(x.main && chosen.some(c => c.main && c.main.id === x.main.id)) &&
+  // Variation: ikke samme hovedtilbud eller hovedingrediens to gange (fire
+  // retter med hakket grisekød er for ensformigt), højst to af samme slags
+  const fresh = (x) => !(x.main && chosen.some(c => c.main && c.main.id === x.main.id)) &&
+    !chosen.some(c => mainKey(c) && mainKey(c) === mainKey(x));
+  const fits = (x) => count(c => c.recipe.kind === x.recipe.kind) < PLAN_MAX_PER_KIND && fresh(x) &&
     (!red(x) || count(red) < Math.max(1, Math.floor(n / 2)));
   // Den næste ret er den med flest point; en ret, der bruger resten af en
   // pakke fra en anden ret, får lidt ekstra
@@ -2326,6 +2356,26 @@ function choosePlan(ranked, keep, n) {
     if (!x) break;
     chosen.push(x);
   }
+  // Derefter tilbudsretter med færre krav til slags (en vegetar spiser kun
+  // vegetarretter), men stadig uden gentagelser
+  const perKind = plan.diet === "vegetar" ? Infinity : PLAN_MAX_PER_KIND + 1;
+  while (chosen.length < n) {
+    const x = pick(x => fresh(x) && count(c => c.recipe.kind === x.recipe.kind) < perKind);
+    if (!x) break;
+    chosen.push(x);
+  }
+  // Er der ikke tilbudsretter nok, fyldes ugen ud med billige hverdagsretter
+  // fra samlingen (helst af forskellig slags), så der er aftensmad alle dage,
+  // hellere end med fire retter med samme tilbud
+  const extra = ranked.filter(x => x.fallback && !plan.skipped.has(x.recipe.id));
+  for (const varied of [true, false]) {
+    for (const x of extra) {
+      if (chosen.length >= n) break;
+      if (chosen.includes(x) || (varied && (!fresh(x) || chosen.some(c => c.recipe.kind === x.recipe.kind && c.fallback)))) continue;
+      chosen.push(x);
+    }
+  }
+  // Til sidst tilbudsretter uden kravene og retter, der er byttet væk
   for (const x of [...pool, ...usable]) {
     if (chosen.length >= n) break;
     if (!chosen.includes(x)) chosen.push(x);
@@ -2377,41 +2427,94 @@ function fitDay(e) {
   return {...e, items};
 }
 
-function planEntries() {
-  const ranked = rankRecipes();
-  const fresh = !plan.ids.length;
-  let entries = choosePlan(ranked, plan.ids, dishCount());
-  if (fresh) entries = arrange(entries);
-  let day = 0;
-  const picked = [];
-  for (const x of entries) {
-    const mult = plan.double.has(x.recipe.id) ? 2 : 1;
-    let e = fitDay({...x, mult, day: addDays(startDate(), day)});
-    // Et tilbud, der er slut på rettens dag, kan gøre, at retten ikke
-    // længere er en tilbudsret; så tager en anden ret, der er det, dagen
-    // (helst en, der ikke lige er byttet væk); findes ingen, udgår dagen
-    if (!x.recipe.own && !dayOk(e)) {
-      const used = new Set([...entries, ...picked].map(y => y.recipe.id));
-      const free = ranked.filter(c => c.eligible && !used.has(c.recipe.id));
-      let found = null;
-      for (const c of [...free.filter(c => !plan.skipped.has(c.recipe.id)), ...free.filter(c => plan.skipped.has(c.recipe.id))]) {
-        const ce = fitDay({...c, mult, day: e.day});
-        if (dayOk(ce)) { found = ce; break; }
-      }
-      if (plan.double.delete(x.recipe.id) && found) plan.double.add(found.recipe.id);
-      if (!found) continue;
-      e = found;
+// Butikkerne, madplanen handler i: ét navn, en Set eller null (alle mine butikker)
+function planDealers() {
+  const max = AUTO_STORES[plan.store];
+  if (!max) return plan.store || null;
+  if (plan.autoShops === undefined || plan.autoShops === null) plan.autoShops = chooseShops(max) || false;
+  return plan.autoShops || null;
+}
+
+// De (højst) max butikker, der giver den bedste plan: flest tilbudsretter,
+// derefter flest point (pris, besparelse og grønt) og lavest pris for de hele
+// pakker (hver krone tæller som et point). Hver butik prøves for sig, og de bedste seks prøves to og to.
+function chooseShops(max) {
+  const stores = [...new Set(state.offers.filter(planUsable).map(o => o.dealer))];
+  const tried = new Map();
+  const value = (combo) => {
+    const key = [...combo].sort().join("|");
+    if (!tried.has(key)) {
+      // Planen, som den bliver dag for dag (et tilbud, der først starter
+      // senere, kan give en anden ret)
+      const entries = buildEntries(rankRecipes(new Set(combo)), [], new Set());
+      buyPacks(entries);
+      const pay = entries.reduce((sum, x) => sum + dishPay(x), 0);
+      tried.set(key, 1000 * entries.filter(x => x.eligible).length + entries.reduce((sum, x) => sum + x.score, 0) - pay);
     }
-    day += mult;
-    picked.push(e);
+    return tried.get(key);
+  };
+  const singles = stores.map(st => [st]).sort((a, b) => value(b) - value(a));
+  if (!singles.length) return null;
+  let best = singles[0];
+  if (max >= 2) {
+    const top = singles.slice(0, 6).map(c => c[0]);
+    for (const [i, a] of top.entries()) for (const b of top.slice(i + 1)) if (value([a, b]) > value(best)) best = [a, b];
   }
-  const result = picked;
+  return new Set(best);
+}
+
+function planEntries() {
+  const fresh = !plan.ids.length;
+  // En ny plan vælger sine butikker igen; en plan, man retter i, beholder dem
+  if (fresh) plan.autoShops = null;
+  const result = buildEntries(rankRecipes(), plan.ids, plan.double);
   plan.ids = result.map(x => x.recipe.id);
   markSeen(result);
   plan.double = new Set([...plan.double].filter(id => plan.ids.includes(id)));
   savePlan();
   buyPacks(result);
   return result;
+}
+
+// Retterne dag for dag ud fra ranked: keep er de retter, planen har i
+// forvejen, og double de dobbelte portioner (opdateres, når en ret byttes)
+function buildEntries(ranked, keep, double) {
+  const fresh = !keep.length;
+  const dishes = Math.max(1, plan.count - keep.filter(id => double.has(id)).length);
+  let entries = choosePlan(ranked, keep, dishes);
+  if (fresh) entries = arrange(entries);
+  let day = 0;
+  const picked = [];
+  for (const [n, x] of entries.entries()) {
+    const mult = double.has(x.recipe.id) ? 2 : 1;
+    let e = fitDay({...x, mult, day: addDays(startDate(), day)});
+    // Et tilbud, der er slut på rettens dag, kan gøre, at retten ikke
+    // længere er en tilbudsret; så tager en anden ret, der er det, dagen
+    // (helst en, der giver variation og ikke lige er byttet væk, ellers en
+    // billig hverdagsret)
+    if (!x.recipe.own && !x.fallback && !dayOk(e)) {
+      const used = new Set([...entries, ...picked].map(y => y.recipe.id));
+      const others = [...picked, ...entries.slice(n + 1)];
+      const varied = (c) => !others.some(o => (mainKey(o) && mainKey(o) === mainKey(c)) || (o.main && c.main && o.main.id === c.main.id))
+        && others.filter(o => o.recipe.kind === c.recipe.kind).length < PLAN_MAX_PER_KIND;
+      const free = ranked.filter(c => c.eligible && !used.has(c.recipe.id));
+      const spare = ranked.filter(c => c.fallback && !used.has(c.recipe.id));
+      const skipped = (c) => plan.skipped.has(c.recipe.id);
+      const order = [free.filter(c => varied(c) && !skipped(c)), free.filter(c => varied(c) && skipped(c)),
+        spare.filter(varied), free.filter(c => !skipped(c)), free, spare].flat();
+      let found = null;
+      for (const c of order) {
+        const ce = fitDay({...c, mult, day: e.day});
+        if (c.fallback || dayOk(ce)) { found = ce; break; }
+      }
+      if (double.delete(x.recipe.id) && found) double.add(found.recipe.id);
+      if (!found) continue;
+      e = found;
+    }
+    day += mult;
+    picked.push(e);
+  }
+  return picked;
 }
 
 // -- Mængder og priser ---------------------------------------------------
@@ -2628,11 +2731,13 @@ function renderPlan() {
       <div class="day">${esc(days)}</div>
       <div class="dish-head"><h3>${esc(r.name)}</h3>
         <span class="price-tag">ca. ${kr(pay)}</span></div>
-      <div class="sub">${Math.abs(pay - cost) >= 1 ? `Retten bruger for ca. ${kr(cost)} · ` : ""}${kr(cost / plan.persons / x.mult)} pr. person · ${esc(kindName(r))}
-        ${r.minutes ? ` · ${r.minutes} min` : ""} · ${r.veg_g} g grønt pr. person · ${onOffer} af ${x.items.length} varer på tilbud${onOffer ? ` (${Math.round(offerStats(x).share * 100)} % af prisen)` : ""}
-        ${have ? ` · ${have} har du` : ""}${unknown ? ` · ${unknown} ${unknown === 1 ? "vare" : "varer"} uden kendt pris er ikke regnet med` : ""}${source ? ` · ${esc(source)}` : ""}
+      <div class="sub">${kr(cost / plan.persons / x.mult)} pr. person · ${esc(kindName(r))}${r.minutes ? ` · ${r.minutes} min` : ""}${source ? ` · ${esc(source)}` : ""}
         ${normal - cost >= 5 ? ` · <b class="save">sparer ca. ${kr(normal - cost)}</b>` : ""}</div>
+      ${x.fallback ? `<div class="leftover">Ingen tilbud på hovedvaren i ${plan.store && !AUTO_STORES[plan.store] ? esc(plan.store) : "dine butikker"} lige nu, så her er en billig hverdagsret, så ugen er fuld. Tryk Byt ret for en anden.</div>` : ""}
       ${x.mult === 2 ? `<div class="leftover">Dobbelt portion: lav det hele ${esc(WEEKDAYS[x.day.getDay()])}, og gem halvdelen til ${esc(WEEKDAYS[addDays(x.day, 1).getDay()])}.</div>` : ""}
+      <details class="items" data-items="${esc(r.id)}" ${plan.open.has(r.id) ? "open" : ""}>
+        <summary>Varer: ${onOffer} af ${x.items.length} på tilbud${dishShops(x).length ? ` i ${esc(joinDa(dishShops(x)))}` : ""}${have ? ` · ${have} har du` : ""}</summary>
+        <div class="sub">${Math.abs(pay - cost) >= 1 ? `Du betaler ca. ${kr(pay)} for hele pakker; retten bruger for ca. ${kr(cost)}. ` : ""}${r.veg_g} g grønt pr. person${onOffer ? ` · tilbuddene er ${Math.round(offerStats(x).share * 100)} % af prisen` : ""}${unknown ? ` · ${unknown} ${unknown === 1 ? "vare" : "varer"} uden kendt pris er ikke regnet med` : ""}</div>
       <ul>${x.items.map((y, j) => {
         const c = lineCost(y, x.mult);
         const src = y.have ? "har du derhjemme" : y.offer ? offerLine(y.offer, y.item.keys.find(k => y.offer.ingredients.includes(k)))
@@ -2644,8 +2749,8 @@ function renderPlan() {
         <span class="cost">${c.unknown ? "" : y.rest && !y.have ? "rest" : `${c.estimate && y.offer && !y.buy ? "ca. " : ""}${kr(linePay(y, c))}`}
           ${y.item.keys.length ? `<button class="link" data-have="${i}:${j}">${y.have ? "har ikke" : "har jeg"}</button>` : ""}</span>
         ${buyLine(y, c, x.mult)}</li>`;
-      }).join("")}</ul>
-      ${r.pantry.length ? `<div class="pantry">Har du derhjemme: ${esc(r.pantry.join(", "))}</div>` : ""}
+      }).join("")}</ul></details>
+      ${pantryText(r)}
       ${how}
       <div class="dish-actions">
         <button class="btn small" data-swap="${i}">Byt ret</button>
@@ -2663,6 +2768,62 @@ function renderPlan() {
 
 // Den samlede pris for hele madplanen, øverst over retterne: det, du betaler
 // i butikken for hele pakker, og det, retterne bruger af dem
+// Butikkerne, planens tilbud købes i, flest varer først
+// Det, opskrifterne regner med, man har derhjemme: salt, olie og krydderier
+// har de fleste, men harissa, kapers og frisk dild skal ofte købes. De kommer
+// på indkøbslisten som "Tjek om du har". [ord, navn på listen, afdeling]
+const CHECK_PANTRY = [
+  ["harissa", "Harissa", "kolonial"], ["tahin", "Tahin", "kolonial"], ["kapers", "Kapers", "kolonial"],
+  ["panko", "Panko", "kolonial"], ["pinjekerner", "Pinjekerner", "kolonial"], ["hoisin", "Hoisinsauce", "kolonial"],
+  ["sriracha", "Sriracha", "kolonial"], ["citrongræs", "Citrongræs", "frugt_og_groent"],
+  ["karrypasta", "Karrypasta", "kolonial"], ["fiskesauce", "Fiskesauce", "kolonial"], ["østerssauce", "Østerssauce", "kolonial"],
+  ["miso", "Miso", "kolonial"], ["mirin", "Mirin", "kolonial"], ["teriyaki", "Teriyakisauce", "kolonial"],
+  ["sambal", "Sambal oelek", "kolonial"], ["pesto", "Pesto", "kolonial"], ["oliven", "Oliven", "kolonial"],
+  ["soltørrede", "Soltørrede tomater", "kolonial"], ["jalapeño", "Jalapeños", "kolonial"], ["jalapeños", "Jalapeños", "kolonial"],
+  ["peanuts", "Peanuts", "kolonial"], ["cashew", "Cashewnødder", "kolonial"], ["mandler", "Mandler", "kolonial"],
+  ["valnødder", "Valnødder", "kolonial"], ["nødder", "Nødder", "kolonial"], ["rosiner", "Rosiner", "kolonial"],
+  ["tranebær", "Tørrede tranebær", "kolonial"], ["dadler", "Dadler", "kolonial"], ["kokosmel", "Kokosmel", "kolonial"],
+  ["sesamfrø", "Sesamfrø", "kolonial"], ["græskarkerner", "Græskarkerner", "kolonial"], ["solsikkekerner", "Solsikkekerner", "kolonial"],
+  ["remoulade", "Remoulade", "kolonial"], ["mayonnaise", "Mayonnaise", "kolonial"], ["chutney", "Chutney", "kolonial"],
+  ["chilisauce", "Chilisauce", "kolonial"], ["barbecuesauce", "Barbecuesauce", "kolonial"], ["bbq", "Barbecuesauce", "kolonial"],
+  ["garam", "Garam masala", "kolonial"], ["hvidvin", "Hvidvin", "oel_og_vin"], ["rødvin", "Rødvin", "oel_og_vin"],
+  ["ansjos", "Ansjoser", "kolonial"], ["nori", "Noriark", "kolonial"],
+  ["thaibasilikum", "Frisk thaibasilikum", "frugt_og_groent"], ["basilikum", "Frisk basilikum", "frugt_og_groent"],
+  ["koriander", "Frisk koriander", "frugt_og_groent"], ["dild", "Frisk dild", "frugt_og_groent"],
+  ["purløg", "Frisk purløg", "frugt_og_groent"], ["mynte", "Frisk mynte", "frugt_og_groent"],
+  ["estragon", "Frisk estragon", "frugt_og_groent"], ["karse", "Karse", "frugt_og_groent"],
+];
+// Tørrede krydderurter har man; "stødt koriander" og "tørret dild" er ikke friske
+const DRIED = ["stødt", "tørret", "tørrede", "frø", "pulver"];
+// Det valgfrie ("evt. dild", "persille til pynt") skal ikke købes
+const NOT_NEEDED_RE = /(?<![\p{L}])(evt|eventuelt|valgfri|valgfrit|optional|pynt|servering)(?![\p{L}])/iu;
+function checkPantry(text) {
+  const toks = tokens(text);
+  if (NOT_NEEDED_RE.test(text)) return null;
+  for (const [word, name, dept] of CHECK_PANTRY) {
+    // Som ord eller sidst i et ord ("kalamataoliven"), ikke "olivenolie"
+    const rest = (t) => t.slice(word.length);
+    if (!toks.some(t => t === word || t.endsWith(word) || (t.startsWith(word) && (rest(t).length <= 2 || rest(t) === "blade")))) continue;
+    if (name.startsWith("Frisk") && DRIED.some(d => toks.some(t => t.startsWith(d) || t.endsWith(d)))) return null;
+    return {word, name, dept};
+  }
+  return null;
+}
+
+function pantryText(r) {
+  const check = [...new Set(r.pantry.map(checkPantry).filter(Boolean).map(c => c.name.toLowerCase()))];
+  const home = r.pantry.filter(t => !checkPantry(t));
+  return (check.length ? `<div class="pantry"><b>Tjek om du har:</b> ${esc(check.join(", "))} (kommer på indkøbslisten)</div>` : "")
+    + (home.length ? `<div class="pantry">Har du derhjemme: ${esc(home.join(", "))}</div>` : "");
+}
+
+function dishShops(x) { return [...new Set(x.items.filter(y => y.offer && !y.have).map(y => y.offer.dealer))]; }
+
+function planShops(entries) {
+  const n = new Map();
+  for (const x of entries) for (const y of x.items) if (y.offer && !y.have) n.set(y.offer.dealer, (n.get(y.offer.dealer) || 0) + 1);
+  return [...n.keys()].sort((a, b) => n.get(b) - n.get(a));
+}
 function planTotal(entries) {
   const pay = entries.reduce((s, x) => s + dishPay(x), 0);
   const used = entries.reduce((s, x) => s + dishCost(x), 0);
@@ -2672,8 +2833,10 @@ function planTotal(entries) {
   const have = lines.filter(l => l.y.have).length, unknown = lines.filter(l => !l.y.have && l.c.unknown).length;
   const ends = entries.flatMap(x => [x.day, addDays(x.day, x.mult - 1)]).sort((a, b) => a - b);
   const first = ends[0], last = ends[ends.length - 1];
+  const shops = planShops(entries);
   const details = [
     `${esc(cap(dayName(first)))} til ${esc(dayName(last))} · ${entries.length} retter til ${days} dage`,
+    ...(shops.length ? [`<b>Handl i ${esc(joinDa(shops))}</b>${shops.length > 2 && !plan.store ? " (vælg Højst 2 butikker under Butik for færre)" : ""}`] : []),
     `Retterne bruger for ca. ${kr(used)}: ${kr(used / days)} pr. dag og ${kr(used / days / plan.persons)} pr. person pr. dag`,
   ];
   if (pay - used >= 1) details.push(`Resten af pakkerne, ca. ${kr(pay - used)}, kan bruges senere`);
@@ -2702,9 +2865,14 @@ async function openPlan() {
   plan.skipped = new Set();
   plan.seen = store.get("seen", {});
   const stores = [...new Set(state.offers.filter(planUsable).map(o => o.dealer))].sort((a, b) => a.localeCompare(b, "da"));
-  plan.store = stores.includes(saved.store) ? saved.store : "";
-  $("plan-store").innerHTML = `<option value="">Alle mine butikker</option>` +
-    stores.map(st => `<option ${st === plan.store ? "selected" : ""}>${esc(st)}</option>`).join("");
+  // Før version 2 var "Alle mine butikker" standard; nu handles der højst to steder
+  plan.store = stores.includes(saved.store) ? saved.store
+    : saved.v >= 2 && (saved.store === "" || saved.store in AUTO_STORES) ? saved.store : "@2";
+  const shops = (saved.shops || []).filter(st => stores.includes(st));
+  plan.autoShops = plan.ids.length && shops.length ? new Set(shops) : null;
+  $("plan-store").innerHTML = [["@2", "Højst 2 butikker"], ["@1", "Kun 1 butik"], ["", "Alle mine butikker"]]
+    .map(([v, label]) => `<option value="${v}" ${v === plan.store ? "selected" : ""}>${label}</option>`).join("") +
+    `<optgroup label="Kun denne butik">` + stores.map(st => `<option ${st === plan.store ? "selected" : ""}>${esc(st)}</option>`).join("") + `</optgroup>`;
   $("plan-count").innerHTML = [1, 2, 3, 4, 5, 6, 7].map(n => `<option ${n === plan.count ? "selected" : ""}>${n}</option>`).join("");
   $("plan-persons").innerHTML = [1, 2, 3, 4, 5, 6, 8].map(n => `<option ${n === plan.persons ? "selected" : ""}>${n}</option>`).join("");
   $("plan-start").innerHTML = [0, 1, 2, 3, 4, 5, 6].map(n => {
@@ -2791,21 +2959,36 @@ async function planToList() {
   }).join(" + ");
   const note = (e) => (e.buy && e.buy.count > 1 && !e.buy.stk ? `${packText(e.buy)} · ` : "")
     + [amounts(e), `til ${joinDa(e.dishes)}`].filter(Boolean).join(" ");
+  // Varer uden tilbud købes i den butik, hvor de fleste af ugens tilbud er,
+  // så man ikke skal et ekstra sted hen
+  const main = planShops(entries)[0] || null;
   const texts = [...extra.values()].map(e => {
     const name = e.item.side === "groent" ? "Grønt tilbehør (råkost, salat eller broccoli)" : cap(e.item.name);
     const a = amounts(e);
-    return {text: name + (a ? ` (${a})` : ""), note: `til ${joinDa(e.dishes)}`,
+    return {text: name + (a ? ` (${a})` : ""), note: `ikke på tilbud · til ${joinDa(e.dishes)}`, dealer: main,
       category: e.item.keys.length ? ING[e.item.keys[0]].dept : "andet"};
-  }).filter(t => !state.list.some(i => i.heading === t.text));
+  });
+  // Det, opskrifterne regner med, at man har, men som tit skal købes
+  const check = new Map();
+  for (const x of entries) for (const t of x.recipe.pantry) {
+    const c = checkPantry(t);
+    if (!c) continue;
+    const e = check.get(c.name) || {...c, dishes: []};
+    if (!e.dishes.includes(x.recipe.name)) e.dishes.push(x.recipe.name);
+    check.set(c.name, e);
+  }
+  for (const c of check.values())
+    texts.push({text: c.name, note: `tjek om du har det · til ${joinDa(c.dishes)}`, dealer: main, category: c.dept});
+  const newTexts = texts.filter(t => !state.list.some(i => i.heading === t.text));
   const btn = $("btn-plan-list");
   btn.disabled = true;
   try {
     for (const e of offers.values()) {
       state.list = (await api("/api/list", {action: "add", id: e.offer.id, note: note(e), count: e.buy ? e.buy.count : 1})).items;
     }
-    for (const t of texts) state.list = (await api("/api/list", {action: "add_text", ...t})).items;
-    toast(offers.size || texts.length
-      ? `${offers.size} tilbud og ${texts.length} andre varer er lagt på indkøbslisten`
+    for (const t of newTexts) state.list = (await api("/api/list", {action: "add_text", ...t})).items;
+    toast(offers.size || newTexts.length
+      ? `${offers.size} tilbud og ${newTexts.length} andre varer er lagt på indkøbslisten`
       : "Varerne er allerede på indkøbslisten");
   } catch (e) { toast(e.message); }
   finally { btn.disabled = false; }
@@ -2870,6 +3053,11 @@ $("plan-have").addEventListener("click", e => {
   if (e.target.dataset.unhave) { plan.have.delete(e.target.dataset.unhave); renderPlan(); }
   else if (e.target.id === "btn-have-clear") { plan.have = new Set(); renderPlan(); }
 });
+// Hvilke retters varer er foldet ud; det huskes, når planen tegnes igen
+$("plan-body").addEventListener("toggle", e => {
+  const d = e.target.closest && e.target.closest("[data-items]");
+  if (d && e.target === d) d.open ? plan.open.add(d.dataset.items) : plan.open.delete(d.dataset.items);
+}, true);
 $("plan-body").addEventListener("click", e => {
   const d = e.target.dataset;
   if (d.swap !== undefined) swapDish(Number(d.swap));

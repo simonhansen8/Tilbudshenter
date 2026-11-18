@@ -318,6 +318,11 @@ plan giver nye retter.
   kategori), og en hentet opskrift skal mætte (mindst 120 kcal pr. person af
   de varer, der kan genkendes, 250 kcal for supper og salater) og have kød,
   fisk, æg, bælgfrugter, tofu eller ost (mindst 60 g til 4 personer).
+  Desserter og bagværk (en ret uden kød med fx marcipan, vanilje, flormelis
+  eller glasur), bagværk i stk ("6 boller") og morgenmad kommer heller ikke
+  med. Danske opskrifter
+  (madsider på .dk og samlingens hverdagsretter) får ekstra point, fordi de
+  bruger varer og pakker fra danske butikker og er skrevet på dansk.
 - Mangler en ret kartofler, ris, pasta, brød eller lignende, får den
   kartofler som tilbehør, eller ris til fx karry, wok og chili, så prisen er
   for et helt måltid.
@@ -335,11 +340,24 @@ plan giver nye retter.
   lægge mest vægt på prisen.
 - Planen følger kostrådene: fisk hver uge (to gange ved 6-7 retter), en
   grøntsagsret ved 4 eller flere retter, højst halvdelen med rødt kød og højst
-  to retter af samme slags. Retter med under 125 g grønt pr. person får grønt
+  to retter af samme slags. Samme hovedingrediens (fx hakket grisekød) eller
+  samme hovedtilbud bruges ikke to gange, så ugen ikke bliver fire slags
+  frikadeller. Retter med under 125 g grønt pr. person får grønt
   tilbehør, fx råkost, af det billigste grønt på tilbud.
+- Under **Butik** er standardvalget **Højst 2 butikker**: madplanen prøver
+  de butikker, hvor ugens bedste tilbudsretter har deres hovedtilbud, og
+  vælger de to (eller **Kun 1 butik**: den ene), der giver flest
+  tilbudsretter og de bedste point. Øverst står, hvor du skal handle. Ugen
+  bliver lidt dyrere end med alle butikker, men skal kun købes ind ét eller
+  to steder. Du kan også vælge **Alle mine butikker** eller én bestemt
+  butik. Butikkerne vælges, når planen laves, og ændres ikke, når du bytter
+  eller flytter retter.
+- Er der ikke tilbudsretter nok (fx med kun én butik), fyldes ugen ud med
+  billige hverdagsretter fra samlingen, så der er aftensmad alle dage. De
+  er mærket, så du kan se, at hovedvaren ikke er på tilbud.
 - For hver vare vises det billigste tilbud pr. kg, helst fra den butik, hvor
-  hovedingrediensen købes, så en ret kan købes ind ét sted. Du kan også
-  vælge én bestemt butik.
+  hovedingrediensen købes, så en ret kan købes ind ét sted. Varerne står
+  under **Varer** ved hver ret, som foldes ud med et tryk.
 - Et tilbud bruges kun, når det er billigere end **basisvaren**: den
   rigtige hyldepris uden tilbud i REMA 1000 på den billigste almindelige (ikke
   økologiske) udgave af varen. Hele REMA 1000's sortiment hentes fra deres
@@ -397,8 +415,12 @@ plan giver nye retter.
 - **Læg på indkøbslisten** lægger tilbuddene og de varer, der ikke er på
   tilbud, på indkøbslisten. Samme vare i flere retter lægges sammen, med en
   note om mængden og retterne, og antallet af pakker står på listen og
-  ganges med i prisen. Krydderier, olie og mel regnes som noget, man
-  har derhjemme. Indkøbslisten er sorteret efter afdeling i butikken.
+  ganges med i prisen. Varer uden tilbud lægges under den butik, hvor de
+  fleste af ugens tilbud købes. Krydderier, olie og mel regnes som noget, man
+  har derhjemme, men det, man ofte ikke har (fx harissa, kapers, pesto,
+  nødder og friske krydderurter som dild og koriander), står ved retten som
+  **Tjek om du har** og kommer på listen med en note. Indkøbslisten er
+  sorteret efter afdeling i butikken.
 
 Under **På tilbud** vælger du, hvor mange af rettens varer der skal være på
 tilbud: mindst halvdelen (standard), mindst 3 af 4 eller alle. Krydderier,
