@@ -117,7 +117,8 @@ class Storage:
         self.conn.executescript(SCHEMA)
         # Kolonner der er kommet til siden databasen blev oprettet
         added = {
-            "shopping_list": {"note": "TEXT", "category": "TEXT", "count": "INTEGER"},
+            # plan = 1: lagt på listen af madplanen, så en ny madplan kan erstatte den
+            "shopping_list": {"note": "TEXT", "category": "TEXT", "count": "INTEGER", "plan": "INTEGER"},
             "catalogs": {"url": "TEXT", "pages": "TEXT", "scan_version": "INTEGER"},
             "offers": {"catalog_page": "INTEGER", "catalog_order": "INTEGER"},
         }
@@ -347,17 +348,19 @@ class Storage:
         ).fetchall()
         return [{**dict(r), "checked": bool(r["checked"])} for r in rows]
 
-    def add_to_list(self, offer_id: str, note: str | None = None, count: int | None = None) -> bool:
+    def add_to_list(self, offer_id: str, note: str | None = None, count: int | None = None,
+                    plan: bool = False) -> bool:
         """Lægger et tilbud på listen, evt. i flere pakker. Returnerer False,
-        hvis tilbuddet ikke findes."""
+        hvis tilbuddet ikke findes. ``plan``: lagt på af madplanen (gælder kun,
+        når tilbuddet ikke allerede er på listen)."""
         cur = self.conn.execute(
             """
             INSERT OR IGNORE INTO shopping_list
-                (id, dealer, heading, description, price, unit, amount, run_from, run_till, added_at, category)
-            SELECT id, dealer, heading, description, price, unit, amount, run_from, run_till, ?, category
+                (id, dealer, heading, description, price, unit, amount, run_from, run_till, added_at, category, plan)
+            SELECT id, dealer, heading, description, price, unit, amount, run_from, run_till, ?, category, ?
             FROM offers WHERE id = ?
             """,
-            (_now(), offer_id),
+            (_now(), int(plan), offer_id),
         )
         if note:
             self.conn.execute("UPDATE shopping_list SET note = ? WHERE id = ?", (note, offer_id))
@@ -369,12 +372,14 @@ class Storage:
         ).fetchone() is not None
 
     def add_text_to_list(self, text: str, note: str | None = None, category: str | None = None,
-                         dealer: str | None = None) -> str:
-        """Lægger en egen vare (fx "mælk") på listen, evt. under en butik."""
+                         dealer: str | None = None, price: float | None = None, plan: bool = False) -> str:
+        """Lægger en egen vare (fx "mælk") på listen, evt. under en butik og
+        med en anslået pris (varer uden tilbud fra madplanen)."""
         item_id = f"egen-{datetime.now(timezone.utc).timestamp():.6f}"
         self.conn.execute(
-            "INSERT INTO shopping_list (id, heading, added_at, note, category, dealer) VALUES (?, ?, ?, ?, ?, ?)",
-            (item_id, text.strip(), _now(), note, category, dealer),
+            "INSERT INTO shopping_list (id, heading, added_at, note, category, dealer, price, plan)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (item_id, text.strip(), _now(), note, category, dealer, price, int(plan)),
         )
         self.conn.commit()
         return item_id
@@ -390,3 +395,9 @@ class Storage:
     def clear_list(self, only_checked: bool = False) -> None:
         self.conn.execute("DELETE FROM shopping_list" + (" WHERE checked = 1" if only_checked else ""))
         self.conn.commit()
+
+    def clear_plan_items(self) -> int:
+        """Fjerner det, madplanen har lagt på listen, og som ikke er købt endnu."""
+        n = self.conn.execute("DELETE FROM shopping_list WHERE plan = 1 AND checked = 0").rowcount
+        self.conn.commit()
+        return n

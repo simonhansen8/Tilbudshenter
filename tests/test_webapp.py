@@ -221,3 +221,17 @@ def test_own_item_can_belong_to_a_store(tmp_path):
         storage.add_text_to_list("Pasta (400 g)", note="ikke på tilbud", category="kolonial", dealer="Netto")
         item = storage.shopping_list()[0]
     assert (item["heading"], item["dealer"], item["category"]) == ("Pasta (400 g)", "Netto", "kolonial")
+
+
+def test_new_meal_plan_replaces_the_old_one_on_the_list(tmp_path):
+    from tilbudshenter.storage import Storage
+
+    with Storage(tmp_path / "t.db") as storage:
+        storage.add_text_to_list("Mælk")  # lagt på af brugeren
+        old = storage.add_text_to_list("Ris (300 g)", price=4.5, plan=True)
+        bought = storage.add_text_to_list("Løg (1 net)", price=7.0, plan=True)
+        storage.set_list_checked(bought, True)
+        assert storage.clear_plan_items() == 1
+        left = {i["heading"]: i for i in storage.shopping_list()}
+    assert set(left) == {"Mælk", "Løg (1 net)"} and old not in {i["id"] for i in left.values()}
+    assert left["Løg (1 net)"]["price"] == 7.0

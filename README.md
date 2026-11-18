@@ -390,11 +390,19 @@ plan giver nye retter.
   (pr. dag og pr. person), hvad resten af pakkerne er værd, og hvor meget
   tilbuddene sparer. Varer, du har derhjemme, og varer uden kendt pris er ikke regnet
   med.
-- Vælg første dag, antal dage, antal personer (mængderne skaleres) og kost
-  (alt, uden svinekød, uden fisk eller vegetar). Hver ret får en dag: retter
-  over 45 minutter lægges i weekenden og de hurtige på hverdagene. **↑** og
-  **↓** flytter en ret, **Byt ret** giver det næste bedste forslag, og **Ny
-  madplan** giver helt nye retter.
+- Øverst står valgene på én linje (fx "5 dage fra i dag · 4 pers. · højst
+  2 butikker"); tryk **Ret** for at vælge første dag, antal dage, antal
+  personer (mængderne skaleres), kost (alt, uden svinekød, uden fisk eller
+  vegetar), butik og hvor mange varer der skal være på tilbud. Hver ret får
+  en dag: retter over 45 minutter lægges i weekenden og de hurtige på
+  hverdagene. **↑** og **↓** flytter en ret, **Byt ret** viser fire andre
+  retter, der passer ind i planen (pris pr. person, tid og hvor mange varer
+  der er på tilbud), at vælge imellem, og **Ny madplan** giver helt nye retter.
+- Retterne står på deres dato. Åbner du planen senere på ugen, er de dage,
+  der er gået, væk, og resten står, hvor de stod, så de passer til det, du
+  har købt. Først når alle dagene er gået, laves en ny plan.
+- Øverst står også, hvad der er tilovers af pakkerne efter ugen (fx "400 g
+  ris, citron (ca. 4 stk)"), og hvilke tilbud der først kan købes senere.
 - **Dobbelt portion** laver retten til to dage, så resten spises dagen efter.
 - **Det har jeg allerede**: skriv, hvad du har i køleskabet eller skabet
   (eller tryk **har jeg** ved en vare). Retter, der bruger det, kommer
@@ -419,8 +427,12 @@ plan giver nye retter.
   fleste af ugens tilbud købes. Krydderier, olie og mel regnes som noget, man
   har derhjemme, men det, man ofte ikke har (fx harissa, kapers, pesto,
   nødder og friske krydderurter som dild og koriander), står ved retten som
-  **Tjek om du har** og kommer på listen med en note. Indkøbslisten er
-  sorteret efter afdeling i butikken.
+  **Tjek om du har** og kommer på listen med en note. Varer uden tilbud får
+  den anslåede pris for hele pakker, så listens sum passer med madplanens.
+  Laver du en ny madplan og lægger den på listen, erstatter den den forrige
+  madplans varer; det, du har sat hak ved, og det, du selv har lagt på,
+  bliver. Listen åbnes, så du kan se den. Indkøbslisten er sorteret efter
+  afdeling i butikken.
 
 Under **På tilbud** vælger du, hvor mange af rettens varer der skal være på
 tilbud: mindst halvdelen (standard), mindst 3 af 4 eller alle. Krydderier,
@@ -443,10 +455,9 @@ netop dens ingredienser på listen. Under opskriften kan du også vælge
 retten til en anden uge. Under hver vare står det billigste tilbud i ugen
 fra dine butikker (tryk for at se tilbuddet), og ved retten står, hvor
 mange varer der er på tilbud. For de kommende uger vises kun de tilbud,
-der allerede er kendt. Vælg **Størst andel på tilbud** eller **Flest varer på tilbud** i stedet for **Alfabetisk**
-(eller tryk **Opskrifter på tilbud** øverst på siden) for kun at se retter
-med varer på tilbud i ugen, sorteret efter hvor stor en andel af varerne
-der er på tilbud, eller hvor mange varer der er på tilbud. Hver ret kan åbnes, lægges i en uge og på
+der allerede er kendt. Som standard står retterne med den største andel
+af varerne på tilbud først (kun retter med varer på tilbud i ugen); vælg
+**Flest varer på tilbud** eller **Alfabetisk** for en anden rækkefølge. Hver ret kan åbnes, lægges i en uge og på
 indkøbslisten. Ved hver ret står, hvad den koster til ugens antal
 personer, og i den åbne ret står prisen for hver vare: hele pakker af
 tilbuddet eller basisvaren, som i madplanen. I madplanen

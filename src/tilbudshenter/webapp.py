@@ -168,20 +168,26 @@ class App:
                     count = int(data.get("count") or 0) or None
                 except (TypeError, ValueError):
                     count = None
-                if not storage.add_to_list(str(data.get("id", "")), note, count):
+                if not storage.add_to_list(str(data.get("id", "")), note, count, plan=bool(data.get("plan"))):
                     raise ValueError("Tilbuddet findes ikke længere")
             elif action == "add_text":
                 text = str(data.get("text", "")).strip()
                 if not text:
                     raise ValueError("Skriv hvad der skal på listen")
+                try:
+                    price = round(float(data["price"]), 2) if data.get("price") not in (None, "") else None
+                except (TypeError, ValueError):
+                    price = None
                 storage.add_text_to_list(text[:200], note, str(data.get("category") or "")[:40] or None,
-                                         str(data.get("dealer") or "")[:60] or None)
+                                         str(data.get("dealer") or "")[:60] or None, price, plan=bool(data.get("plan")))
             elif action == "check":
                 storage.set_list_checked(str(data.get("id", "")), bool(data.get("checked")))
             elif action == "remove":
                 storage.remove_from_list(str(data.get("id", "")))
             elif action == "clear":
                 storage.clear_list(only_checked=bool(data.get("only_checked")))
+            elif action == "clear_plan":
+                storage.clear_plan_items()
             else:
                 raise ValueError(f"Ukendt handling: {action}")
 
