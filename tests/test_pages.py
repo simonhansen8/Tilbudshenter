@@ -25,7 +25,8 @@ def test_site_demo(tmp_path, capsys):
     # Alle kategorier sendes med; brugerens valg anvendes i browseren
     assert {"koed", "oel_og_vin"} <= {o["category"] for o in data["offers"]}
     assert {s["name"] for s in data["stores"]} >= {"Netto", "Lidl"}
-    assert data["default_settings"]["stores"] and data["default_settings"]["categories"]
+    # Kæderne er valgt på forhånd, men ingen kategorier skjules
+    assert data["default_settings"]["stores"] and data["default_settings"]["categories"] == []
     assert (out / "tilbud.demo.db").exists()
     # Tilbuddene kan vises i avisens rækkefølge, og aviserne kendes efter id
     assert all(o["catalog_order"] for o in data["offers"])
@@ -133,3 +134,18 @@ def test_foetex_food_is_added_to_saved_choices():
     for stores in ([], ["Netto"]):  # Alle butikker, eller føtex ikke valgt
         other = Config(stores=list(stores), upgrades=["nye-butikker-2026-10"])
         assert upgrade_config(other) and other.stores == stores
+
+
+def test_reports_show_all_categories():
+    from tilbudshenter.config import OLD_DEFAULT_CATEGORIES, Config, example_config, upgrade_config
+
+    assert example_config().categories == []
+    done = ["nye-butikker-2026-10", "foetex-food-2026-10"]
+    # Det gamle standardvalg bliver til alle kategorier, én gang
+    cfg = Config(categories=list(reversed(OLD_DEFAULT_CATEGORIES)), upgrades=list(done))
+    assert upgrade_config(cfg) and cfg.categories == []
+    cfg.categories = ["koed"]
+    assert not upgrade_config(cfg) and cfg.categories == ["koed"]
+    # Et valg, brugeren selv har rettet, beholdes
+    own = Config(categories=["koed", "fisk"], upgrades=list(done))
+    assert upgrade_config(own) and own.categories == ["koed", "fisk"]
