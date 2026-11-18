@@ -184,6 +184,10 @@ favoritter = ["kyllingebryst", "skyr"]
 
 En ny konfiguration vælger Netto, REMA 1000, Lidl, føtex, Bilka,
 365discount og Coops kæder (Kvickly, SuperBrugsen, Brugsen, MENY og SPAR).
+Alle kategorier er valgt. Står en ældre konfiguration stadig med det gamle
+standardvalg (kød, fisk, mejeri, frugt og grønt, brød, kolonial, frost og
+kaffe og te), vælges alle kategorier én gang; har du selv rettet listen,
+beholdes den.
 Kør `tilbudshenter butikker` for at se de præcise navne på butikker og
 aviser i dit område. Listen viser også, hvilke der er valgt med de nuværende
 indstillinger. Butiksnavne matches uden hensyn til store/små bogstaver, og et
