@@ -90,3 +90,43 @@ def test_english_name_on_danish_site_is_translated():
     assert danish(recipe)[0]["name"] == "Italiensk rigatoni med kylling og frisk spinat og peberfrugt"
     danish_name = {"name": "Poke bowl med and, grøn chili og mango", "ingredients": []}
     assert danish(danish_name)[0]["name"] == danish_name["name"]
+
+
+def test_no_english_left_in_common_lines():
+    # Linjer, der før havde engelske ord tilbage i madplanen
+    cases = {
+        "2 tsp black peppercorns": "2 tsk sorte peberkorn",
+        "1 vegetable stock cube": "1 grøntsagsbouillonterning",
+        "+ 1 teaspoon sugar": "1 tsk sukker",
+        "1⁄2 tsp fine sea salt": "0,5 tsk fine havsalt",
+        "cayenne pepper (more to taste": "cayennepeber",
+        "2 6-ounce chicken breasts": "2 kyllingebryst",
+        "1/4 cup chopped fresh cilantro": "0,6 dl hakket frisk koriander",
+        "200g beansprouts": "200 g bønnespirer",
+        "1 knob of butter": "15 g smør",
+        "4 naan breads": "4 naanbrød",
+        "2 tbsp clear honey": "2 spsk honning",
+        "1 x 2kg/4½lb free-range organic chicken": "1 kylling",
+    }
+    for line, want in cases.items():
+        assert translate_line(line) == want, line
+
+
+def test_unclosed_parenthesis_keeps_the_item():
+    # "boneless, (skinless chicken breasts": varen står i parentesen
+    assert translate_line("1½ pounds boneless, (skinless chicken breasts or tenderloins") == "680 g kyllingebryst"
+
+
+def test_title_adjectives_agree_with_plural():
+    assert translate_title("Baked Shrimp with Feta") == "Bagte rejer med feta"
+    assert translate_title("Swedish Meatballs") == "Svenske kødboller"
+    assert translate_title("Herby steak & crispy potatoes") == "Bøf med krydderurter og sprøde kartofler"
+    assert translate_title("Sausage rolls") == "Pølsehorn"
+    assert translate_title("Toad in the hole") == "Pølser i dej"
+
+
+def test_redcurrant_jelly_is_not_meat():
+    recipe = {"lang": "en", "name": "Lamb chops with potatoes", "category": "",
+              "ingredients": ["4 lamb chops", "2 tbsp redcurrant jelly", "300ml chicken stock"]}
+    da, why = danish(recipe)
+    assert da is not None, why
