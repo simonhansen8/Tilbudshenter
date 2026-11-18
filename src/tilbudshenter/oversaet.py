@@ -122,6 +122,8 @@ WORDS: dict[str, str] = {
     "spaghetti": "spaghetti", "penne": "penne", "fusilli": "fusilli", "rigatoni": "rigatoni", "linguine": "linguine",
     "tagliatelle": "tagliatelle", "macaroni": "makaroni", "pasta": "pasta", "orzo": "orzo",
     "lasagne sheets": "lasagneplader", "lasagna sheets": "lasagneplader", "lasagna noodles": "lasagneplader",
+    "egg lasagne": "lasagneplader", "dried lasagne": "lasagneplader", "fresh lasagne": "lasagneplader",
+    "sheets of lasagne": "lasagneplader", "sheets of dried lasagne": "lasagneplader",
     "egg noodles": "ægnudler", "rice noodles": "risnudler", "noodles": "nudler", "udon noodles": "udonnudler",
     "rice": "ris", "long-grain rice": "ris", "long grain rice": "ris", "basmati rice": "basmatiris",
     "jasmine rice": "jasminris", "risotto rice": "risottoris", "arborio rice": "risottoris", "brown rice": "brune ris",
@@ -220,7 +222,9 @@ WORDS: dict[str, str] = {
     "pak choi": "pak choi", "bok choy": "pak choi", "bean sprouts": "bønnespirer", "edamame": "edamamebønner",
     "corn on the cob": "majskolber", "stir-fry vegetables": "wokgrøntsager", "mixed vegetables": "blandede grøntsager",
     "lemon": "citron", "lemons": "citroner", "lime": "lime", "limes": "lime", "lemon juice": "citronsaft",
-    "lime juice": "limesaft", "lemon zest": "citronskal", "lime zest": "limeskal", "orange": "appelsin",
+    "lime juice": "limesaft", "apple juice": "æblejuice", "orange juice": "appelsinjuice", "pineapple juice": "ananasjuice",
+    "tomato ketchup": "ketchup", "beef tomato": "bøftomat", "beef tomatoes": "bøftomater", "spring water": "vand",
+    "lemon zest": "citronskal", "lime zest": "limeskal", "orange": "appelsin",
     "apple": "æble", "apples": "æbler", "mango": "mango", "pineapple": "ananas", "coriander leaves": "frisk koriander",
     "jalapeño": "jalapeño", "jalapeños": "jalapeños", "jalapeno": "jalapeño", "jalapenos": "jalapeños",
 }
@@ -753,6 +757,11 @@ def translate_name(text: str) -> str:
     text = re.sub(r"\b(?:to\s+(?:make\s+)?)?\d[\d/.,]*\s*-?\s*(?:tsp|tbsp|teaspoons?|tablespoons?|cups?|oz|ounces?|lbs?|"
                   r"pounds?|g|kg|ml|cm|mm|in|inch(?:es)?)\b\.?", " ", text)
     text = re.sub(r"(?<![\w-])-?(?:inch|ounce|oz)\b", " ", text)
+    # "chicken or vegetable stock" er bouillon og ikke kylling, og "chicken or
+    # turkey breasts" er kyllingebryst: ordet til sidst gælder begge muligheder
+    if m := re.match(r"^(.*?)\s+or\s+.*?\b(stock|broth|stock cubes?|bouillon|juice|sauce|paste|powder|oil|breasts?|"
+                     r"thighs?|fillets?|mince|drumsticks?|legs?|steaks?)\s*$", text):
+        text = f"{m.group(1)} {m.group(2)}"
     text = re.sub(r"\bor\b.*$", "", text) if " or " in text and _PHRASE_RE.search(text.split(" or ")[0]) else text
     text = re.sub(r"\b(?:and|or)\s*$", "", text.strip())
     out = []

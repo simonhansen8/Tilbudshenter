@@ -18,6 +18,12 @@ def test_translate_line_units():
     assert translate_line("2 boneless, skinless chicken breasts") == "2 kyllingebryst"
     assert translate_line("juice of ½ a lemon") == "0,5 citron"
     assert translate_line("For the sauce") == ""
+    # Ordet til sidst gælder begge muligheder: bouillon er ikke kylling
+    assert translate_line("90ml chicken or vegetable stock") == "90 ml hønsebouillon"
+    assert translate_line("2 chicken or turkey breasts") == "2 kyllingebryst"
+    assert translate_line("75ml apple juice") == "75 ml æblejuice"
+    assert translate_line("4 tbsp tomato ketchup") == "4 spsk ketchup"
+    assert translate_line("8–10 sheets of dried egg lasagne") == "9 tørret lasagneplader"
 
 
 def test_translate_line_cans():
