@@ -42797,31 +42797,6 @@
    "fetched": "2026-10-27"
   },
   {
-   "url": "https://opskrifter.coop.dk/opskrifter/kartoffelstegt-multe-med-kantarelsauce-4166",
-   "name": "Kartoffelstegt multe med kantarelsauce",
-   "category": "Aftensmad,Aftensmad",
-   "persons": 4,
-   "minutes": 0,
-   "ingredients": [
-    "600 g multefilet",
-    "1 stk. æggeblomme",
-    "2 spsk. hakkede krydderurter",
-    "1 stk. kartoffel",
-    "1 spsk. rapsolie",
-    "4 stk. skalotteløg",
-    "1 spsk. rapsolie",
-    "600 g kantareller",
-    "2 dl hvidvin",
-    "1 l hønsefond",
-    "2 tsk. majsstivelse",
-    "200 g babyspinat",
-    "salt og peber",
-    "nye kartofler",
-    "godt brød"
-   ],
-   "fetched": "2026-11-17"
-  },
-  {
    "url": "https://www.hellofresh.dk/recipes/tortillas-wrap-6810b82c5917498f8bf28e19",
    "name": "Indian Kathi inspired chicken wrap with roasted zucchini and mint coriander yogh",
    "category": "",
@@ -42992,40 +42967,6 @@
    ],
    "lang": "en",
    "fetched": "2026-10-20"
-  },
-  {
-   "url": "https://www.jamieoliver.com/recipes/cheese/ricotta-fritters-with-tomato-sauce-courgette-salad/",
-   "name": "Ricotta fritters",
-   "category": "Cheese",
-   "persons": 4,
-   "minutes": 15,
-   "ingredients": [
-    "SAUCE",
-    "25g dried porcini mushrooms",
-    "optional: 4 anchovy fillets, from sustainable sources",
-    "1 dried red chilli",
-    "2 cloves of garlic",
-    "700g passata",
-    "8 black olives (stone in)",
-    "½ a bunch of fresh basil (15g)",
-    "FRITTERS",
-    "1 large free-range egg",
-    "400g ricotta cheese",
-    "1 whole nutmeg, for grating",
-    "1 lemon",
-    "40g Parmesan cheese",
-    "1 heaped tablespoon plain flour",
-    "olive oil",
-    "balsamic vinegar",
-    "SALAD",
-    "400g firm green or yellow baby courgettes",
-    "1 tablespoon extra virgin olive oil",
-    "1 fresh red chilli",
-    "½ a bunch of fresh mint (15g)",
-    "1 lemon"
-   ],
-   "lang": "en",
-   "fetched": "2026-10-24"
   },
   {
    "url": "https://www.olivemagazine.com/recipes/meat-and-poultry/pork-chops-with-apple-chilli-salsa/",
@@ -70712,32 +70653,6 @@
    "fetched": "2026-10-15"
   },
   {
-   "url": "https://www.opskrifter.dk/opskrift/100251-perlehøne-fyldt-med-fars-af-vilde-svampe-samt-ærtemos",
-   "name": "Perlehøne fyldt med fars af vilde svampe samt ærtemos",
-   "category": "Hovedret",
-   "persons": 4,
-   "minutes": 120,
-   "ingredients": [
-    "1 kg Perlehønebryst",
-    "100 gram Bacon",
-    "2 stk Kyllingebryst",
-    "3 stk Skalotteløg",
-    "2 stk Hvidløgs fed",
-    "100 gram Årstidens svampe",
-    "1 spsk Frisk persille",
-    "1 spsk Frisk timian",
-    "20 gram Smør",
-    "1 knsp Køkkensalt",
-    "1 knsp Peber",
-    "500 gram Ærter",
-    "50 gram Smør",
-    "3 stk Friske mynteblade",
-    "1 knsp Køkkensalt",
-    "1 knsp Peber"
-   ],
-   "fetched": "2026-10-30"
-  },
-  {
    "url": "https://www.bbcgoodfood.com/recipes/sausage-sweet-potato-sweetcorn-bake",
    "name": "Sausage, sweet potato & sweetcorn bake",
    "category": "Dinner",
@@ -87972,33 +87887,6 @@
    "fetched": "2026-10-30"
   },
   {
-   "url": "https://www.arla.dk/opskrifter/hvidlogsstegt-knurhane-og-cremet-spaghetti/",
-   "name": "Hvidløgsstegt knurhane og cremet spaghetti",
-   "category": "Hovedretter, Aftensmad",
-   "persons": 4,
-   "minutes": 0,
-   "ingredients": [
-    "200 g lufttørret bacon",
-    "25 g smør",
-    "8 bananskalotteløg i halve og kvarte (ca. 300 g)",
-    "300 g frisk spinat",
-    "½ liter madlavningsfløde",
-    "1 tsk groft salt",
-    "friskkværnet peber",
-    "50 g smør",
-    "2 spsk friskpresset citronsaft",
-    "2 små fed hvidløg i skiver",
-    "8 rensede knurhanefileter med skind eller hvilling (ca. 550 g)",
-    "½ tsk havsalt",
-    "4 liter vand",
-    "4 tsk groft salt",
-    "500 g frisk pasta, fx spaghetti",
-    "fintstrimlede frisk spinat",
-    "fintrevet citronskal (usprøjtet)"
-   ],
-   "fetched": "2026-10-14"
-  },
-  {
    "url": "https://mummum.dk/andesteg-i-airfryer/",
    "name": "Andesteg i airfryer",
    "category": "Aftensmad",
@@ -88625,28 +88513,6 @@
     "Salt & peber"
    ],
    "fetched": "2026-10-16"
-  },
-  {
-   "url": "https://www.opskrifter.dk/opskrift/100026-helleflyndermedaillon",
-   "name": "Helleflyndermedaillon",
-   "category": "Hovedret",
-   "persons": 4,
-   "minutes": 90,
-   "ingredients": [
-    "800 gram Helleflynder",
-    "400 gram Kogte rejer",
-    "2 stk Citronsaft",
-    "1 tsk Havsalt",
-    "1 knsp Hvid peber",
-    "1 deciliter Piskefløde 38%",
-    "8 deciliter Piskefløde 38%",
-    "2 deciliter Tør hvidvin",
-    "6 spsk Fish sauce",
-    "1 kg Nye kartofler",
-    "1 deciliter Frisk spinat",
-    "1 deciliter Olivenolie"
-   ],
-   "fetched": "2026-11-06"
   },
   {
    "url": "https://www.bbcgoodfood.com/recipes/baked-cod-with-creamy-mushroom-leek-orzo",
@@ -93137,28 +93003,6 @@
    "fetched": "2026-10-14"
   },
   {
-   "url": "https://www.louisesmadblog.dk/fasan-i-stegeso/",
-   "name": "Fasan i stegeso",
-   "category": "Aftensmad",
-   "persons": 2,
-   "minutes": 90,
-   "ingredients": [
-    "2 hele fasaner",
-    "2 pakker bacon i skiver",
-    "1 rødløg",
-    "3 gulerødder",
-    "2 tomater",
-    "Timian",
-    "Salt",
-    "¼ liter piskefløde",
-    "¼ liter vand",
-    "Kulør til saucen",
-    "kartofler",
-    "Vindruesalsa"
-   ],
-   "fetched": "2026-10-20"
-  },
-  {
    "url": "https://www.danishcrown.com/da-dk/opskrifter/bacon-cheeseburger/",
    "name": "Bacon-Cheeseburger",
    "category": "Aftensmad, Hovedret, Middag, Natmad",
@@ -95363,33 +95207,6 @@
     "brød eller kogte kartofler"
    ],
    "fetched": "2026-10-15"
-  },
-  {
-   "url": "https://mummum.dk/spaghetti-med-jomfruhummerhaler/",
-   "name": "Spaghetti med jomfruhummerhaler",
-   "category": "Aftensmad",
-   "persons": 4,
-   "minutes": 60,
-   "ingredients": [
-    "500 g. jomfruhummerhaler",
-    "2 fed hvidløg",
-    "0,5 bundt frisk persille",
-    "salt/peber",
-    "3 spsk. smør",
-    "400 g. spaghetti",
-    "2 spsk. smør",
-    "2 fed hvidløg",
-    "1 stk. løg",
-    "1 tsk. chiliflager",
-    "1,5 dl. hvidvin",
-    "4 dl. piskefløde",
-    "60 g. parmesan",
-    "0,5 bundt frisk persille",
-    "0,5 bundt frisk dild",
-    "1 stk. citron",
-    "salt/peber"
-   ],
-   "fetched": "2026-10-26"
   },
   {
    "url": "https://opskrifter.coop.dk/opskrifter/langtidsstegt-gris-12025",
@@ -119094,32 +118911,6 @@
    "fetched": "2026-10-18"
   },
   {
-   "url": "https://www.sainsburysmagazine.co.uk/recipes/mains/roast-tuna-nicoise",
-   "name": "Roast tuna niçoise",
-   "category": "main",
-   "persons": 4,
-   "minutes": 60,
-   "ingredients": [
-    "200g extra fine green beans",
-    "4 medium eggs (at room temperature)",
-    "1kg baby potatoes, cut into 4mm slices",
-    "3 tbsp olive oil, plus extra to drizzle",
-    "1 red and 1 yellow pepper, deseeded",
-    "100g mixed pitted olives",
-    "10 anchovy fillets in olive oil, drained",
-    "250g small vine tomatoes (such as Sundream)",
-    "4 fresh tuna steaks (as chunky as possible)",
-    "2 tbsp capers",
-    "1 tbsp Dijon mustard",
-    "1 tbsp white wine vinegar",
-    "a pinch of sugar",
-    "4 tbsp extra-virgin olive oil",
-    "1 x 30g pack basil"
-   ],
-   "lang": "en",
-   "fetched": "2026-10-20"
-  },
-  {
    "url": "https://www.mob.co.uk/recipes/mallika-basus-butter-chicken-curry",
    "name": "Mallika Basu's Butter Chicken Curry",
    "category": "Dinner, Curry, Rice, Chicken, One Pot Recipes, Audit, Fakeaway, Munchies, Comfor",
@@ -119642,31 +119433,6 @@
    ],
    "lang": "en",
    "fetched": "2026-10-20"
-  },
-  {
-   "url": "https://www.sainsburysmagazine.co.uk/recipes/bbq/sponsored-bbq-meat-platter",
-   "name": "Sponsored: BBQ meat platter",
-   "category": "main",
-   "persons": 4,
-   "minutes": 35,
-   "ingredients": [
-    "300g Greek-style natural yogurt",
-    "2 tbsp sweet chilli sauce",
-    "1 garlic clove, crushed",
-    "1 tbsp lemon juice",
-    "½ tsp lemon zest",
-    "2 tsp thyme leaves",
-    "1 large red onion, cut into 4 thick rounds",
-    "1 tbsp olive oil",
-    "250g asparagus spears, trimmed",
-    "1 x 135g pack Padron cooking peppers",
-    "1 x 440g pack Chinese-style Pork Loin Steaks",
-    "1 x 348g pack British Pork & Pepper Kebabs",
-    "warmed flatbreads",
-    "new potato salad"
-   ],
-   "lang": "en",
-   "fetched": "2026-10-23"
   },
   {
    "url": "https://www.goodto.com/recipes/bacon-mushroom-and-tomato-spaghetti",
@@ -123996,29 +123762,6 @@
     "450 g blandet salat af fx squash, gulerod og rød peber"
    ],
    "fetched": "2026-10-26"
-  },
-  {
-   "url": "https://mummum.dk/pizza-med-stenbiderrogn-og-kartoffel/",
-   "name": "Pizza med stenbiderrogn og kartoffel",
-   "category": "Aftensmad",
-   "persons": 2,
-   "minutes": 930,
-   "ingredients": [
-    "215 g. vand",
-    "5 g. gær",
-    "8 g. salt",
-    "315 g. hvedemel",
-    "150 g. mascarpone",
-    "300 g. kartoffel",
-    "1 pk. mozzarella",
-    "150 g. stenbiderrogn",
-    "1 stk. rødløg",
-    "150 g. creme fraiche",
-    "0,5 bundt frisk dild",
-    "1 bk. frisk karse",
-    "salt/peber"
-   ],
-   "fetched": "2026-10-29"
   },
   {
    "url": "https://opskrifter.coop.dk/opskrifter/marokkansk-inspireret-laks-med-gremolata-kikaerter-oliven-og-couscous-11088",
@@ -128721,26 +128464,6 @@
     "flagesalt"
    ],
    "fetched": "2026-10-23"
-  },
-  {
-   "url": "https://mummum.dk/pizza-med-burrata-mortadella-og-pistacie/",
-   "name": "Pizza med burrata, mortadella og pistacie",
-   "category": "Aftensmad",
-   "persons": 2,
-   "minutes": 910,
-   "ingredients": [
-    "215 g. vand",
-    "5 g. gær",
-    "8 g. salt",
-    "315 g. hvedemel",
-    "125 g. frisk mozzarella",
-    "40 g. grøn pesto",
-    "150 g. burrata",
-    "60 g. mortadella",
-    "20 g. pistacienødder",
-    "0,25 bundt frisk basilikum"
-   ],
-   "fetched": "2026-10-17"
   },
   {
    "url": "https://opskrifter.coop.dk/opskrifter/lammekrone-med-urtecrust-bagte-tomater-aubergine-og-roedloeg-12139",
@@ -138714,28 +138437,6 @@
    "fetched": "2026-11-12"
   },
   {
-   "url": "https://www.taste.com.au/recipes/fish-minestrone-pesto/5e17e12e-8358-4042-b99d-1fd9e0a1268c",
-   "name": "Fish minestrone with pesto",
-   "category": "lunch, main",
-   "persons": 6,
-   "minutes": 45,
-   "ingredients": [
-    "36.40 gm extra virgin olive oil",
-    "2 leeks (white part only), thinly sliced",
-    "2 celery stalks, thinly sliced",
-    "3 small carrots, thinly sliced",
-    "1.5L (6 cups) boiling chicken stock, or water",
-    "2 small zucchini, thinly sliced",
-    "150g green beans, thinly sliced on an angle",
-    "400g can borlotti beans, rinsed, drained",
-    "4 (about 70g each) red mullet fillets",
-    "40.00 gm pesto",
-    "Flat-leaf parsley leaves, to garnish"
-   ],
-   "lang": "en",
-   "fetched": "2026-10-24"
-  },
-  {
    "url": "https://www.budgetbytes.com/roasted-turkey-breast-recipe/",
    "name": "Roasted Turkey Breast Recipe",
    "category": "Dinner",
@@ -140623,23 +140324,6 @@
    "fetched": "2026-10-14"
   },
   {
-   "url": "https://www.opskrifter.dk/opskrift/103851-aborre-filet-med-kartofler-og-citronsovs",
-   "name": "Aborre filet med kartofler og citronsovs",
-   "category": "Hovedret",
-   "persons": 8,
-   "minutes": 60,
-   "ingredients": [
-    "14 stk Fileteret aborre",
-    "1 stk Citron",
-    "20 stk Små kartofler",
-    "200 gram Rasp",
-    "4 stk Æg",
-    "6 spsk Sødmælk",
-    "300 gram Usaltet smør"
-   ],
-   "fetched": "2026-10-24"
-  },
-  {
    "url": "https://www.bbcgoodfood.com/recipes/steak-vietnamese-noodle-salad",
    "name": "Steak & Vietnamese noodle salad",
    "category": "Dinner, Main course, Supper",
@@ -141967,22 +141651,6 @@
    ],
    "lang": "en",
    "fetched": "2026-10-23"
-  },
-  {
-   "url": "https://www.skinnytaste.com/loaded-turkey-chili-baked-potato/",
-   "name": "Loaded Turkey Chili Baked Potato",
-   "category": "Dinner, Lunch",
-   "persons": 4,
-   "minutes": 15,
-   "ingredients": [
-    "4 russet potato (5 1/2 oz each)",
-    "1 cup kid-friendly turkey chili",
-    "1 cup reduced fat shredded cheddar",
-    "1 tablespoon chopped chives or scallions",
-    "reduced fat sour cream or Greek yogurt for topping (optional)"
-   ],
-   "lang": "en",
-   "fetched": "2026-10-18"
   },
   {
    "url": "https://www.delish.com/cooking/recipe-ideas/recipes/a52791/coconut-shrimp-curry-recipe/",
@@ -144174,31 +143842,6 @@
     "finthakket top af forårsløg"
    ],
    "fetched": "2026-10-16"
-  },
-  {
-   "url": "https://mummum.dk/crispy-chicken-med-groentsagssauce/",
-   "name": "Crispy chicken med grøntsagssauce",
-   "category": "Aftensmad",
-   "persons": 4,
-   "minutes": 30,
-   "ingredients": [
-    "520 g. NemFilet",
-    "2 stk. æg",
-    "50 g. pankorasp",
-    "salt/peber",
-    "2 stk. løg",
-    "3 fed hvidløg",
-    "300 g. kartoffel",
-    "300 g. gulerod",
-    "3 tsk. paprika",
-    "40 g. tomatpure",
-    "1 stk. hønsebouillonterning",
-    "400 ml. kokosmælk",
-    "salt/peber",
-    "320 g. ris",
-    "1 bundt frisk persille"
-   ],
-   "fetched": "2026-10-31"
   },
   {
    "url": "https://opskrifter.coop.dk/opskrifter/chili-sin-carne-3725",
@@ -146908,23 +146551,6 @@
     "peber"
    ],
    "fetched": "2026-10-28"
-  },
-  {
-   "url": "https://opskrifter.coop.dk/opskrifter/stegt-aborre-6877",
-   "name": "Stegt aborre",
-   "category": "Aftensmad,Hovedret",
-   "persons": 4,
-   "minutes": 30,
-   "ingredients": [
-    "1 kg aborre",
-    "125 g champignoner",
-    "100 g bacon",
-    "1 stk. bdt persille",
-    "1 spsk. smør",
-    "2 spsk. mel",
-    "salt og peber"
-   ],
-   "fetched": "2026-11-02"
   },
   {
    "url": "https://www.hellofresh.dk/recipes/zaatar-krydret-aubergine-6582c0f1f9c7ff868993fbc6",
@@ -152104,32 +151730,6 @@
    "fetched": "2026-10-19"
   },
   {
-   "url": "https://www.skinnytaste.com/greek-chicken-meal-prep-rice-bowls/",
-   "name": "Meal Prep Greek Chicken Rice Bowls",
-   "category": "Dinner, Lunch, Meal Prep",
-   "persons": 4,
-   "minutes": 60,
-   "ingredients": [
-    "1 1/2 pounds boneless (skinless chicken breasts (2 large or 3 small))",
-    "2 tablespoons fresh lemon juice",
-    "2 tablespoons red wine vinegar",
-    "1 tablespoon extra virgin olive oil",
-    "3 cloves garlic (minced)",
-    "2 teaspoons dried oregano",
-    "1-1/4 cups quick cooking brown rice (such as Uncle Bens 10 min rice)",
-    "2 cups low sodium chicken broth",
-    "1 dry pint cherry or grape tomatoes",
-    "1 medium cucumber (peeled, seeded and cut into bite-sized pieces)",
-    "1 small orange bell pepper (cut into 1-inch pieces)",
-    "20 pitted Kalamata olives (sliced)",
-    "4 teaspoons extra virgin olive oil",
-    "1 medium lemon (quartered)",
-    "1/4 cup crumbled feta cheese"
-   ],
-   "lang": "en",
-   "fetched": "2026-10-18"
-  },
-  {
    "url": "https://www.delish.com/cooking/recipe-ideas/a40588843/shrimp-katsu-burgers-recipe/",
    "name": "Shrimp Katsu Burgers",
    "category": "nut-free, date night, dinner, seafood",
@@ -156056,29 +155656,6 @@
     "½ spsk Olie til salat"
    ],
    "fetched": "2026-10-17"
-  },
-  {
-   "url": "https://www.danishcrown.com/da-dk/opskrifter/italiensk-inspireret-pesto-burger/",
-   "name": "Italiensk inspireret pesto burger",
-   "category": "Aftensmad, Hovedret",
-   "persons": 4,
-   "minutes": 30,
-   "ingredients": [
-    "4 Økologiske hakkebøffer",
-    "4 burgerboller",
-    "Ruccola",
-    "2 tomater",
-    "2 stk. mozzarella",
-    "Mayonnaise",
-    "2 håndfulde basilikum",
-    "1 dl olivenolie",
-    "1 spsk. pinjekerner",
-    "20 g parmesanost",
-    "1 fed hvidløg",
-    "1 citron",
-    "Salt & peber"
-   ],
-   "fetched": "2026-10-16"
   },
   {
    "url": "https://www.opskrifter.dk/opskrift/401-nem-rødspætte",
@@ -171241,25 +170818,6 @@
    "fetched": "2026-10-20"
   },
   {
-   "url": "https://www.goodto.com/recipes/baked-vegetable-omelette",
-   "name": "Baked vegetable omelette recipe",
-   "category": "Dinner",
-   "persons": 4,
-   "minutes": 45,
-   "ingredients": [
-    "50g/1 3/4oz butter, plus extra for greasing",
-    "2 tablespoons extra virgin olive oil",
-    "300g/10 1/2oz spinach, roughly chopped",
-    "150g/5 1/2oz fresh or frozen peas",
-    "6 eggs",
-    "100g/3 1/2oz hard mozzarella, finely chopped",
-    "50g/1 3/4oz mortadella, cubed",
-    "Salt and pepper"
-   ],
-   "lang": "en",
-   "fetched": "2026-10-22"
-  },
-  {
    "url": "https://www.mob.co.uk/recipes/spicy-harissa-sausage-fusilli",
    "name": "Spicy Harissa Sausage Fusilli",
    "category": "Dinner, Pasta, Sausages, Batch Cook, Batch Cooking, 5 Min Prep, Nut-Free, Shellf",
@@ -172832,40 +172390,6 @@
    "fetched": "2026-11-02"
   },
   {
-   "url": "https://www.valdemarsro.dk/luksus-stjerneskud/",
-   "name": "Stjerneskud med rødspættefilet og med de lækreste topping",
-   "category": "Aftensmad",
-   "persons": 4,
-   "minutes": 30,
-   "ingredients": [
-    "8 rødspættefilet",
-    "1 spsk hvedemel",
-    "50 g rasp",
-    "1 æg",
-    "1 spsk smør, til stegning",
-    "1 spsk olivenolie, til stegning",
-    "½ dl hvidvin",
-    "salt og friskkværnet peber",
-    "100 g rejer",
-    "100 g stenbiderrogn",
-    "4 hvide asparges",
-    "4 grønne asparges",
-    "1 dl cremefraiche 18 %",
-    "2 spsk mayonnaise",
-    "2 spsk koncentreret tomatpuré",
-    "1 citron, 1 spsk saft herfra",
-    "1 knivspids sød paprika",
-    "1 knivspids røget paprika",
-    "salt og friskkværnet peber",
-    "4 skiver brød",
-    "4 håndfulde grøn salat, til anretning",
-    "12 skiver agurk",
-    "1 citron, skåret i både",
-    "2 håndfulde frisk dild, til pynt"
-   ],
-   "fetched": "2026-10-24"
-  },
-  {
    "url": "https://madensverden.dk/vegetarfrikadeller-med-couscous/",
    "name": "Vegetarfrikadeller med couscous og kikærter",
    "category": "Vegetar",
@@ -172934,22 +172458,6 @@
     "1 stk. æg"
    ],
    "fetched": "2026-10-15"
-  },
-  {
-   "url": "https://opskrifter.coop.dk/opskrifter/nytaarstorsk-med-jomfruhummer-4207",
-   "name": "Nytårstorsk med jomfruhummer",
-   "category": "Aftensmad,Aftensmad",
-   "persons": 4,
-   "minutes": 45,
-   "ingredients": [
-    "4 stk. torskefileter (á cirka 150 g)",
-    "8 stk. jomfruhummere",
-    "400 g blandede rodfrugter - fx gulerod, selleri, pastinak",
-    "3 dl sød Martini eller dessertvin",
-    "saft af 1 lime",
-    "4 stk. forårsløg"
-   ],
-   "fetched": "2026-11-03"
   },
   {
    "url": "https://www.hellofresh.dk/recipes/lammeculotte-og-ramslogsolie-698242d4eee067c9eb8facd7",
@@ -192044,37 +191552,6 @@
    "fetched": "2026-10-15"
   },
   {
-   "url": "https://www.arla.dk/opskrifter/laks-og-havtaske-med-limesauce/",
-   "name": "Laks og havtaske med limesauce",
-   "category": "Hovedretter, Aftensmad",
-   "persons": 6,
-   "minutes": 60,
-   "ingredients": [
-    "25 g smør",
-    "6 finthakkede skalotteløg (ca. 100 g)",
-    "¼ liter piskefløde",
-    "2 tsk friskpresset limesaft",
-    "¾ tsk groft salt",
-    "friskkværnet peber",
-    "600 g laksefilet uden skind",
-    "600 g havtaskefilet uden skind",
-    "2 tsk friskpresset limesaft",
-    "½ tsk groft salt",
-    "friskkværnet peber",
-    "2 dl brødkrumme fra franskbrød (ca. 50 g)",
-    "50 g blødt smør",
-    "2 tsk fintrevet limeskal (usprøjtet)",
-    "1 tsk knuste fennikelfrø",
-    "¼ tsk groft salt",
-    "600 g frisk spinat revet i grove stykker",
-    "50 g smør - smeltet",
-    "¼ liter piskefløde - pisket til flødeskum",
-    "4 dl vilde ris - koges",
-    "150 g flutes"
-   ],
-   "fetched": "2026-10-23"
-  },
-  {
    "url": "https://mummum.dk/aeggewrap-med-oksekoed-og-syltede-roedloeg/",
    "name": "Åben æggewrap med oksekød og syltede rødløg",
    "category": "Wraps",
@@ -194852,25 +194329,6 @@
    ],
    "lang": "en",
    "fetched": "2026-11-12"
-  },
-  {
-   "url": "https://www.jamieoliver.com/recipes/pork/bubble-and-squeak-with-ham-and-eggs/",
-   "name": "Bubble & squeak with ham and eggs",
-   "category": "Meat",
-   "persons": 4,
-   "minutes": 65,
-   "ingredients": [
-    "The leftovers",
-    "500g mixed, leftover Christmas veg (or mixed veg, cut into equal sized chunks)",
-    "8 slices of cold higher welfare honey roast ham or Christmas ham",
-    "750g floury potatoes cut into chunks",
-    "olive oil",
-    "a knob of unsalted butter",
-    "4 large free-range eggs",
-    "sea salt and freshly ground black pepper"
-   ],
-   "lang": "en",
-   "fetched": "2026-10-24"
   },
   {
    "url": "https://www.olivemagazine.com/recipes/vegetarian/ricotta-and-tarragon-gnocchi/",
@@ -231902,29 +231360,6 @@
    "fetched": "2026-11-03"
   },
   {
-   "url": "https://www.danishcrown.com/da-dk/opskrifter/low-carb-burger/",
-   "name": "Low carb burger",
-   "category": "Aftensmad, Hovedret, Middag",
-   "persons": 4,
-   "minutes": 30,
-   "ingredients": [
-    "4 stk. Økologiske hakkebøffer",
-    "8 porto bello svampe",
-    "2 spsk. olie",
-    "2 stilke rosmarin",
-    "1 fed hvidløg",
-    "3 store tomater i skiver a 1/2 cm",
-    "3 stilke timian",
-    "2 spsk. olie",
-    "Salt og peber",
-    "Mayonnaise",
-    "1 spsk. grov sennep",
-    "Salat",
-    "8 skiver Tørsaltet røget bacon"
-   ],
-   "fetched": "2026-10-16"
-  },
-  {
    "url": "https://www.opskrifter.dk/opskrift/104446-empanadas",
    "name": "Empanadas",
    "category": "Hovedret",
@@ -244912,28 +244347,6 @@
     "500 g. kartoffel"
    ],
    "fetched": "2026-10-15"
-  },
-  {
-   "url": "https://opskrifter.coop.dk/opskrifter/courgettestegt-slethvar-med-tranebaerpuré-4273",
-   "name": "Courgettestegt slethvar med tranebærpuré",
-   "category": "Aftensmad,Aftensmad",
-   "persons": 4,
-   "minutes": 0,
-   "ingredients": [
-    "2 spsk. honning",
-    "300 g tranebær",
-    "appelsinsaft",
-    "2 spsk. Rød balsamico",
-    "1 stk. courgette",
-    "1 stk. æg",
-    "600 g slethvarfilet",
-    "1 spsk. rapsolie",
-    "1 stk. porre",
-    "400 g grønne bønner",
-    "kogt kartoffel",
-    "brød"
-   ],
-   "fetched": "2026-10-27"
   },
   {
    "url": "https://www.hellofresh.dk/recipes/ostrigsk-kyllingeschnitzel-65806f4659e9d368332e5670",
@@ -257935,27 +257348,6 @@
    "fetched": "2026-11-13"
   },
   {
-   "url": "https://www.taste.com.au/recipes/salad-nicoise-4/0d245dd2-5843-4737-99f5-fc1a73ef5490",
-   "name": "Salad nicoise",
-   "category": "lunch, main",
-   "persons": 4,
-   "minutes": 26,
-   "ingredients": [
-    "2 x 200g tuna steaks (3 cm thick)",
-    "600g baby chat potatoes, halved",
-    "250g cherry tomatoes, halved",
-    "150g baby green beans, trimmed",
-    "2 baby cos lettuce, leaves separated, rinsed, dried",
-    "4 eggs",
-    "82.50 ml small black olives,rinsed",
-    "20.00 ml red wine vinegar",
-    "17.70 gm Dijon mustard",
-    "56.88 gm olive oil"
-   ],
-   "lang": "en",
-   "fetched": "2026-11-16"
-  },
-  {
    "url": "https://www.delish.com/cooking/recipe-ideas/a33010975/ribeye-steak-recipe/",
    "name": "Ribeye Steak",
    "category": "low-carb, nut-free, date night, dinner party, Valentine's Day, weeknight meals, ",
@@ -270274,30 +269666,6 @@
    ],
    "lang": "en",
    "fetched": "2026-10-30"
-  },
-  {
-   "url": "https://www.mob.co.uk/recipes/leftover-chicken-caesar-wraps",
-   "name": "Leftover Chicken Caesar Wraps",
-   "category": "Sandwiches, Chicken, Wraps, Leftovers, Batch Remix, Nut-Free, Shellfish-Free, Eg",
-   "persons": 2,
-   "minutes": 20,
-   "ingredients": [
-    "3tbsp Mayonnaise",
-    "1tbsp Worcestershire Sauce",
-    "1tbsp Dijon Mustard",
-    "70g Parmesan",
-    "1 Garlic Clove",
-    "4 Anchovy",
-    "1 Iceberg Lettuce",
-    "0.5 Avocado",
-    "10g Crouton",
-    "2 Flour Tortilla",
-    "Lemon",
-    "Fine Sea Salt",
-    "Black Pepper"
-   ],
-   "lang": "en",
-   "fetched": "2026-10-20"
   },
   {
    "url": "https://www.hellofresh.co.uk/recipes/bbq-chicken-flatbread-and-street-corn-686b11c56abf1607dadcb194",
@@ -288122,22 +287490,6 @@
    "fetched": "2026-11-04"
   },
   {
-   "url": "https://www.danishcrown.com/da-dk/opskrifter/panini-med-salami-mozzarella-og-pesto/",
-   "name": "Panini med salami, mozzarella og pesto",
-   "category": "Aftensmad, Frokost, Madpakke",
-   "persons": 4,
-   "minutes": 15,
-   "ingredients": [
-    "4 paninibrød",
-    "4 spsk. undefined",
-    "250 g frisk mozzarella",
-    "4 store tomater",
-    "1 pakke Peberspegepølse",
-    "2 håndfulde rucola"
-   ],
-   "fetched": "2026-10-14"
-  },
-  {
    "url": "https://www.opskrifter.dk/opskrift/105651-italienske-kødboller",
    "name": "Italienske kødboller",
    "category": "Hovedret",
@@ -293204,31 +292556,6 @@
     "1 bundt frisk persille"
    ],
    "fetched": "2026-10-16"
-  },
-  {
-   "url": "https://opskrifter.coop.dk/opskrifter/luksus-jomfruhummer-pizza-7921",
-   "name": "Luksus Jomfruhummerpizza",
-   "category": "Aftensmad,Aftensmad",
-   "persons": 4,
-   "minutes": 0,
-   "ingredients": [
-    "160 g pizzadej",
-    "Tomatsovs",
-    "6 stk. jomfruhummerhaler",
-    "1 knsp. sukker",
-    "salt og peber",
-    "125 g komælksmozzarella",
-    "syltede perleløg eller skalotteløgsringe",
-    "1 håndfuld ærteskud eller brøndkarse",
-    "4 stk. cherrytomater",
-    "1 skive tørt brød",
-    "1 spsk. olivenolie",
-    "3 skiver god bacon",
-    "10 stk. mandler",
-    "3 spsk. rygeost, uden kommen",
-    "3 spsk. piskefløde"
-   ],
-   "fetched": "2026-11-17"
   },
   {
    "url": "https://www.hellofresh.dk/recipes/lynhurtig-indisk-kylling-68c2e7c7f65599931600e79b",
@@ -301129,32 +300456,6 @@
     "Sprødt baconknas"
    ],
    "fetched": "2026-10-26"
-  },
-  {
-   "url": "https://www.opskrifter.dk/opskrift/100415-braiseret-kæbeklump",
-   "name": "Braiseret kæbeklump",
-   "category": "Hovedret",
-   "persons": 4,
-   "minutes": 120,
-   "ingredients": [
-    "600 gram Kæbeklump",
-    "10 gram Smør",
-    "250 gram Cherrytomat",
-    "1 spsk Rødvinseddike",
-    "2 stk Hvidløg",
-    "1 tsk Bordsalt",
-    "1 tsk Herbes de Provence",
-    "0.5 tsk Peber",
-    "2 deciliter Oksebouillon",
-    "500 gram Frisk pasta",
-    "3 deciliter Vand",
-    "1 spsk Køkkensalt",
-    "100 gram Frisk Mozzarella",
-    "350 gram Porre",
-    "2 spsk Maizena",
-    "2 stk Gulerod"
-   ],
-   "fetched": "2026-10-14"
   },
   {
    "url": "https://www.bbcgoodfood.com/recipes/leek-manchego-chorizo-tart",
@@ -310059,28 +309360,6 @@
    "fetched": "2026-11-10"
   },
   {
-   "url": "https://www.taste.com.au/recipes/nicoise-salad-7/303710f3-a327-4c7b-8c6f-d4d86667e814",
-   "name": "Nicoise salad",
-   "category": "",
-   "persons": 4,
-   "minutes": 40,
-   "ingredients": [
-    "12 (about 650g) baby coliban (chat) potatoes",
-    "320g green beans, topped",
-    "4 eggs",
-    "60ml (1/4 cup) extra virgin olive oil",
-    "20.00 ml red wine vinegar",
-    "5.90 gm Dijon mustard",
-    "Pinch of sugar",
-    "3 (about 250g each) tuna steaks",
-    "12 baby egg tomatoes, halved",
-    "100g (2/3 cup) kalamata olives",
-    "250.00 ml fresh continental parsley leaves"
-   ],
-   "lang": "en",
-   "fetched": "2026-11-15"
-  },
-  {
    "url": "https://www.delish.com/cooking/recipe-ideas/a42625190/creamy-garlic-chicken-recipe/",
    "name": "Creamy Garlic Chicken",
    "category": "dinner party, easy chicken, weeknight meals, dinner, main dish",
@@ -310898,26 +310177,6 @@
     "¼ tsk Salt (trin 3)"
    ],
    "fetched": "2026-11-06"
-  },
-  {
-   "url": "https://www.danishcrown.com/da-dk/opskrifter/revelsben-i-ovn/",
-   "name": "Revelsben i ovn",
-   "category": "Aftensmad, Middag",
-   "persons": 4,
-   "minutes": 90,
-   "ingredients": [
-    "1 kg Antonius Revelsben",
-    "Salt og friskkværnet peber",
-    "3 stk. majskolber",
-    "200 g sorte bønner",
-    "2 forårsløg",
-    "1 rød chili",
-    "1 lime (skal og saft)",
-    "1 håndfuld bredbladet persille",
-    "Salt og friskkværnet peber",
-    "1 avocado"
-   ],
-   "fetched": "2026-10-14"
   },
   {
    "url": "https://www.opskrifter.dk/opskrift/103268-italiensk-suppe",
@@ -334950,32 +334209,6 @@
    "fetched": "2026-11-01"
   },
   {
-   "url": "https://www.arla.dk/opskrifter/fasaner-med-vindrue-flodesauce-og-mos/",
-   "name": "Fasan med vindrue-flødesauce og mos",
-   "category": "Hovedretter, Aftensmad",
-   "persons": 4,
-   "minutes": 60,
-   "ingredients": [
-    "750 g kartofler i grove stykker",
-    "½ knoldselleri i grove stykker (ca. 250 g)",
-    "20 g smør",
-    "1 tsk groft salt",
-    "2 fasaner uden skind (ca. 750 g)",
-    "2 æg",
-    "100 g finthakkede mandler",
-    "½ tsk groft salt",
-    "friskkværnet peber",
-    "20 g smør",
-    "2 spsk rapsolie",
-    "200 g grønne stenfri vindruer i halve",
-    "4 dl madlavningsfløde",
-    "½ groft salt",
-    "6 stilke bladselleri i meget tynde skiver (ca. 150 g)",
-    "blade af bladselleri"
-   ],
-   "fetched": "2026-10-15"
-  },
-  {
    "url": "https://mummum.dk/forloren-hare-i-airfryer/",
    "name": "Forloren hare i airfryer",
    "category": "Aftensmad",
@@ -345701,28 +344934,6 @@
     "¼ tsk Salt til salsa"
    ],
    "fetched": "2026-10-29"
-  },
-  {
-   "url": "https://www.opskrifter.dk/opskrift/107843-helleflyndersteaks-med-kold-aspargessalat",
-   "name": "Helleflyndersteaks med kold aspargessalat",
-   "category": "Hovedret",
-   "persons": 4,
-   "minutes": 50,
-   "ingredients": [
-    "800 gram Helleflynder",
-    "1 deciliter Hvedemel",
-    "25 gram Smør",
-    "2 spsk Olie",
-    "600 gram Hvid asparges",
-    "300 gram Fine ærter",
-    "4 stk Hårdkogt æg",
-    "1 stk Hovedsalat",
-    "100 gram Mayonnaise",
-    "8 spsk Creme fraiche 18%",
-    "10 spsk Finthakket dild",
-    "1 spsk Citronsaft"
-   ],
-   "fetched": "2026-10-31"
   },
   {
    "url": "https://www.bbcgoodfood.com/recipes/slow-cooker-lasagne",
@@ -377281,29 +376492,6 @@
    "fetched": "2026-11-07"
   },
   {
-   "url": "https://www.opskrifter.dk/opskrift/100052-victoriafisk-med-mandelpanering",
-   "name": "Victoriafisk med mandelpanering",
-   "category": "Hovedret",
-   "persons": 5,
-   "minutes": 75,
-   "ingredients": [
-    "100 Mandler",
-    "700 Victoriafilet",
-    "2 stk Æg",
-    "2 spsk Olie",
-    "500 Nye kartofler",
-    "2 Tør hvidvin",
-    "1 tsk Havsalt",
-    "1 knsp Hvid peber",
-    "5 Fiskebouillon",
-    "2 dåse Kokosmælk",
-    "1 tsk Citronsaft",
-    "2 kvist Frisk estragon",
-    "Frisk estragon"
-   ],
-   "fetched": "2026-10-23"
-  },
-  {
    "url": "https://www.bbcgoodfood.com/recipes/prawn-pak-choi-stir-fry",
    "name": "Prawn & pak choi stir-fry",
    "category": "Dinner, Main course, Supper",
@@ -379084,23 +378272,6 @@
     "¼ tsk Salt (trin 5)"
    ],
    "fetched": "2026-11-06"
-  },
-  {
-   "url": "https://www.opskrifter.dk/opskrift/1093-havtaske-med-saganaki",
-   "name": "Havtaske med saganaki",
-   "category": "Hovedret",
-   "persons": 4,
-   "minutes": 85,
-   "ingredients": [
-    "1 stk Fennikelknold",
-    "1 stk Frisk chili",
-    "2 stk Forårsløg",
-    "0.8 deciliter Olivenolie",
-    "2 deciliter Tør hvidvin",
-    "1 kg Havtaske",
-    "125 gram Feta 40+"
-   ],
-   "fetched": "2026-10-27"
   },
   {
    "url": "https://www.bbcgoodfood.com/recipes/chicken-bean-enchiladas",
@@ -388055,24 +387226,6 @@
     "¼ tsk Salt til sauce"
    ],
    "fetched": "2026-10-16"
-  },
-  {
-   "url": "https://www.opskrifter.dk/opskrift/72-fasan-med-bacon-citronskal-og-rosmarin",
-   "name": "Fasan med bacon, citronskal og rosmarin",
-   "category": "Hovedret",
-   "persons": 4,
-   "minutes": 225,
-   "ingredients": [
-    "1 stk hel fasan",
-    "2 stk Æbler",
-    "2 stk Løg",
-    "2 kvist Frisk rosmarin",
-    "10 stk Bacon",
-    "1 spsk Revet citronskal",
-    "1 tsk Havsalt",
-    "1 tsk Peber"
-   ],
-   "fetched": "2026-10-19"
   },
   {
    "url": "https://www.bbcgoodfood.com/recipes/moroccan-chicken-stew",
@@ -405747,24 +404900,6 @@
     "400 g spaghetti"
    ],
    "fetched": "2026-10-15"
-  },
-  {
-   "url": "https://opskrifter.coop.dk/opskrifter/lasagne-med-ising-4102",
-   "name": "Lasagne med ising",
-   "category": "Aftensmad,Aftensmad",
-   "persons": 4,
-   "minutes": 0,
-   "ingredients": [
-    "500 g isingfileter",
-    "250 g frisk mozzarella",
-    "2 fed knust hvidløg",
-    "1 dåse hakkede tomater",
-    "2 tsk. tørret oregano",
-    "200 g lasagneplader",
-    "Groft brød",
-    "grøn salat"
-   ],
-   "fetched": "2026-11-03"
   },
   {
    "url": "https://www.hellofresh.dk/recipes/svine-og-kalvekodsenchiladas-6a0dc167099c5b8fd89ccd20",
@@ -450388,6 +449523,7 @@
   "https://mummum.dk/creme-brulee/": "ikke aftensmad",
   "https://mummum.dk/cremet-pasta-med-nduja/": "ukendt kød eller fisk: nduja",
   "https://mummum.dk/cremet-spinatpasta-med-kylling-og-kalkunbacon/": "ukendt kød eller fisk: kalkunbacon i skiver",
+  "https://mummum.dk/crispy-chicken-med-groentsagssauce/": "kød eller fisk i navnet, men ikke i ingredienserne: Crispy chicken med grøntsagssauce",
   "https://mummum.dk/croissant-med-hoensesalat/": "ikke aftensmad",
   "https://mummum.dk/croissant-med-kyllingesalat/": "ikke aftensmad",
   "https://mummum.dk/croissant-med-skaldyrssalat/": "for lidt mad til en aftensmad",
@@ -451011,10 +450147,12 @@
   "https://mummum.dk/pita-pizza-med-pepperoni/": "ukendt kød eller fisk: pepperoni",
   "https://mummum.dk/pizza-i-airfryer/": "for mange ukendte varer: durummel, pizzasauce, pepperoni",
   "https://mummum.dk/pizza-med-barbequesauce-og-pulled-pork/": "ukendt kød eller fisk: pulled pork",
+  "https://mummum.dk/pizza-med-burrata-mortadella-og-pistacie/": "ukendt kød eller fisk: mortadella",
   "https://mummum.dk/pizza-med-cocktailpoelser/": "ikke aftensmad",
   "https://mummum.dk/pizza-med-pepperoni/": "ukendt kød eller fisk: pepperoni",
   "https://mummum.dk/pizza-med-skinke-og-ananas/": "ukendt kød eller fisk: skinke",
   "https://mummum.dk/pizza-med-skinke-og-pepperoni/": "ukendt kød eller fisk: pepperoni",
+  "https://mummum.dk/pizza-med-stenbiderrogn-og-kartoffel/": "ukendt kød eller fisk: stenbiderrogn",
   "https://mummum.dk/pizza-paa-grill/": "for få kendte ingredienser",
   "https://mummum.dk/pizzabrud-med-groentsager-og-pepperoni/": "ikke aftensmad",
   "https://mummum.dk/pizzasnegle-med-skinke-og-pepperoni/": "ikke aftensmad",
@@ -451252,6 +450390,7 @@
   "https://mummum.dk/sommertrifli-med-vaniljecreme/": "ikke aftensmad",
   "https://mummum.dk/sour-cream-and-onion-dip/": "ikke aftensmad",
   "https://mummum.dk/spaghetti-med-hvidloeg-og-chili/": "intet kød, fisk, æg, bælgfrugter eller ost",
+  "https://mummum.dk/spaghetti-med-jomfruhummerhaler/": "ukendt kød eller fisk: jomfruhummerhaler",
   "https://mummum.dk/spareribs-paa-grill/": "for få kendte ingredienser",
   "https://mummum.dk/spicy-tunsalat-med-aeg/": "ikke aftensmad",
   "https://mummum.dk/spidskaal-i-airfryer/": "ikke aftensmad",
@@ -451683,6 +450822,7 @@
   "https://opskrifter.coop.dk/opskrifter/cool-coffee-12548": "ikke aftensmad",
   "https://opskrifter.coop.dk/opskrifter/courgette-suppe-med-frugt-8128": "for lidt mad til en aftensmad",
   "https://opskrifter.coop.dk/opskrifter/courgettesquash-kage-7117": "ikke aftensmad",
+  "https://opskrifter.coop.dk/opskrifter/courgettestegt-slethvar-med-tranebaerpuré-4273": "ukendt kød eller fisk: slethvarfilet",
   "https://opskrifter.coop.dk/opskrifter/couscoussalat-med-falafel-og-friske-krydderurter-10446": "ikke aftensmad",
   "https://opskrifter.coop.dk/opskrifter/creme-brûlée-307": "ikke aftensmad",
   "https://opskrifter.coop.dk/opskrifter/cremet-aertesuppe-10656": "intet kød, fisk, æg, bælgfrugter eller ost",
@@ -452119,6 +451259,7 @@
   "https://opskrifter.coop.dk/opskrifter/kartoffelsalat-med-rygeost-og-radiser-8490": "intet kød, fisk, æg, bælgfrugter eller ost",
   "https://opskrifter.coop.dk/opskrifter/kartoffelsalat-med-spidskaal-og-bacon-7984": "ikke en ret: tilbehør",
   "https://opskrifter.coop.dk/opskrifter/kartoffelsalat-med-tahincreme-syltede-loeg-og-sesam-11786": "for lidt mad til en aftensmad",
+  "https://opskrifter.coop.dk/opskrifter/kartoffelstegt-multe-med-kantarelsauce-4166": "ukendt kød eller fisk: multefilet",
   "https://opskrifter.coop.dk/opskrifter/kartoffelsuppe-med-soed-kartoffel-og-bacon-10057": "for mange ukendte varer: skalotteløg, sød kartoffel/sweet potato, æblemost",
   "https://opskrifter.coop.dk/opskrifter/kartofler-med-caviar-11967": "intet kød, fisk, æg, bælgfrugter eller ost",
   "https://opskrifter.coop.dk/opskrifter/kartofler-med-rygeost-3269": "ikke aftensmad",
@@ -452209,6 +451350,7 @@
   "https://opskrifter.coop.dk/opskrifter/lammedeller-med-spinat-paa-smoerstegt-broed-12133": "ikke aftensmad",
   "https://opskrifter.coop.dk/opskrifter/lammerest-i-pitabroed-snackpeber-roedloeg-persille-og-fetadressing-12138": "ikke aftensmad",
   "https://opskrifter.coop.dk/opskrifter/langtidsbagt-svinenakke-med-agurkesalat-541": "ukendt kød eller fisk: oksekraft",
+  "https://opskrifter.coop.dk/opskrifter/lasagne-med-ising-4102": "ukendt kød eller fisk: isingfileter",
   "https://opskrifter.coop.dk/opskrifter/lemoncurd-12375": "ikke aftensmad",
   "https://opskrifter.coop.dk/opskrifter/let-frokost-3443": "ikke en ret: frokost",
   "https://opskrifter.coop.dk/opskrifter/let-kransekagetaerte-3235": "ikke aftensmad",
@@ -452224,6 +451366,7 @@
   "https://opskrifter.coop.dk/opskrifter/luftig-hindbaerkoldskaal-med-mandelkammerjunkere-3537": "ikke aftensmad",
   "https://opskrifter.coop.dk/opskrifter/luftige-bananpandekager-8163": "ikke aftensmad",
   "https://opskrifter.coop.dk/opskrifter/luftige-fuldkornsboller-3823": "ikke aftensmad",
+  "https://opskrifter.coop.dk/opskrifter/luksus-jomfruhummer-pizza-7921": "ukendt kød eller fisk: jomfruhummerhaler",
   "https://opskrifter.coop.dk/opskrifter/luksus-marcipanbroed-3790": "ikke aftensmad",
   "https://opskrifter.coop.dk/opskrifter/luksus-svampetoast-3196": "ikke aftensmad",
   "https://opskrifter.coop.dk/opskrifter/luksushveder-med-rigelig-smoer-7892": "ikke aftensmad",
@@ -452337,6 +451480,7 @@
   "https://opskrifter.coop.dk/opskrifter/nougatboller-med-marcipanbund-5578": "ikke aftensmad",
   "https://opskrifter.coop.dk/opskrifter/nougatfirkanter-med-mandler-5574": "ikke aftensmad",
   "https://opskrifter.coop.dk/opskrifter/nudel-salat-med-asiatisk-dressing-og-grillet-laks-7821": "ikke aftensmad",
+  "https://opskrifter.coop.dk/opskrifter/nytaarstorsk-med-jomfruhummer-4207": "ukendt kød eller fisk: jomfruhummere",
   "https://opskrifter.coop.dk/opskrifter/oksekoed-med-bagte-tomater-pasta-basilikum-og-hytteost-588": "ukendt kød eller fisk: oksekød",
   "https://opskrifter.coop.dk/opskrifter/oksekoed-med-jordnoedder-7835": "ukendt kød eller fisk: mørt oksekød",
   "https://opskrifter.coop.dk/opskrifter/oksekoed-med-tomat-og-rucola-stracetti-di-manzi-589": "ukendt kød eller fisk: oksetykstege",
@@ -452735,6 +451879,7 @@
   "https://opskrifter.coop.dk/opskrifter/squashsuppe-med-kyllling-kartofler-og-estragon-37": "ikke aftensmad",
   "https://opskrifter.coop.dk/opskrifter/staerk-tomatsalsa-med-koriander-og-moerk-chokolade-7982": "ikke aftensmad",
   "https://opskrifter.coop.dk/opskrifter/steaksandwich-med-sennepscreme-6876": "kød eller fisk i navnet, men ikke i ingredienserne: Steaksandwich med sennepscreme",
+  "https://opskrifter.coop.dk/opskrifter/stegt-aborre-6877": "ukendt kød eller fisk: aborre",
   "https://opskrifter.coop.dk/opskrifter/stegt-and-med-lun-perlebygsalat-og-appelsinvinaigrette-1240": "intet kød, fisk, æg, bælgfrugter eller ost",
   "https://opskrifter.coop.dk/opskrifter/stegt-andebryst-med-papadum-10871": "for mange ukendte varer: Papadum, fennikel, æblemost",
   "https://opskrifter.coop.dk/opskrifter/stegt-appelsinsalat-med-palmekaal-og-valnoedder-10155": "for få kendte ingredienser",
@@ -454849,6 +453994,7 @@
   "https://www.arla.dk/opskrifter/farseret-kalkun-og-svamperagout/": "ukendt kød eller fisk: kalkun",
   "https://www.arla.dk/opskrifter/farspandekage/": "ikke aftensmad",
   "https://www.arla.dk/opskrifter/farvet-snobrod/": "ikke aftensmad",
+  "https://www.arla.dk/opskrifter/fasaner-med-vindrue-flodesauce-og-mos/": "ukendt kød eller fisk: fasaner uden skind",
   "https://www.arla.dk/opskrifter/fastelavnsboller-med-appelsin/": "ikke aftensmad",
   "https://www.arla.dk/opskrifter/fastelavnsboller-med-creme/": "ikke aftensmad",
   "https://www.arla.dk/opskrifter/fastelavnsboller-med-flodeskum/": "ikke aftensmad",
@@ -455275,6 +454421,7 @@
   "https://www.arla.dk/opskrifter/hvidlogsflutes/": "ikke aftensmad",
   "https://www.arla.dk/opskrifter/hvidlogssauce/": "ikke aftensmad",
   "https://www.arla.dk/opskrifter/hvidlogssmor/": "ikke aftensmad",
+  "https://www.arla.dk/opskrifter/hvidlogsstegt-knurhane-og-cremet-spaghetti/": "ukendt kød eller fisk: rensede knurhanefileter med skind eller hvilling",
   "https://www.arla.dk/opskrifter/hvidlogssuppe-med-laks-og-sprode-pastakiks/": "ikke aftensmad",
   "https://www.arla.dk/opskrifter/hvidlogstomater-med-sprod-parmaskinke/": "ikke aftensmad",
   "https://www.arla.dk/opskrifter/hybenchutney/": "ikke aftensmad",
@@ -456284,6 +455431,7 @@
   "https://www.arla.dk/opskrifter/lagkagebunde/": "ikke aftensmad",
   "https://www.arla.dk/opskrifter/lakridsis/": "ikke aftensmad",
   "https://www.arla.dk/opskrifter/laks-i-ovn/": "ikke aftensmad",
+  "https://www.arla.dk/opskrifter/laks-og-havtaske-med-limesauce/": "ukendt kød eller fisk: havtaskefilet uden skind",
   "https://www.arla.dk/opskrifter/laksebulgur-med-limedressing/": "ikke aftensmad",
   "https://www.arla.dk/opskrifter/laksecarpaccio-med-ableselleriflode/": "ikke aftensmad",
   "https://www.arla.dk/opskrifter/laksecarpaccio-med-peberrodscreme/": "ikke aftensmad",
@@ -477130,6 +476278,7 @@
   "https://www.danishcrown.com/da-dk/opskrifter/is-med-bacon/": "ikke aftensmad",
   "https://www.danishcrown.com/da-dk/opskrifter/italiensk-inspirerede-grissini-med-ost-og-tomat/": "ikke aftensmad",
   "https://www.danishcrown.com/da-dk/opskrifter/italiensk-inspirerede-koedboller-til-suppe/": "ikke en ret: sovs, dej eller en del af en anden ret",
+  "https://www.danishcrown.com/da-dk/opskrifter/italiensk-inspireret-pesto-burger/": "ukendt kød eller fisk: Økologiske hakkebøffer",
   "https://www.danishcrown.com/da-dk/opskrifter/italiensk-inspireret-sandwich-med-spegepoelse/": "ukendt kød eller fisk: Spegepølse",
   "https://www.danishcrown.com/da-dk/opskrifter/italiensk-inspireret-sandwich/": "for mange ukendte varer: Grovbrød, Veggie Sandwich-skiver, Ricotta",
   "https://www.danishcrown.com/da-dk/opskrifter/italiensk-tapas-med-smaa-tomater/": "ikke aftensmad",
@@ -477275,6 +476424,7 @@
   "https://www.danishcrown.com/da-dk/opskrifter/loegsovs/": "ikke aftensmad",
   "https://www.danishcrown.com/da-dk/opskrifter/loegsuppe-med-ostebroed/": "for lidt mad til en aftensmad",
   "https://www.danishcrown.com/da-dk/opskrifter/loegtaerte-med-bacon/": "for mange ukendte varer: hokkaido græskar, pastinak, tærtedej",
+  "https://www.danishcrown.com/da-dk/opskrifter/low-carb-burger/": "ukendt kød eller fisk: Økologiske hakkebøffer",
   "https://www.danishcrown.com/da-dk/opskrifter/luciabroed-med-bacon/": "ikke aftensmad",
   "https://www.danishcrown.com/da-dk/opskrifter/luksus-kartoffelmad-med-sproed-bacon/": "ukendt kød eller fisk: Kalkunbacon",
   "https://www.danishcrown.com/da-dk/opskrifter/luksus-toast/": "for mange ukendte varer: kantareller, rensede, lille skalotteløg, finthakket, brød, fx briochebrød eller surdejsbrød",
@@ -477435,6 +476585,7 @@
   "https://www.danishcrown.com/da-dk/opskrifter/panini-med-fetaostcreme-tomater-og-spegepoelse/": "ikke aftensmad",
   "https://www.danishcrown.com/da-dk/opskrifter/panini-med-hummus-og-jaegerpoelse/": "ikke aftensmad",
   "https://www.danishcrown.com/da-dk/opskrifter/panini-med-kylling-og-avocado/": "ikke aftensmad",
+  "https://www.danishcrown.com/da-dk/opskrifter/panini-med-salami-mozzarella-og-pesto/": "ukendt kød eller fisk: Peberspegepølse",
   "https://www.danishcrown.com/da-dk/opskrifter/pariser-baguette-med-brie-og-bacon/": "ikke aftensmad",
   "https://www.danishcrown.com/da-dk/opskrifter/pariserboef-med-pocheret-aeg-og-lynsyltet-beder/": "for mange ukendte varer: hakkede syltede rødbeder, Beder, røde, bolsje eller gule beder, brød",
   "https://www.danishcrown.com/da-dk/opskrifter/pariserboef/": "for mange ukendte varer: toastbrød eller franskbrød, syltet rødbede, æggeblommer",
@@ -477567,6 +476718,7 @@
   "https://www.danishcrown.com/da-dk/opskrifter/resteboller/": "ikke aftensmad",
   "https://www.danishcrown.com/da-dk/opskrifter/rester-af-flaeskesteg/": "ingen opskrift på siden",
   "https://www.danishcrown.com/da-dk/opskrifter/rester/": "ingen opskrift på siden",
+  "https://www.danishcrown.com/da-dk/opskrifter/revelsben-i-ovn/": "ukendt kød eller fisk: Antonius Revelsben",
   "https://www.danishcrown.com/da-dk/opskrifter/ribbenssteg-i-airfryer/": "for få kendte ingredienser",
   "https://www.danishcrown.com/da-dk/opskrifter/ribbenssteg-i-fuldkornsburger-med-syltede-groentsager-og-tahin-dressing/": "ikke aftensmad",
   "https://www.danishcrown.com/da-dk/opskrifter/ribbenssteg-i-ovn/": "for få kendte ingredienser",
@@ -484992,6 +484144,7 @@
   "https://www.goodto.com/recipes/baked-spiced-chicken-with-pomegranate": "navnet kunne ikke oversættes: Baked spiced chicken with pomegranate recipe",
   "https://www.goodto.com/recipes/baked-stuffed-peppers": "for få kendte ingredienser",
   "https://www.goodto.com/recipes/baked-vanilla-cheesecake-with-rhubarb": "ikke aftensmad",
+  "https://www.goodto.com/recipes/baked-vegetable-omelette": "ukendt kød eller fisk: mortadella",
   "https://www.goodto.com/recipes/bakewell-mince-pies": "ikke aftensmad",
   "https://www.goodto.com/recipes/bakewell-slice": "navnet kunne ikke oversættes: Bakewell slice with blueberries and pistachio recipe",
   "https://www.goodto.com/recipes/bakewell-tarts": "navnet kunne ikke oversættes: Bakewell tarts recipe",
@@ -510273,6 +509426,7 @@
   "https://www.jamieoliver.com/recipes/cheese/oozy-cheesy-pasta-with-crispy-pangritata/": "navnet kunne ikke oversættes: Oozy cheesy pasta with crispy pangritata",
   "https://www.jamieoliver.com/recipes/cheese/pierogi": "navnet kunne ikke oversættes: Pierogi",
   "https://www.jamieoliver.com/recipes/cheese/quesadillas-with-guacamole/": "for få kendte ingredienser",
+  "https://www.jamieoliver.com/recipes/cheese/ricotta-fritters-with-tomato-sauce-courgette-salad/": "kød eller fisk i navnet, men ikke i ingredienserne: Frikadeller med ricotta",
   "https://www.jamieoliver.com/recipes/cheese/ricotta-parmesan-fritters/": "kød eller fisk i navnet, men ikke i ingredienserne: Frikadeller med ricotta og parmesan",
   "https://www.jamieoliver.com/recipes/cheese/roasted-veg-with-camembert-fondue": "navnet kunne ikke oversættes: Roasted veg with Camembert fondue",
   "https://www.jamieoliver.com/recipes/cheese/rolled-cassata/": "navnet kunne ikke oversættes: Rolled cassata",
@@ -512442,6 +511596,7 @@
   "https://www.jamieoliver.com/recipes/pork/boiled-bacon-with-pease-pudding/": "ikke aftensmad",
   "https://www.jamieoliver.com/recipes/pork/boxing-day-bubble-and-squeak/": "navnet kunne ikke oversættes: Boxing Day bubble & squeak",
   "https://www.jamieoliver.com/recipes/pork/brazilian-feijoada/": "navnet kunne ikke oversættes: Brazilian feijoada",
+  "https://www.jamieoliver.com/recipes/pork/bubble-and-squeak-with-ham-and-eggs/": "ukendt kød eller fisk: honning skinke",
   "https://www.jamieoliver.com/recipes/pork/bubble-and-squeak-with-sausages-and-onion-gravy/": "ikke aftensmad",
   "https://www.jamieoliver.com/recipes/pork/bubble-squeak-hamburgers/": "navnet kunne ikke oversættes: Bubble & squeak hamburgers",
   "https://www.jamieoliver.com/recipes/pork/buddy-s-barbecue-ribs/": "ukendt kød eller fisk: ribs",
@@ -513907,6 +513062,7 @@
   "https://www.louisesmadblog.dk/double-chocolate-chip-cookies/": "ikke aftensmad",
   "https://www.louisesmadblog.dk/dulce-de-leche-dolce-latte-eller-bare-karamel-pa-dase/": "for få kendte ingredienser",
   "https://www.louisesmadblog.dk/fantastisk-cremet-hasselnoddechokoladeis/": "ikke aftensmad",
+  "https://www.louisesmadblog.dk/fasan-i-stegeso/": "ukendt kød eller fisk: hele fasaner",
   "https://www.louisesmadblog.dk/fastelavnsboller-med-karamel-og-hindbaer/": "ikke aftensmad",
   "https://www.louisesmadblog.dk/fastelavnsboller-med-remonce/": "ikke aftensmad",
   "https://www.louisesmadblog.dk/flaeskesteg-i-airfryer/": "for få kendte ingredienser",
@@ -518059,6 +517215,7 @@
   "https://www.mob.co.uk/recipes/leek-y-parmesan-chickpeas": "navnet kunne ikke oversættes: Leek-y Parmesan Chickpeas",
   "https://www.mob.co.uk/recipes/leeky-basil-chickpeas": "navnet kunne ikke oversættes: Leeky Basil Chickpeas",
   "https://www.mob.co.uk/recipes/leftover-boxing-day-green-eggs-and-ham": "navnet kunne ikke oversættes: Leftover Boxing Day Green Eggs and Ham",
+  "https://www.mob.co.uk/recipes/leftover-chicken-caesar-wraps": "kød eller fisk i navnet, men ikke i ingredienserne: Caesar wraps med kylling",
   "https://www.mob.co.uk/recipes/leftover-chip-shop-potato-bread": "ikke aftensmad",
   "https://www.mob.co.uk/recipes/leftover-chocolate-hot-chocolate": "navnet kunne ikke oversættes: Leftover Chocolate Hot Chocolate",
   "https://www.mob.co.uk/recipes/leftover-crispy-onion-turkey-brothy-rice": "navnet kunne ikke oversættes: Leftover Turkey & Crispy Onion Brothy Rice",
@@ -528351,6 +527508,7 @@
   "https://www.opskrifter.dk/opskrift/100019-torsk-i-vinaigrette": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/100022-choko-mynte-kage": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/100023-laks-i-pernod": "ikke aftensmad",
+  "https://www.opskrifter.dk/opskrift/100026-helleflyndermedaillon": "ukendt kød eller fisk: Helleflynder",
   "https://www.opskrifter.dk/opskrift/100028-unghane": "for lidt mad til en aftensmad",
   "https://www.opskrifter.dk/opskrift/100030-søtunge-med-estragon": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/100033-okse-stifado": "ukendt kød eller fisk: Oksetyksteg uden kappe",
@@ -528365,6 +527523,7 @@
   "https://www.opskrifter.dk/opskrift/100048-stegt-dyreryg": "ukendt kød eller fisk: Hjortefilet",
   "https://www.opskrifter.dk/opskrift/100050-tigerrejer-med-nudler": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/100051-spinat-potage": "ikke aftensmad",
+  "https://www.opskrifter.dk/opskrift/100052-victoriafisk-med-mandelpanering": "ukendt kød eller fisk: Victoriafilet",
   "https://www.opskrifter.dk/opskrift/100055-braiseret-svinefilet": "ukendt kød eller fisk: Svinefilet",
   "https://www.opskrifter.dk/opskrift/100059-indbagt-svampesuppe": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/100060-artiskokker-med-rejer": "ikke aftensmad",
@@ -528492,6 +527651,7 @@
   "https://www.opskrifter.dk/opskrift/100244-rosenkål-med-bacon-mandel-og-persillesmør": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/100245-krabbe-og-mangotartar-med-hindbærdressing": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/100246-lakseparceller-fyldt-med-rejer-æbler-og-valnødder": "ikke aftensmad",
+  "https://www.opskrifter.dk/opskrift/100251-perlehøne-fyldt-med-fars-af-vilde-svampe-samt-ærtemos": "ukendt kød eller fisk: Perlehønebryst",
   "https://www.opskrifter.dk/opskrift/100252-kronhjort-medallion-med-madeira-vanille-appelsin-sauce": "ukendt kød eller fisk: Hjortefilet",
   "https://www.opskrifter.dk/opskrift/100255-fransk-lys-jule-bûche": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/100256-ovnbagt-havtaske": "intet kød, fisk, æg, bælgfrugter eller ost",
@@ -528574,6 +527734,7 @@
   "https://www.opskrifter.dk/opskrift/100409-sommergrøntsager-med-couscous": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/100410-avocado-og-yoghurtdip-med-jalapeno-og-koriander": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/100411-avocado-og-linsesalat": "ikke aftensmad",
+  "https://www.opskrifter.dk/opskrift/100415-braiseret-kæbeklump": "ukendt kød eller fisk: Kæbeklump",
   "https://www.opskrifter.dk/opskrift/100416-rullesteg-med-fyld": "ukendt kød eller fisk: Kogt røget skinke",
   "https://www.opskrifter.dk/opskrift/100422-mexicansk-salat-med-honning-lime-dressing": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/100423-fersken-og-agurkesalsa": "ikke aftensmad",
@@ -529333,6 +528494,7 @@
   "https://www.opskrifter.dk/opskrift/103847-broccoli-salat-med-solsikkekerner": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/103848-pandekager-med-kanel-og-chokolade": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/103849-broccolitærte-med-røget-skinke": "ukendt kød eller fisk: Kogt røget skinke",
+  "https://www.opskrifter.dk/opskrift/103851-aborre-filet-med-kartofler-og-citronsovs": "ukendt kød eller fisk: Fileteret aborre",
   "https://www.opskrifter.dk/opskrift/103858-bananer-i-kokosmælk-med-is": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/103861-bradepandekage-med-æbler-og-kanel": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/103866-gratineret-blomkålsfad": "ikke aftensmad",
@@ -529908,6 +529070,7 @@
   "https://www.opskrifter.dk/opskrift/107828-brungiel-mimli-fyldte-auberginer": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/107829-aljotta-fiskesuppe": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/107833-bønnesalat-med-tomater": "ikke aftensmad",
+  "https://www.opskrifter.dk/opskrift/107843-helleflyndersteaks-med-kold-aspargessalat": "ukendt kød eller fisk: Helleflynder",
   "https://www.opskrifter.dk/opskrift/107847-rådyrbov-med-champignonsauce": "intet kød, fisk, æg, bælgfrugter eller ost",
   "https://www.opskrifter.dk/opskrift/107849-grov-broccolicreme-med-citron": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/107854-sunde-amerikanske-pandekager": "ikke aftensmad",
@@ -530144,6 +529307,7 @@
   "https://www.opskrifter.dk/opskrift/109266-asiatisk-inspireret-sommersalat-med-tigerrejer": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/109279-marineret-hvidkålssalat-med-feta": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/109290-bagte-rabarber-med-rørsukker-og-lakrids": "ikke aftensmad",
+  "https://www.opskrifter.dk/opskrift/1093-havtaske-med-saganaki": "ukendt kød eller fisk: Havtaske",
   "https://www.opskrifter.dk/opskrift/109320-nem-chokoladekage-i-bradepande": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/109325-bagte-kartofler-i-ovn": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/109331-cannelloni-classic": "for mange ukendte varer: deciliter Tomatsauce, Ricotta, Cannelloni",
@@ -530738,6 +529902,7 @@
   "https://www.opskrifter.dk/opskrift/716-laotisk-chilisauce": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/718-svampesuppe-med-koriander": "for lidt mad til en aftensmad",
   "https://www.opskrifter.dk/opskrift/719-bananer-i-kokosmælk": "ikke aftensmad",
+  "https://www.opskrifter.dk/opskrift/72-fasan-med-bacon-citronskal-og-rosmarin": "ukendt kød eller fisk: hel fasan",
   "https://www.opskrifter.dk/opskrift/725-sukkerstegt-svinebov": "ukendt kød eller fisk: Afpudset svinebov",
   "https://www.opskrifter.dk/opskrift/731-mangois": "ikke aftensmad",
   "https://www.opskrifter.dk/opskrift/732-stegte-ris-med-forårsløg-og-soja": "ikke aftensmad",
@@ -532774,6 +531939,7 @@
   "https://www.sainsburysmagazine.co.uk/recipes/bbq/pineapple-relish": "ikke aftensmad",
   "https://www.sainsburysmagazine.co.uk/recipes/bbq/rump-steak-with-chilli-hollandaise": "navnet kunne ikke oversættes: Rump steak with chilli hollandaise",
   "https://www.sainsburysmagazine.co.uk/recipes/bbq/sponsored-bbq-little-willie-sausage-burgers-with-caramelised-onions": "navnet kunne ikke oversættes: Sponsored: BBQ Little Willies Sausage burgers with caramelised onions",
+  "https://www.sainsburysmagazine.co.uk/recipes/bbq/sponsored-bbq-meat-platter": "ukendt kød eller fisk: svinekød & peber kebabs",
   "https://www.sainsburysmagazine.co.uk/recipes/bbq/sponsored-bbq-pepper-and-little-willie-sausage-skewers": "navnet kunne ikke oversættes: Sponsored: BBQ pepper and Little Willies Sausage skewers",
   "https://www.sainsburysmagazine.co.uk/recipes/bbq/sponsored-char-grilled-warm-summer-salad-with-chicken-style-chunks": "navnet kunne ikke oversættes: Sponsored: Chargrilled warm summer salad with What The Cluck Chicken Style Chunk",
   "https://www.sainsburysmagazine.co.uk/recipes/bbq/sponsored-impeckable-burger-with-hellmanns-garlic-potato-salad": "navnet kunne ikke oversættes: Sponsored: Impeckable ‘burger’ with Hellmann's roasted garlic potato salad",
@@ -535758,6 +534924,7 @@
   "https://www.sainsburysmagazine.co.uk/recipes/mains/roast-sea-bream-with-samphire-potato-salad": "navnet kunne ikke oversættes: Roast sea bream with samphire potato salad",
   "https://www.sainsburysmagazine.co.uk/recipes/mains/roast-squash-apple-and-barley-soup": "intet kød, fisk, æg, bælgfrugter eller ost",
   "https://www.sainsburysmagazine.co.uk/recipes/mains/roast-squash-with-pumpkin-seed-and-cranberry-stuffing": "navnet kunne ikke oversættes: Roast squash with pumpkin seed and cranberry stuffing",
+  "https://www.sainsburysmagazine.co.uk/recipes/mains/roast-tuna-nicoise": "ukendt kød eller fisk: frisk tunbøffer",
   "https://www.sainsburysmagazine.co.uk/recipes/mains/roast-turkey-breast-with-almond-and-lemon-stuffing": "navnet kunne ikke oversættes: Roast turkey breast with almond and lemon stuffing",
   "https://www.sainsburysmagazine.co.uk/recipes/mains/roast-turkey-breast-with-apricot-gammon-and-pistachio-stuffing": "navnet kunne ikke oversættes: Roast turkey breast with apricot, gammon and pistachio stuffing",
   "https://www.sainsburysmagazine.co.uk/recipes/mains/roast-turkey-crown-with-herb-butter": "navnet kunne ikke oversættes: Roast turkey crown with herb butter",
@@ -538224,6 +537391,7 @@
   "https://www.skinnytaste.com/gochujang-honey-glazed-shrimp-skewers/": "navnet kunne ikke oversættes: Gochujang-Honey Glazed Shrimp Skewers",
   "https://www.skinnytaste.com/grapefruit-ginger-kombucha-mocktail/": "ikke aftensmad",
   "https://www.skinnytaste.com/greek-7-layer-dip/": "ikke aftensmad",
+  "https://www.skinnytaste.com/greek-chicken-meal-prep-rice-bowls/": "kød eller fisk i navnet, men ikke i ingredienserne: Græske skåle med kylling og ris",
   "https://www.skinnytaste.com/greek-cottage-cheese-bowl/": "ikke aftensmad",
   "https://www.skinnytaste.com/greek-pasta-salad/": "ikke aftensmad",
   "https://www.skinnytaste.com/greek-salad-dressing/": "ikke aftensmad",
@@ -538431,6 +537599,7 @@
   "https://www.skinnytaste.com/loaded-cauliflower-mash-bake/": "ikke aftensmad",
   "https://www.skinnytaste.com/loaded-nacho-chicken-tostada/": "navnet kunne ikke oversættes: Loaded \"Nacho\" Chicken Tostada",
   "https://www.skinnytaste.com/loaded-philly-cheesesteak-baked-potato/": "navnet kunne ikke oversættes: Loaded Philly Cheesesteak Baked Potato",
+  "https://www.skinnytaste.com/loaded-turkey-chili-baked-potato/": "kød eller fisk i navnet, men ikke i ingredienserne: Fyldt chili med kalkun bagt kartoffel",
   "https://www.skinnytaste.com/loaded-turkey-santa-fe-baked-potato/": "navnet kunne ikke oversættes: Loaded Turkey Santa Fe Baked Potato Skins",
   "https://www.skinnytaste.com/lobster-asparagus-chopped-salad/": "navnet kunne ikke oversættes: Lobster Asparagus Chopped Salad",
   "https://www.skinnytaste.com/lobster-cobb-salad/": "navnet kunne ikke oversættes: Lobster Cobb Salad",
@@ -539233,6 +538402,7 @@
   "https://www.taste.com.au/recipes/eggplant-potato-curry/42fbbcc1-dd05-432a-84e1-f7093fe8753d": "intet kød, fisk, æg, bælgfrugter eller ost",
   "https://www.taste.com.au/recipes/festive-ice-bucket/65b8529d-f59a-4758-80ef-e605e2d7b93c": "navnet kunne ikke oversættes: Festive ice bucket",
   "https://www.taste.com.au/recipes/fish-cakes-smashed-peas-lemon/4a277b1d-c888-48ec-881c-0862b1bde092": "ikke aftensmad",
+  "https://www.taste.com.au/recipes/fish-minestrone-pesto/5e17e12e-8358-4042-b99d-1fd9e0a1268c": "ukendt kød eller fisk: rød mullet",
   "https://www.taste.com.au/recipes/fish-pumpkin-tagine/596a56ac-29bc-4ed3-91fb-2a0babfc1830": "ukendt kød eller fisk: ling fisk",
   "https://www.taste.com.au/recipes/five-hour-roast-lamb-beans-olives/625edf8c-94eb-4944-b341-3a79f55b6a5d": "navnet kunne ikke oversættes: Five-hour roast lamb with beans and olives",
   "https://www.taste.com.au/recipes/french-toast-banana-maple-syrup/716426f4-d180-446d-a98b-696a2bfa0364": "ikke aftensmad",
@@ -539297,6 +538467,7 @@
   "https://www.taste.com.au/recipes/mushrooms-pumpkin-lime-pengkat/785d9968-771f-44bf-961b-6a9e50008676": "intet kød, fisk, æg, bælgfrugter eller ost",
   "https://www.taste.com.au/recipes/nashi-chicken-waldorf-bruschetta/7397640d-2683-4cc4-aef8-08596af11e5e": "navnet kunne ikke oversættes: Nashi chicken Waldorf bruschetta",
   "https://www.taste.com.au/recipes/nicoise-salad-5/5423f619-33a6-41a7-8722-a378e6cf835c": "for lidt mad til en aftensmad",
+  "https://www.taste.com.au/recipes/nicoise-salad-7/303710f3-a327-4c7b-8c6f-d4d86667e814": "ukendt kød eller fisk: tunbøffer",
   "https://www.taste.com.au/recipes/osso-bucco-tomato-cannellini-beans/63a15901-938c-43be-b5ab-e2e2ed76640f": "navnet kunne ikke oversættes: Osso bucco with tomato and cannellini beans",
   "https://www.taste.com.au/recipes/oven-baked-fish-fingers-chips/4ce252e0-1a25-4203-b247-10daf8619918": "for lidt mad til en aftensmad",
   "https://www.taste.com.au/recipes/oven-roasted-balsamic-tomatoes/69d65f17-d37f-4109-9815-1fa00c02366f": "navnet kunne ikke oversættes: Oven-roasted balsamic tomatoes",
@@ -539356,6 +538527,7 @@
   "https://www.taste.com.au/recipes/rocket-asparagus-parmesan-salad/59411713-12d4-4316-8901-8fd5b928d8c9": "for lidt mad til en aftensmad",
   "https://www.taste.com.au/recipes/rocky-road-granola/7aa57e66-6ea3-4c29-b7a2-68e898961847": "ikke aftensmad",
   "https://www.taste.com.au/recipes/rosemary-beef-schnitzels-snow-pea-potato-salad/75c36915-c36e-4536-8a97-107f46568d72": "navnet kunne ikke oversættes: Rosemary beef schnitzels with snow pea and potato salad",
+  "https://www.taste.com.au/recipes/salad-nicoise-4/0d245dd2-5843-4737-99f5-fc1a73ef5490": "ukendt kød eller fisk: tunbøffer",
   "https://www.taste.com.au/recipes/salmon-avocado-rice-balls/642e3681-4e00-4654-8251-3c10aeaceb5e": "intet kød, fisk, æg, bælgfrugter eller ost",
   "https://www.taste.com.au/recipes/salmon-mornay/59211ec6-a1ae-4e21-b02a-5fa40f6b9b65": "navnet kunne ikke oversættes: Salmon mornay",
   "https://www.taste.com.au/recipes/salmon-pistachio-pesto/456c5a12-37d7-42e2-8135-50d52881e1bc": "for lidt mad til en aftensmad",
@@ -540613,6 +539785,7 @@
   "https://www.valdemarsro.dk/lordagshygge/": "ingen opskrift på siden",
   "https://www.valdemarsro.dk/lucca-guide/": "ingen opskrift på siden",
   "https://www.valdemarsro.dk/luksus-morgenmad-pa-hverdage/": "ingen opskrift på siden",
+  "https://www.valdemarsro.dk/luksus-stjerneskud/": "ukendt kød eller fisk: stenbiderrogn",
   "https://www.valdemarsro.dk/luksus-til-vores-badevaerelse/": "ingen opskrift på siden",
   "https://www.valdemarsro.dk/lun-kartoffelsalat-med-spidskaal/": "intet kød, fisk, æg, bælgfrugter eller ost",
   "https://www.valdemarsro.dk/lygtemaend-og-graeskarhoveder/": "ingen opskrift på siden",

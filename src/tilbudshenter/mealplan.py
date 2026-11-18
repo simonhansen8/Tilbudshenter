@@ -39,7 +39,7 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "kyllingelaar": ("kyllingelår", [["kylling", "lår"], ["overlår"], ["underlår"], ["kyllingelårfilet"], ["kylling", "lårfilet"]], ["and", "kalkun"]),
     "hel_kylling": ("hel kylling", [["hel", "kylling"], ["helkylling"], ["kylling", "hel "], ["kylling "], ["kyllinger "]],
                     ["grill", "stegt", "lår", "bryst", "filet", "hakket", "pålæg", "kogt", "wings", "tern", "pose", "posen"]),
-    "bacon": ("bacon", [["bacon"]], ["leverpostej", "kalkun", "pølse", "ost", "chips"]),
+    "bacon": ("bacon", [["bacon"], ["guanciale"]], ["leverpostej", "kalkun", "pølse", "ost", "chips"]),
     "stegeflaesk": ("stegeflæsk", [["stegeflæsk"], ["brystflæsk"], ["flæsk", "skiver"]], ["svær", "steg"]),
     "medister": PRODUCT_GROUPS["medister"],
     "flaeskesteg": PRODUCT_GROUPS["flaeskesteg"],
@@ -58,10 +58,11 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "lufttoerret_skinke": ("parma- eller serranoskinke", [["parmaskinke"], ["serranoskinke"], ["serrano "], ["prosciutto"],
                                                            ["lufttørret", "skinke"], ["spegeskinke"]],
                            ["ost", "pizza", "chips"]),
-    "poelser": ("pølser", [["pølser"]], ["cocktail", "salami", "spege", "rulle", "leverpostej", "vegansk"]),
+    "poelser": ("pølser", [["pølser"], ["frankfurter"], ["wienerpølse"], ["salsiccia"]], ["cocktail", "salami", "spege", "rulle", "leverpostej", "vegansk"]),
     "chorizo": ("chorizo", [["chorizo"]], ["chips", "snack", "pizza", "skiver"]),
     "boef": ("bøf", [["bøf "], ["bøffer"], ["oksebøf"], ["entrecote"], ["ribeye"], ["culotte"], ["flanksteak"], ["flatsteak"],
-                     ["oksefilet"], ["tykstegsbøf"], ["rumpsteak"], ["rump", "steak"], ["okse", "steak"], ["steak"], ["tournedos"], ["picanha"]],
+                     ["oksefilet"], ["tykstegsbøf"], ["rumpsteak"], ["rump", "steak"], ["okse", "steak"], ["steak"], ["tournedos"], ["picanha"],
+                     ["entrecôte"], ["sirloin"], ["cuvette"]],
              ["hakke", "burger", "kylling", "kalkun", "lam", "lammekød", "gris", "svin", "vegansk", "plantebaseret",
               "laks", "fisk", "tun", "veggie", "vegetar", "grønt", "grønsag", "sauce", "krydderi", "house", "pommes",
               "fritter", "kartof", "frites", "sandwich", "bacon"]),
@@ -1205,21 +1206,25 @@ PANTRY_WORDS = [
     "sovsekulør", "madkulør", "soya", "teriyaki", "tamari", "miso", "tahin", "sirup", "farin", "panko",
     "remoulade", "barbecuesauce", "bbq", "chutney", "citronskal", "limeskal", "isterninger", "karse",
     # Ikke kød eller fisk at købe, selv om ordet ligner: "risvin" er ikke svin, "kødsnor" er snor
-    "risvin", "mirin", "kødsnor", "fiskesause", "nori", "tang ", "ansjos", "ansjoser",
+    "risvin", "mirin", "kødsnor", "fiskesause", "nori", "tang ", "ansjos", "ansjoser", "katsuobushi",
 ]
 PORK_WORDS = ["skinke", "bacon", "pancetta", "chorizo", "salami", "svin", "gris", "flæsk", "pølse", "prosciutto",
               "serrano", "medister", "kotelet", "spegepølse", "ribben", "spareribs",
               # Engelske ord, som oversættelsen lader stå
-              "pork", "pepperoni", "nduja", "ham ", "gammon", "lardons", "hamburgerryg", "kassler"]
+              "pork", "pepperoni", "nduja", "ham ", "gammon", "lardons", "hamburgerryg", "kassler",
+              "guanciale", "mortadella", "salsiccia", "frankfurter", "wienerpølse", "revelsben"]
 FISH_WORDS = ["fisk", "laks", "torsk", "tun ", "rejer", "makrel", "sild", "ansjos", "muslinge", "hummer",
               "krabbe", "blæksprutte", "rødspætte", "kuller", "sej ", "skaldyr", "kammusling", "tang ", "lyssej",
               "mørksej", "kulmule", "hellefisk", "rødfisk", "havkat", "ørred", "pighvar", "rødtunge", "skrubbe ",
               "sardin", "havbars", "dorade", "havrude", "bass", "seabass", "bream", "monkfish", "halibut", "haddock",
-              "cod ", "salmon", "prawn", "prawns", "shrimp", "squid", "calamari", "mussels", "clams", "scallops"]
+              "cod ", "salmon", "prawn", "prawns", "shrimp", "squid", "calamari", "mussels", "clams", "scallops",
+              "tunbøf", "tunfilet", "aborre", "helleflynder", "havtaske", "slethvar", "multe", "victoria", "isingfilet",
+              "jomfruhummer", "rogn", "sandart", "gedde", "knurhane", "mullet", "katsuobushi"]
 MEAT_WORDS = ["kød", "okse", "kalv", "lam", "kylling", "kalkun", "and ", "andebryst", "gås", "vildt", "hjort",
               "rådyr", "kanin", "bøf", "andesteg", "juleand", "chicken", "beef", "turkey", "lamb", "meatball",
               "meatballs", "pulled", "bresaola", "venison", "duck", "frikadelle", "høne", "hønse", "lever", "kebab", "gyros", "steak", "tournedos", "gulasch", "gullasch",
-              "entrecote", "culotte", "ribeye", "picanha"]
+              "entrecote", "entrecôte", "culotte", "cuvette", "ribeye", "picanha", "sirloin", "hakkebøf", "kæbe",
+              "fasan", "perlehøne", "agerhøne", "goose"]
 _KIND_KEYS = [
     ("fisk", ["laksefilet", "roeget_laks", "hvid_fisk", "fiskefrikadeller", "tun", "rejer"]),
     # And og kalkun er fjerkræ ligesom kylling; kalv og lam er rødt kød ligesom okse
@@ -1257,9 +1262,31 @@ _VEGGIE_NAME = re.compile(r"(grøntsags|grønsags|linse|bønne|kikærte|rødbede
                           re.IGNORECASE)
 
 
+# Ansjoser er krydderi: "Pasta med broccoli og ansjos" er en grøntsagsret med fisk i smagen
+_SEASONING_NAME = re.compile(r"\bansjos\w*", re.IGNORECASE)
+
+
 def _meat_in_name(name: str) -> bool:
     """Om rettens navn nævner kød eller fisk, man skal købe."""
-    return bool(diet_flag(_VEGGIE_NAME.sub(" ", name)))
+    return bool(diet_flag(_SEASONING_NAME.sub(" ", _VEGGIE_NAME.sub(" ", name))))
+
+
+def _last_word(tokens: list[str], words: list[str]) -> tuple[int, int]:
+    """Hvor det sidste af ordene står: (ordets plads, om det står sidst i ordet)."""
+    return max(((i, int(t.endswith(w.strip().casefold()))) for w in words for i, t in enumerate(tokens)
+                if _has_word([t], w)), default=(-1, 0))
+
+
+def _seasoning(text: str) -> bool:
+    """Om en linje med kød eller fisk er bouillon, sauce eller krydderi. Det,
+    der står sidst, er varen: "kyllingebouillon" og "fiskesauce" er basisvarer,
+    men "peberspegepølse" og "honning skinke" er kød. Det efter "til" og
+    "fra" er ikke varen: "Salt til kød", "Stegesky fra kyllingen"."""
+    text = re.sub(r"\([^)]*\)?|\band/or\b", " ", text).replace("fiske sauce", "fiskesauce")
+    tokens = _tokens(re.split(r",|\b(?:til|till|fra)\b", text, maxsplit=1, flags=re.IGNORECASE)[0]) or _tokens(text)
+    meat = _last_word(tokens, PORK_WORDS + FISH_WORDS + MEAT_WORDS)
+    pantry = _last_word(tokens, PANTRY_WORDS)
+    return pantry >= meat and pantry[0] >= 0
 
 
 def _before_til(name: str) -> str:
@@ -1374,7 +1401,7 @@ def recipe_from_lines(
         keys = line_keys(text)
         if not keys:
             flag = diet_flag(text)
-            staple = _has_any(text, PANTRY_WORDS)
+            staple = _seasoning(text) if flag else _has_any(text, PANTRY_WORDS)
             if flag and not staple:
                 return None, f"ukendt kød eller fisk: {text}"
             if flag and flag not in flags:
@@ -1424,7 +1451,7 @@ def recipe_from_lines(
     kind = next((kind for kind, ks in _KIND_KEYS if keys & set(ks)), "vegetar")
     # "Lynstegt rumpsteak ..." uden kendt kød i ingredienserne: kødet kan
     # ikke prissættes, og retten må ikke ligne en vegetarret på tilbud
-    if kind == "vegetar" and not flags and _meat_in_name(name):
+    if kind == "vegetar" and _meat_in_name(name):
         return None, f"kød eller fisk i navnet, men ikke i ingredienserne: {name}"
     rid = rid or "egen-" + hashlib.sha1(name.encode()).hexdigest()[:8]
     return Recipe(rid, name.strip()[:80], kind, int(minutes or 0), items, pantry, method, source, flags), ""
