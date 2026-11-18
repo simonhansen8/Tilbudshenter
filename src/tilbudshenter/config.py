@@ -255,9 +255,26 @@ def _add_foetex_food(cfg: Config) -> bool:
     return True
 
 
+# Kategorierne, en ny konfiguration valgte før; nu vælges alle
+OLD_DEFAULT_CATEGORIES = ["koed", "fisk", "mejeri", "frugt_og_groent", "broed_og_bager", "kolonial", "frost", "kaffe_og_te"]
+
+
+def _all_categories(cfg: Config) -> bool:
+    """Det gamle standardvalg (8 af kategorierne) skjulte fx drikkevarer, øl
+    og vin og husholdning. Står det uændret, vælges alle kategorier; har
+    brugeren selv rettet listen, beholdes den."""
+    if sorted(cfg.categories) != sorted(OLD_DEFAULT_CATEGORIES):
+        return False
+    cfg.categories = []
+    return True
+
+
 # Navn -> ændring. Hver opgradering udføres én gang pr. konfiguration, så
 # brugeren kan fravælge fx en butik bagefter, uden at den kommer igen.
-UPGRADES = {"nye-butikker-2026-10": _add_new_stores, "foetex-food-2026-10": _add_foetex_food}
+UPGRADES = {
+    "nye-butikker-2026-10": _add_new_stores, "foetex-food-2026-10": _add_foetex_food,
+    "alle-kategorier-2026-11": _all_categories,
+}
 
 
 def upgrade_config(cfg: Config) -> bool:
@@ -277,7 +294,6 @@ def example_config() -> Config:
         stores=["Netto", "REMA 1000", "Lidl", "føtex", "føtex food", "Bilka", "365discount", *NEW_STORES],
         upgrades=list(UPGRADES),
         exclude_catalogs=["legetøj", "nonfood", "prosonic", "halloween", "ud af huset", "julekatalog", "skønhed"],
-        categories=["koed", "fisk", "mejeri", "frugt_og_groent", "broed_og_bager", "kolonial", "frost", "kaffe_og_te"],
     )
 
 
