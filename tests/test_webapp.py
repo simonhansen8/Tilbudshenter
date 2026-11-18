@@ -235,3 +235,18 @@ def test_new_meal_plan_replaces_the_old_one_on_the_list(tmp_path):
         left = {i["heading"]: i for i in storage.shopping_list()}
     assert set(left) == {"Mælk", "Løg (1 net)"} and old not in {i["id"] for i in left.values()}
     assert left["Løg (1 net)"]["price"] == 7.0
+
+
+def test_list_count_and_store_can_be_changed(tmp_path):
+    from tilbudshenter.storage import Storage
+
+    with Storage(tmp_path / "t.db") as storage:
+        own = storage.add_text_to_list("Toiletpapir", category="husholdning")
+        storage.set_list_count(own, 3)
+        storage.set_list_dealer(own, "Netto")
+        item = storage.shopping_list()[0]
+        assert (item["count"], item["dealer"]) == (3, "Netto")
+        storage.set_list_count(own, 500)  # højst 99
+        storage.set_list_dealer(own, None)
+        item = storage.shopping_list()[0]
+        assert (item["count"], item["dealer"]) == (99, None)

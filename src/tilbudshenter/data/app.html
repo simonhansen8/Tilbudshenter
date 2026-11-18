@@ -202,6 +202,14 @@ label.field input { padding: 8px 10px; border: 1px solid var(--line); border-rad
 .item .x { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 20px; line-height: 1;
   min-width: 40px; min-height: 40px; margin-left: 4px; }
 .item .p { white-space: nowrap; font-weight: 600; padding-top: 6px; }
+.item .side { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex: none; }
+.qty { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; }
+.qty button { background: none; border: none; color: var(--muted); font: inherit; font-size: 15px; min-width: 28px; min-height: 28px; cursor: pointer; padding: 0; }
+.qty b { min-width: 14px; text-align: center; font-weight: 600; }
+/* Butikken for en egen vare som diskret tekst ("Netto ▾"), der kan vælges om */
+.item .move { font: inherit; font-size: 12px; color: var(--muted); border: none; background: transparent;
+  padding: 0; margin: 2px 0 0; max-width: 100%; cursor: pointer; }
+#own-store { max-width: 34%; padding: 0 6px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
 .item .open { background: none; border: none; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; display: inline; }
 .item .open:hover { text-decoration-color: currentColor; }
 .item .open::after { content: " ›"; color: var(--muted); }
@@ -542,6 +550,7 @@ ul.preview li.unknown::before { content: "? "; color: var(--warn); font-weight: 
     <div class="dlg-body">
       <form class="add-own" id="add-own">
         <input id="own-text" placeholder="Tilføj egen vare, fx mælk eller toiletpapir" maxlength="200">
+        <select id="own-store" aria-label="Butik" title="Hvor du køber varen"></select>
         <button class="btn small">Tilføj</button>
       </form>
       <div id="list-body"></div>
@@ -964,6 +973,11 @@ function changeSiteList(body) {
       note: body.note ? String(body.note).slice(0, 200) : null, category: body.category || null});
   } else if (body.action === "check") {
     items = items.map(i => i.id === body.id ? {...i, checked: !!body.checked} : i);
+  } else if (body.action === "count") {
+    items = items.map(i => i.id === body.id ? {...i, count: listCount(body.count)} : i);
+  } else if (body.action === "dealer") {
+    // Kun egne varer kan flyttes til en anden butik; et tilbud hører til sin butik
+    items = items.map(i => i.id === body.id && String(i.id).startsWith("egen-") ? {...i, dealer: body.dealer ? String(body.dealer).slice(0, 60) : null} : i);
   } else if (body.action === "remove") {
     items = items.filter(i => i.id !== body.id);
   } else if (body.action === "clear") {
@@ -1977,8 +1991,25 @@ function itemDept(i) {
   if (i.category) return i.category;
   const o = state.offers.find(o => o.id === i.id);
   if (o) return o.category;
-  const key = planData && lineKeys(i.heading)[0];
-  return key ? ING[key].dept : "andet";
+  return guessDept(i.heading);
+}
+// Afdelingen for en egen vare: madplanens ingrediens ("mælk"), ellers den
+// kategori, ordet oftest står i blandt tilbuddene ("toiletpapir" er husholdning)
+function guessDept(text) {
+  guessDept.memo ||= new Map();
+  const key = `${text}|${state.offers.length}`;
+  if (guessDept.memo.has(key)) return guessDept.memo.get(key);
+  let dept = "andet";
+  const k = planData && lineKeys(text)[0];
+  if (k) dept = ING[k].dept;
+  else if (state.offers.length) {
+    const match = searchFor(text), n = new Map();
+    if (match) for (const o of state.offers) { const t = match(o); if (t === 0 || t === 1) n.set(o.category, (n.get(o.category) || 0) + 1); }
+    const best = [...n].filter(([c]) => c && c !== "andet").sort((a, b) => b[1] - a[1])[0];
+    if (best) dept = best[0];
+  }
+  guessDept.memo.set(key, dept);
+  return dept;
 }
 
 function deptName(key) {
@@ -2026,20 +2057,42 @@ function listWhen(i) {
 }
 // Kort pris på listen: "30 kr", men "19,90 kr"
 function listMoney(n) { return Math.round(n * 100) % 100 ? money(n) : `${Math.round(n).toLocaleString("da-DK")} kr`; }
+// Butikkerne, en egen vare kan købes i: dem på listen og dem med tilbud her
+// (butikkerne i nærheden, når der er valgt en placering)
+function listStores() {
+  const names = new Set(state.list.filter(i => i.dealer).map(i => i.dealer));
+  for (const o of state.offers || []) names.add(o.dealer);
+  return [...names].sort((a, b) => a.localeCompare(b, "da"));
+}
+function storeSelect(i) {
+  return `<select class="move" data-move="${esc(i.id)}" aria-label="Butik for ${esc(i.heading)}">
+    <option value="">${i.dealer ? "Ingen bestemt butik" : "Vælg butik"}</option>${listStores().map(st => `<option ${st === i.dealer ? "selected" : ""}>${esc(st)}</option>`).join("")}</select>`;
+}
 function listRow(i, offerIds) {
   const when = listWhen(i);
   return `<div class="item${i.checked ? " done" : ""}">
     <label class="tick"><input type="checkbox" data-check="${esc(i.id)}" ${i.checked ? "checked" : ""} aria-label="${esc(i.heading)} er købt"></label>
-    <div class="what">${listCount(i.count) > 1 ? `<b>${listCount(i.count)} ×</b> ` : ""}${offerIds.has(i.id)
+    <div class="what">${offerIds.has(i.id)
       ? `<span class="open" role="button" tabindex="0" data-open="${esc(i.id)}" title="Se tilbuddet">${esc(i.heading)}</span>` : esc(i.heading)}
       ${when || i.member ? `<div class="sub">${when ? `<span class="hint-time">${esc(when)}</span>` : ""}${when && i.member ? " · " : ""}${esc(i.member || "")}</div>` : ""}
       ${i.note ? `<div class="sub note" data-note title="${esc(i.note)}">${esc(i.note)}</div>` : ""}
-      ${i.expired ? `<div class="sub"><span class="expired">Tilbuddet er udløbet</span></div>` : ""}</div>
-    ${i.price_text ? `<span class="p">${i.price ? `${/^ca\./.test(i.price_text) ? "ca. " : ""}${listMoney(itemTotal(i))}` : esc(i.price_text)}</span>` : ""}
+      ${i.expired ? `<div class="sub"><span class="expired">Tilbuddet er udløbet</span></div>` : ""}
+      ${String(i.id).startsWith("egen-") && !i.checked ? storeSelect(i) : ""}</div>
+    <div class="side">
+      ${i.price_text ? `<span class="p">${i.price ? `${/^ca\./.test(i.price_text) ? "ca. " : ""}${listMoney(itemTotal(i))}` : esc(i.price_text)}</span>` : ""}
+      ${i.checked ? (listCount(i.count) > 1 ? `<span class="sub">${listCount(i.count)} stk</span>` : "")
+        : `<span class="qty" aria-label="Antal"><button type="button" data-qty="${esc(i.id)}:-1" aria-label="Færre">−</button><b>${listCount(i.count)}</b><button type="button" data-qty="${esc(i.id)}:1" aria-label="Flere">+</button></span>`}
+    </div>
     <button class="x" data-remove="${esc(i.id)}" title="Fjern ${esc(i.heading)}" aria-label="Fjern ${esc(i.heading)}">×</button>
   </div>`;
 }
+function renderOwnStore() {
+  const sel = $("own-store"), keep = store.get("ownstore", "");
+  const stores = listStores();
+  sel.innerHTML = `<option value="">Ingen butik</option>` + stores.map(st => `<option ${st === keep ? "selected" : ""}>${esc(st)}</option>`).join("");
+}
 function renderList() {
+  renderOwnStore();
   $("btn-list-mail").href = "mailto:?subject=" + encodeURIComponent("Indkøbsliste") + "&body=" + encodeURIComponent(listText());
   // På telefonen deles listen med telefonens egen deling; ellers kopieres den
   $("btn-list-copy").textContent = navigator.share ? "Del listen" : "Kopiér listen";
@@ -4697,7 +4750,9 @@ $("add-own").addEventListener("submit", e => {
   if (same) { changeList({action: "check", id: same.id, checked: false}); toast(`${same.heading} er sat tilbage på listen`); return; }
   // Den lokale app svarer først lidt senere; samme vare to gange i træk tilføjes kun én gang
   listAdding.add(key);
-  changeList({action: "add_text", text}).finally(() => listAdding.delete(key));
+  const dealer = $("own-store").value || null;
+  store.set("ownstore", dealer || "");
+  changeList({action: "add_text", text, dealer, category: guessDept(text)}).finally(() => listAdding.delete(key));
 });
 const listAdding = new Set();
 // En fjernet vare kan lægges tilbage (tilbud med samme antal og note, egne varer som de var)
@@ -4710,6 +4765,7 @@ async function restoreItem(i) {
   await changeList(restoreItemBody(i));
   // Var varen købt, er den det stadig
   const back = state.list.filter(x => x.heading === i.heading).pop();
+  if (back && listCount(i.count) !== listCount(back.count)) await changeList({action: "count", id: back.id, count: listCount(i.count)});
   if (i.checked && back) await changeList({action: "check", id: back.id, checked: true});
 }
 $("list-body").addEventListener("click", e => {
@@ -4729,6 +4785,18 @@ $("list-body").addEventListener("click", e => {
     return;
   }
   if (e.target.dataset.note !== undefined) { e.target.classList.toggle("full"); return; }
+  const qty = e.target.closest("[data-qty]");
+  if (qty) {
+    const at = qty.dataset.qty.lastIndexOf(":"), id = qty.dataset.qty.slice(0, at), step = Number(qty.dataset.qty.slice(at + 1));
+    const item = state.list.find(i => i.id === id);
+    if (!item) return;
+    const n = listCount(item.count) + step;
+    if (n < 1) {  // Under 1: varen fjernes, med fortryd
+      changeList({action: "remove", id});
+      toast(`${item.heading} er fjernet`, {label: "Fortryd", fn: () => restoreItem(item)});
+    } else changeList({action: "count", id, count: n});
+    return;
+  }
   const open = e.target.closest("[data-open]");
   if (open) openOffer(open.dataset.open, listOffers());
 });
@@ -4737,6 +4805,7 @@ $("list-body").addEventListener("keydown", e => {
   if (open && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openOffer(open.dataset.open, listOffers()); }
 });
 $("list-body").addEventListener("change", e => {
+  if (e.target.dataset.move !== undefined) { changeList({action: "dealer", id: e.target.dataset.move, dealer: e.target.value || null}); return; }
   const id = e.target.dataset.check;
   if (id) changeList({action: "check", id, checked: e.target.checked});
 });

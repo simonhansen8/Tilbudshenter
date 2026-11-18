@@ -104,7 +104,10 @@ I appen kan du:
   fylder én linje (tryk på noten for at se mængder og retter), og "fra fre."
   eller "sidste dag i morgen" står ved tilbud, hvor det betyder noget. En vare,
   du fjerner, kan lægges tilbage med **Fortryd**, og samme egen vare kommer kun
-  på én gang. **Del listen** bruger telefonens deling (ellers kopieres den); den
+  på én gang. Antallet rettes med **−** og **+** (under 1 fjernes varen). Egne
+  varer kan få en butik, når de tilføjes (valget huskes), og flyttes til en
+  anden butik bagefter; de kommer i den afdeling, hvor ordet oftest står blandt
+  tilbuddene (toiletpapir under husholdning, tandpasta under personlig pleje). **Del listen** bruger telefonens deling (ellers kopieres den); den
   delte tekst er kort, kun det, der mangler, med en samlet pris. Listen kan også
   sendes som mail eller udskrives,
 - lave en **madplan** ud fra ugens tilbud (se nedenfor),
