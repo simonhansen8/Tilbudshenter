@@ -243,3 +243,11 @@ def test_recipes_that_no_longer_build_are_skipped(tmp_path):
     out.write_text(json.dumps({"version": 4, "recipes": [{"url": url, **old}], "skipped": {}}), encoding="utf-8")
     assert update(lst, out, lambda u: "", delay=0)["recipes"] == 0
     assert json.loads(out.read_text(encoding="utf-8"))["skipped"] == {url: "for få kendte ingredienser"}
+
+
+def test_hellofresh_names_and_sharing_snacks():
+    from tilbudshenter.opskrifter import clean_name, is_dinner
+
+    assert clean_name("Kylling i karry | 25 min | med ris") == "Kylling i karry med ris"
+    assert clean_name("Nachos con carne Delevenlig ret | med ost") == "Nachos con carne med ost"
+    assert not is_dinner({"name": "Nachos con carne Delevenlig ret | med ost", "category": ""})

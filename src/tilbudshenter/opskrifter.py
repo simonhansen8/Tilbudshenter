@@ -267,18 +267,23 @@ SIDE_HEADS = ["coleslaw", "råkost", "kartoffelmos", "croutoner", "kiks", "knæk
 def clean_name(name: str) -> str:
     """Rettens navn uden madsidens ekstra tekst: HelloFresh skriver fx
     "Fransk grønsalat | 10 min Delevenlig ret | med syltede løg"."""
+    # "Nachos con carne Delevenlig ret | med ost": navnet står før "Delevenlig ret"
+    name = re.sub(r"\s*\b\d+\s*min\b\s*|\s*\bdelevenlig ret\b\s*", " ", name, flags=re.IGNORECASE)
     parts = [p.strip() for p in name.split("|")]
-    parts = [p for p in parts if p and not re.search(r"\d+\s*min\b|delevenlig", p, re.IGNORECASE)]
+    parts = [p for p in parts if p]
     text = " ".join(parts) or name
     text = re.sub(r"\s*\b\d+\s*portioner\b", "", text, flags=re.IGNORECASE)
     return re.sub(r"\s+", " ", text).strip(" -–|")
 
 
 # "Rustikke gulerodsboller 6 boller", "Blåbærsnitter 6 snitter": bagværk i stk
-_PIECES_IN_NAME = re.compile(r"\b\d+\s*(boller|snitter|kager|cookies|muffins)\b", re.IGNORECASE)
+_PIECES_IN_NAME = re.compile(r"\b\d+\s*(boller|snitter|kager|cookies|muffins|stk)\b", re.IGNORECASE)
 
 
 def is_dinner(recipe: dict) -> bool:
+    # HelloFresh' "Delevenlig ret" er snacks til at dele (nachos, kanapéer, snackbræt)
+    if re.search(r"\bdelevenlig\b", recipe["name"], re.IGNORECASE):
+        return False
     name = clean_name(recipe["name"])
     if _PIECES_IN_NAME.search(name):
         return False

@@ -99,7 +99,9 @@ INGREDIENTS: dict[str, tuple[str, list[list[str]], list[str]]] = {
     "hvid_fisk": ("torsk eller anden hvid fisk", [["torsk"], ["sej "], ["sejfilet"], ["kuller"], ["rødspætte"],
                                                   ["fiskefilet"], ["pangasius"], ["hoki"],
                                                   ["lyssej"], ["mørksej"], ["kulmule"], ["hellefisk"], ["rødfisk"],
-                                                  ["havkat"], ["rødtunge"], ["skrubbe "], ["skrubbefilet"]],
+                                                  ["havkat"], ["rødtunge"], ["skrubbe "], ["skrubbefilet"],
+                                                  ["aborre"], ["helleflynder"], ["ising"], ["multe"], ["knurhane"],
+                                                  ["hvilling"], ["brosme"], ["søtunge"], ["tilapia"]],
                   ["fars", "rogn", "lever", "frikadelle", "tørret", "røget"]),
     "fiskefrikadeller": ("fiskefrikadeller", [["fiskefrikadelle"], ["fiskefars"]], []),
     "tun": ("tun på dåse", [["tun "], ["tunfisk"]], ["salat", "mousse"]),
@@ -1215,11 +1217,16 @@ FISH_WORDS = ["fisk", "laks", "torsk", "tun ", "rejer", "makrel", "sild", "ansjo
               "krabbe", "blæksprutte", "rødspætte", "kuller", "sej ", "skaldyr", "kammusling", "tang ", "lyssej",
               "mørksej", "kulmule", "hellefisk", "rødfisk", "havkat", "ørred", "pighvar", "rødtunge", "skrubbe ",
               "sardin", "havbars", "dorade", "havrude", "bass", "seabass", "bream", "monkfish", "halibut", "haddock",
-              "cod ", "salmon", "prawn", "prawns", "shrimp", "squid", "calamari", "mussels", "clams", "scallops"]
+              "cod ", "salmon", "prawn", "prawns", "shrimp", "squid", "calamari", "mussels", "clams", "scallops",
+              # Flere fisk, så en ret med dem aldrig ligner en vegetarret
+              "multe", "brosme", "stenbider", "rognkelse", "hornfisk", "hvilling", "ising", "helleflynder",
+              "rokke", "aborre", "gedde", "sandart", "karpe", "ål ", "østers ", "krebs", "rogn", "kaviar", "søtunge",
+              "tilapia", "pangasius", "mullet", "trout", "mackerel", "sardine", "anchov", "tuna", "fiskefond"]
 MEAT_WORDS = ["kød", "okse", "kalv", "lam", "kylling", "kalkun", "and ", "andebryst", "gås", "vildt", "hjort",
               "rådyr", "kanin", "bøf", "andesteg", "juleand", "chicken", "beef", "turkey", "lamb", "meatball",
               "meatballs", "pulled", "bresaola", "venison", "duck", "frikadelle", "høne", "hønse", "lever", "kebab", "gyros", "steak", "tournedos", "gulasch", "gullasch",
-              "entrecote", "culotte", "ribeye", "picanha"]
+              "entrecote", "culotte", "ribeye", "picanha", "fasan", "perlehøne", "vildsvin", "gedekød", "fårekød",
+              "struds", "bison", "dådyr", "kronhjort"]
 _KIND_KEYS = [
     ("fisk", ["laksefilet", "roeget_laks", "hvid_fisk", "fiskefrikadeller", "tun", "rejer"]),
     # And og kalkun er fjerkræ ligesom kylling; kalv og lam er rødt kød ligesom okse
